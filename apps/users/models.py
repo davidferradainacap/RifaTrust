@@ -86,7 +86,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Nombre completo del usuario con máximo 100 caracteres
     nombre = models.CharField(max_length=100, verbose_name='Nombre Completo')
     # Teléfono encriptado en base de datos usando Fernet (AES-128) - puede estar vacío
-    telefono = EncryptedCharField(max_length=255, blank=True, verbose_name='Teléfono')
+    # max_length=500 para permitir espacio suficiente después de encriptación
+    telefono = EncryptedCharField(max_length=500, blank=True, verbose_name='Teléfono')
     # Rol del usuario - determina permisos y funcionalidades disponibles
     rol = models.CharField(max_length=20, choices=ROLES, default='participante', verbose_name='Rol')
     # Imagen de perfil subida a la carpeta media/avatars/ - opcional
