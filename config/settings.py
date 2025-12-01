@@ -1,5 +1,5 @@
 """
-Django settings for Sistema de Rifas.
+Django settings for RifaTrust.
 """
 
 from pathlib import Path

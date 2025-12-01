@@ -1,4 +1,4 @@
-# Sistema de Rifas (Raffle System)
+# RifaTrust - Sistema de Rifas (Raffle System)
 
 Sistema completo de gestión de rifas online desarrollado con Django, que permite crear, administrar y participar en rifas con integración de pagos.
 
