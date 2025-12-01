@@ -1,0 +1,1663 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Panel de Superusuario{% endblock %}
+
+{% block content %}
+<div class="superuser-header">
+    <div class="header-content">
+        <div class="header-text">
+            <h1 class="superuser-title">
+                <span class="superuser-icon">🛡️</span>
+                Panel de Superusuario
+            </h1>
+            <p class="superuser-subtitle">Control y administración completa del sistema</p>
+        </div>
+        <div class="header-stats-mini">
+            <div class="mini-stat">
+                <span class="mini-stat-value">{{ users_stats.total }}</span>
+                <span class="mini-stat-label">Usuarios</span>
+            </div>
+            <div class="mini-stat">
+                <span class="mini-stat-value">{{ raffles_stats.activas }}</span>
+                <span class="mini-stat-label">Rifas Activas</span>
+            </div>
+            {% if users_stats.pending_sponsors > 0 %}
+            <div class="mini-stat alert-stat">
+                <span class="mini-stat-value">{{ users_stats.pending_sponsors }}</span>
+                <span class="mini-stat-label">⚠️ Pendientes</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="superuser-tabs">
+    <nav class="tabs-nav">
+        <button class="tab-btn active" onclick="showTab('overview')" data-tab="overview">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Vista General</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('users')" data-tab="users">
+            <span class="tab-icon">👥</span>
+            <span class="tab-label">Gestión de Usuarios</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('raffles')" data-tab="raffles">
+            <span class="tab-icon">🎯</span>
+            <span class="tab-label">Gestión de Rifas</span>
+        </button>
+        <button class="tab-btn" onclick="showTab('payments')" data-tab="payments">
+            <span class="tab-icon">💰</span>
+            <span class="tab-label">Gestión de Pagos</span>
+        </button>
+        <button class="tab-btn {% if users_stats.pending_sponsors > 0 %}tab-alert{% endif %}" onclick="showTab('sponsors')" data-tab="sponsors">
+            <span class="tab-icon">⭐</span>
+            <span class="tab-label">Sponsors Pendientes</span>
+            {% if users_stats.pending_sponsors > 0 %}
+            <span class="tab-badge">{{ users_stats.pending_sponsors }}</span>
+            {% endif %}
+        </button>
+    </nav>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div id="overview-tab" class="tab-content active">
+    <!-- Statistics Grid -->
+    <div class="superuser-stats-grid">
+        <div class="superuser-stat-card primary">
+            <div class="stat-card-header">
+                <span class="stat-card-icon">👥</span>
+                <span class="stat-card-title">Usuarios Totales</span>
+            </div>
+            <div class="stat-card-value">{{ users_stats.total }}</div>
+            <div class="stat-card-details">
+                <span class="detail-item">Participantes: {{ users_stats.participantes }}</span>
+                <span class="detail-item">Organizadores: {{ users_stats.organizadores }}</span>
+            </div>
+        </div>
+
+        <div class="superuser-stat-card success">
+            <div class="stat-card-header">
+                <span class="stat-card-icon">🎯</span>
+                <span class="stat-card-title">Rifas Activas</span>
+            </div>
+            <div class="stat-card-value">{{ raffles_stats.activas }}</div>
+            <div class="stat-card-details">
+                <span class="detail-item">Total: {{ raffles_stats.total }}</span>
+                <span class="detail-item">Completadas: {{ raffles_stats.completadas }}</span>
+            </div>
+        </div>
+
+        <div class="superuser-stat-card info">
+            <div class="stat-card-header">
+                <span class="stat-card-icon">💳</span>
+                <span class="stat-card-title">Transacciones</span>
+            </div>
+            <div class="stat-card-value">{{ payments_stats.total }}</div>
+            <div class="stat-card-details">
+                <span class="detail-item success-text">✓ {{ payments_stats.completados }} Completados</span>
+                <span class="detail-item danger-text">✗ {{ payments_stats.fallidos }} Fallidos</span>
+            </div>
+        </div>
+
+        <div class="superuser-stat-card warning">
+            <div class="stat-card-header">
+                <span class="stat-card-icon">💰</span>
+                <span class="stat-card-title">Ingresos Totales</span>
+            </div>
+            <div class="stat-card-value">CLP${{ payments_stats.total_amount|floatformat:0|intcomma }}</div>
+            <div class="stat-card-details">
+                <span class="detail-item">Boletos vendidos: {{ tickets_stats.vendidos }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Quick Actions -->
+    <div class="quick-actions-section">
+        <h2 class="section-title">
+            <span class="section-icon">⚡</span>
+            Acciones Rápidas
+        </h2>
+        <div class="quick-actions-grid">
+            <button class="quick-action-btn" onclick="showTab('sponsors')" data-action="sponsors">
+                <span class="action-icon">⭐</span>
+                <span class="action-label">Aprobar Sponsors</span>
+                {% if users_stats.pending_sponsors > 0 %}
+                <span class="action-badge">{{ users_stats.pending_sponsors }}</span>
+                {% endif %}
+            </button>
+            <button class="quick-action-btn" onclick="showTab('users')" data-action="users">
+                <span class="action-icon">👥</span>
+                <span class="action-label">Gestionar Usuarios</span>
+            </button>
+            <button class="quick-action-btn" onclick="showTab('raffles')" data-action="raffles">
+                <span class="action-icon">🎯</span>
+                <span class="action-label">Gestionar Rifas</span>
+            </button>
+            <button class="quick-action-btn" onclick="showTab('payments')" data-action="payments">
+                <span class="action-icon">💰</span>
+                <span class="action-label">Ver Pagos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Detailed Analytics -->
+    <div class="analytics-section">
+        <div class="analytics-grid">
+            <!-- Users Analytics -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <h3 class="analytics-title">📊 Análisis de Usuarios</h3>
+                </div>
+                <div class="analytics-body">
+                    <div class="analytics-item">
+                        <span class="analytics-label">Participantes</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value">{{ users_stats.participantes }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill primary" data-width="{% widthratio users_stats.participantes users_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Organizadores</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value">{{ users_stats.organizadores }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill info" data-width="{% widthratio users_stats.organizadores users_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Sponsors</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value">{{ users_stats.sponsors }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill warning" data-width="{% widthratio users_stats.sponsors users_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Administradores</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value">{{ users_stats.admins }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill danger" data-width="{% widthratio users_stats.admins users_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if users_stats.pending_sponsors > 0 %}
+                    <div class="analytics-alert">
+                        <span class="alert-icon">⚠️</span>
+                        <span class="alert-text">{{ users_stats.pending_sponsors }} sponsor(s) pendiente(s) de aprobación</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Raffles Analytics -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <h3 class="analytics-title">🎯 Análisis de Rifas</h3>
+                </div>
+                <div class="analytics-body">
+                    <div class="analytics-item">
+                        <span class="analytics-label">Activas</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value success-text">{{ raffles_stats.activas }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill success" data-width="{% widthratio raffles_stats.activas raffles_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Completadas</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value">{{ raffles_stats.completadas }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill info" data-width="{% widthratio raffles_stats.completadas raffles_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Canceladas</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value danger-text">{{ raffles_stats.canceladas }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill danger" data-width="{% widthratio raffles_stats.canceladas raffles_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payments Analytics -->
+            <div class="analytics-card">
+                <div class="analytics-header">
+                    <h3 class="analytics-title">💳 Análisis de Pagos</h3>
+                </div>
+                <div class="analytics-body">
+                    <div class="analytics-item">
+                        <span class="analytics-label">Completados</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value success-text">{{ payments_stats.completados }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill success" data-width="{% widthratio payments_stats.completados payments_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Pendientes</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value warning-text">{{ payments_stats.pendientes }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill warning" data-width="{% widthratio payments_stats.pendientes payments_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-item">
+                        <span class="analytics-label">Fallidos</span>
+                        <div class="analytics-value-container">
+                            <span class="analytics-value danger-text">{{ payments_stats.fallidos }}</span>
+                            <div class="analytics-bar">
+                                <div class="analytics-bar-fill danger" data-width="{% widthratio payments_stats.fallidos payments_stats.total 100 %}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Tables -->
+    <div class="activity-section">
+        <h2 class="section-title">
+            <span class="section-icon">📝</span>
+            Actividad Reciente
+        </h2>
+        <div class="activity-grid">
+            <div class="activity-card">
+                <div class="activity-card-header">
+                    <h3 class="activity-card-title">👥 Últimos Usuarios Registrados</h3>
+                    <button class="view-all-btn" onclick="showTab('users')">Ver todos →</button>
+                </div>
+                <div class="activity-card-body">
+                    {% if recent_users %}
+                    <div class="activity-list">
+                        {% for user in recent_users|slice:":5" %}
+                        <div class="activity-item">
+                            <div class="activity-item-icon">
+                                {% if user.rol == 'participante' %}👤
+                                {% elif user.rol == 'organizador' %}🎯
+                                {% elif user.rol == 'sponsor' %}⭐
+                                {% else %}🛡️{% endif %}
+                            </div>
+                            <div class="activity-item-content">
+                                <div class="activity-item-title">{{ user.nombre }}</div>
+                                <div class="activity-item-subtitle">{{ user.email }}</div>
+                            </div>
+                            <div class="activity-item-meta">
+                                <span class="activity-badge {{ user.rol }}">{{ user.get_rol_display }}</span>
+                                <span class="activity-time">{{ user.fecha_registro|date:"d/m H:i" }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="activity-empty">No hay usuarios recientes</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="activity-card">
+                <div class="activity-card-header">
+                    <h3 class="activity-card-title">🎯 Últimas Rifas Creadas</h3>
+                    <button class="view-all-btn" onclick="showTab('raffles')">Ver todas →</button>
+                </div>
+                <div class="activity-card-body">
+                    {% if recent_raffles %}
+                    <div class="activity-list">
+                        {% for raffle in recent_raffles|slice:":5" %}
+                        <div class="activity-item">
+                            <div class="activity-item-icon">🎟️</div>
+                            <div class="activity-item-content">
+                                <div class="activity-item-title">{{ raffle.titulo|truncatewords:6 }}</div>
+                                <div class="activity-item-subtitle">Por {{ raffle.organizador.nombre }}</div>
+                            </div>
+                            <div class="activity-item-meta">
+                                <span class="activity-badge {{ raffle.estado }}">
+                                    {% if raffle.estado == 'activa' %}✓ Activa
+                                    {% elif raffle.estado == 'completada' %}★ Completada
+                                    {% else %}✗ Cancelada{% endif %}
+                                </span>
+                                <span class="activity-time">{{ raffle.fecha_creacion|date:"d/m H:i" }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="activity-empty">No hay rifas recientes</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- USERS TAB -->
+<div id="users-tab" class="tab-content">
+    <div class="management-card">
+        <div class="management-header">
+            <div>
+                <h2 class="management-title">👥 Gestión de Usuarios</h2>
+                <p class="management-subtitle">Control completo de cuentas de usuario</p>
+            </div>
+            <div class="management-actions">
+                <input type="text" class="search-input" placeholder="Buscar usuarios..." id="userSearch">
+            </div>
+        </div>
+        <div class="management-body">
+            <div class="table-container">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Validado</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in all_users %}
+                        <tr id="user-row-{{ user.id }}">
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.nombre }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <select class="form-control" style="width: 150px;" onchange="changeRole('{{ user.id }}', this.value)">
+                                    <option value="participante" {% if user.rol == 'participante' %}selected{% endif %}>Participante</option>
+                                    <option value="organizador" {% if user.rol == 'organizador' %}selected{% endif %}>Organizador</option>
+                                    <option value="sponsor" {% if user.rol == 'sponsor' %}selected{% endif %}>Sponsor</option>
+                                    <option value="admin" {% if user.rol == 'admin' %}selected{% endif %}>Admin</option>
+                                </select>
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                <span class="badge badge-danger">Suspendido</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.cuenta_validada %}
+                                <span class="badge badge-success">✓</span>
+                                {% else %}
+                                <span class="badge badge-warning">✗</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.fecha_registro|date:"d/m/Y" }}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    {% if user.is_active %}
+                                    <button class="btn btn-sm btn-warning" onclick="suspendUser('{{ user.id }}')">Suspender</button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success" onclick="activateUser('{{ user.id }}')">Activar</button>
+                                    {% endif %}
+                                    {% if not user.is_superuser %}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ user.id }}')">Eliminar</button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RAFFLES TAB -->
+<div id="raffles-tab" class="tab-content">
+    <div class="management-card">
+        <div class="management-header">
+            <div>
+                <h2 class="management-title">🎯 Gestión de Rifas</h2>
+                <p class="management-subtitle">Control completo de rifas del sistema</p>
+            </div>
+            <div class="management-actions">
+                <select class="filter-select" id="raffleStatusFilter">
+                    <option value="">Todos los estados</option>
+                    <option value="activa">Activas</option>
+                    <option value="completada">Completadas</option>
+                    <option value="cancelada">Canceladas</option>
+                </select>
+            </div>
+        </div>
+        <div class="management-body">
+            <div class="table-container">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Organizador</th>
+                            <th>Precio Boleto</th>
+                            <th>Estado</th>
+                            <th>Fecha Sorteo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for raffle in all_raffles %}
+                        <tr id="raffle-row-{{ raffle.id }}">
+                            <td>{{ raffle.id }}</td>
+                            <td>{{ raffle.titulo|truncatewords:5 }}</td>
+                            <td>{{ raffle.organizador.nombre }}</td>
+                            <td>CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</td>
+                            <td>
+                                {% if raffle.estado == 'activa' %}
+                                <span class="badge badge-success">Activa</span>
+                                {% elif raffle.estado == 'completada' %}
+                                <span class="badge badge-info">Completada</span>
+                                {% else %}
+                                <span class="badge badge-danger">Cancelada</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ raffle.fecha_sorteo|date:"d/m/Y" }}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-sm btn-info">Ver</a>
+                                    {% if raffle.estado == 'activa' %}
+                                    <button class="btn btn-sm btn-warning" onclick="cancelRaffle('{{ raffle.id }}')">Cancelar</button>
+                                    <button class="btn btn-sm btn-success" onclick="forceWinner('{{ raffle.id }}')">Forzar Ganador</button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRaffle('{{ raffle.id }}')">Eliminar</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PAYMENTS TAB -->
+<div id="payments-tab" class="tab-content">
+    <div class="management-card">
+        <div class="management-header">
+            <div>
+                <h2 class="management-title">💰 Gestión de Pagos</h2>
+                <p class="management-subtitle">Monitoreo y control de transacciones</p>
+            </div>
+            <div class="management-actions">
+                <select class="filter-select" id="paymentStatusFilter">
+                    <option value="">Todos los estados</option>
+                    <option value="completado">Completados</option>
+                    <option value="pendiente">Pendientes</option>
+                    <option value="fallido">Fallidos</option>
+                    <option value="reembolsado">Reembolsados</option>
+                </select>
+            </div>
+        </div>
+        <div class="management-body">
+            <div class="table-container">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Monto</th>
+                            <th>Estado</th>
+                            <th>Método</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in recent_payments %}
+                        <tr id="payment-row-{{ payment.id }}">
+                            <td>{{ payment.id }}</td>
+                            <td>{{ payment.usuario.nombre }}</td>
+                            <td>CLP${{ payment.monto|floatformat:0|intcomma }}</td>
+                            <td>
+                                {% if payment.estado == 'completado' %}
+                                <span class="badge badge-success">Completado</span>
+                                {% elif payment.estado == 'pendiente' %}
+                                <span class="badge badge-warning">Pendiente</span>
+                                {% elif payment.estado == 'reembolsado' %}
+                                <span class="badge badge-info">Reembolsado</span>
+                                {% else %}
+                                <span class="badge badge-danger">Fallido</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ payment.metodo_pago }}</td>
+                            <td>{{ payment.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if payment.estado == 'completado' %}
+                                <button class="btn btn-sm btn-warning" onclick="refundPayment('{{ payment.id }}')">Reembolsar</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SPONSORS PENDING TAB -->
+<div id="sponsors-tab" class="tab-content">
+    <div class="management-card">
+        <div class="management-header">
+            <div>
+                <h2 class="management-title">⭐ Sponsors Pendientes de Aprobación</h2>
+                <p class="management-subtitle">Revisión y validación de cuentas sponsor</p>
+            </div>
+            {% if users_stats.pending_sponsors > 0 %}
+            <div class="management-alert">
+                <span class="alert-icon">⚠️</span>
+                <span class="alert-text">{{ users_stats.pending_sponsors }} solicitud(es) pendiente(s)</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="management-body">
+            {% if pending_sponsors %}
+            <div class="table-container">
+                <table class="management-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sponsor in pending_sponsors %}
+                        <tr id="sponsor-row-{{ sponsor.id }}">
+                            <td>{{ sponsor.id }}</td>
+                            <td>{{ sponsor.nombre }}</td>
+                            <td>{{ sponsor.email }}</td>
+                            <td>{{ sponsor.fecha_registro|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn btn-sm btn-success" onclick="approveSponsor('{{ sponsor.id }}')">✓ Aprobar</button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectSponsor('{{ sponsor.id }}')">✗ Rechazar</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">No hay sponsors pendientes de aprobación</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* ========== SUPERUSER HEADER ========== */
+.superuser-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.superuser-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.superuser-icon {
+    font-size: 3rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.superuser-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.header-stats-mini {
+    display: flex;
+    gap: 2rem;
+}
+
+.mini-stat {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mini-stat.alert-stat {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: rgba(255, 107, 107, 0.4);
+    animation: alertPulse 2s ease-in-out infinite;
+}
+
+@keyframes alertPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+}
+
+.mini-stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.mini-stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.5rem;
+}
+
+/* ========== TABS NAVIGATION ========== */
+.superuser-tabs {
+    margin-bottom: 2rem;
+}
+
+.tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.tab-btn.tab-alert {
+    animation: tabAlert 2s ease-in-out infinite;
+}
+
+@keyframes tabAlert {
+    0%, 100% { color: rgba(255, 255, 255, 0.6); }
+    50% { color: #ff6b6b; }
+}
+
+.tab-icon {
+    font-size: 1.3rem;
+}
+
+.tab-label {
+    white-space: nowrap;
+}
+
+.tab-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #ff6b6b;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== STATISTICS CARDS ========== */
+.superuser-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.superuser-stat-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 1.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.superuser-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.superuser-stat-card.primary::before { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+.superuser-stat-card.success::before { background: linear-gradient(90deg, #51cf66 0%, #37b24d 100%); }
+.superuser-stat-card.info::before { background: linear-gradient(90deg, #4dabf7 0%, #339af0 100%); }
+.superuser-stat-card.warning::before { background: linear-gradient(90deg, #ffd43b 0%, #fab005 100%); }
+
+.superuser-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.stat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+
+.stat-card-icon {
+    font-size: 2rem;
+}
+
+.stat-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+
+.stat-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-item {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.success-text { color: #51cf66; }
+.danger-text { color: #ff6b6b; }
+.warning-text { color: #ffd43b; }
+.info-text { color: #4dabf7; }
+
+/* ========== QUICK ACTIONS ========== */
+.quick-actions-section {
+    margin-bottom: 2.5rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.section-icon {
+    font-size: 2rem;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1.8rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: #667eea;
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.action-icon {
+    font-size: 2.5rem;
+}
+
+.action-label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.action-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: #ff6b6b;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ========== ANALYTICS SECTION ========== */
+.analytics-section {
+    margin-bottom: 2.5rem;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.analytics-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analytics-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-header {
+    padding: 1.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.analytics-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+}
+
+.analytics-body {
+    padding: 1.5rem;
+}
+
+.analytics-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.analytics-item:last-child {
+    margin-bottom: 0;
+}
+
+.analytics-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.analytics-value-container {
+    flex: 1;
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.analytics-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    min-width: 50px;
+    text-align: right;
+}
+
+.analytics-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.analytics-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analytics-bar-fill.primary { background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); }
+.analytics-bar-fill.success { background: linear-gradient(90deg, #51cf66 0%, #37b24d 100%); }
+.analytics-bar-fill.info { background: linear-gradient(90deg, #4dabf7 0%, #339af0 100%); }
+.analytics-bar-fill.warning { background: linear-gradient(90deg, #ffd43b 0%, #fab005 100%); }
+.analytics-bar-fill.danger { background: linear-gradient(90deg, #ff6b6b 0%, #fa5252 100%); }
+
+.analytics-alert {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+}
+
+.alert-text {
+    font-size: 0.9rem;
+    color: #ff6b6b;
+    font-weight: 600;
+}
+
+/* ========== ACTIVITY SECTION ========== */
+.activity-section {
+    margin-bottom: 2.5rem;
+}
+
+.activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 1.5rem;
+}
+
+.activity-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.activity-card-header {
+    padding: 1.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.view-all-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.4);
+    border-radius: 8px;
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-all-btn:hover {
+    background: rgba(102, 126, 234, 0.3);
+    transform: translateX(3px);
+}
+
+.activity-card-body {
+    padding: 1.5rem;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.activity-item-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.activity-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-item-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-item-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.activity-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.activity-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.activity-badge.participante { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+.activity-badge.organizador { background: rgba(77, 171, 247, 0.2); color: #4dabf7; }
+.activity-badge.sponsor { background: rgba(255, 212, 59, 0.2); color: #ffd43b; }
+.activity-badge.admin { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+.activity-badge.activa { background: rgba(81, 207, 102, 0.2); color: #51cf66; }
+.activity-badge.completada { background: rgba(77, 171, 247, 0.2); color: #4dabf7; }
+.activity-badge.cancelada { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+
+.activity-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.activity-empty {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+}
+
+/* ========== MANAGEMENT CARDS ========== */
+.management-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.management-header {
+    padding: 2rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.management-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+}
+
+.management-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.management-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-input, .filter-select {
+    padding: 0.8rem 1.2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    min-width: 250px;
+    transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.search-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.filter-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+.management-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+}
+
+.management-body {
+    padding: 2rem;
+}
+
+.table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+.management-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.management-table thead {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.management-table th {
+    padding: 1rem;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.management-table td {
+    padding: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.management-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.management-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.form-control {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.form-control option {
+    background: #1a1a2e;
+    color: white;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+    .superuser-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-stats-mini {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .superuser-title {
+        font-size: 2rem;
+    }
+    
+    .tabs-nav {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        justify-content: flex-start;
+    }
+    
+    .superuser-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .management-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .management-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .search-input, .filter-select {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// User Management Functions
+function changeRole(userId, newRole) {
+    if (!confirm('¿Cambiar el rol de este usuario?')) return;
+    
+    const formData = new FormData();
+    formData.append('role', newRole);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/change-role/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function suspendUser(userId) {
+    if (!confirm('¿Suspender este usuario?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/suspend-user/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function activateUser(userId) {
+    if (!confirm('¿Activar este usuario?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/activate-user/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function deleteUser(userId) {
+    if (!confirm('¿ELIMINAR PERMANENTEMENTE este usuario? Esta acción no se puede deshacer.')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/delete-user/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            document.getElementById('user-row-' + userId).remove();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// Sponsor Management Functions
+function approveSponsor(userId) {
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/approve-sponsor/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            document.getElementById('sponsor-row-' + userId).remove();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function rejectSponsor(userId) {
+    if (!confirm('¿Rechazar y eliminar este sponsor?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/reject-sponsor/${userId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            document.getElementById('sponsor-row-' + userId).remove();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// Raffle Management Functions
+function cancelRaffle(raffleId) {
+    if (!confirm('¿Cancelar esta rifa? Se afectarán todos los boletos vendidos.')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/cancel-raffle/${raffleId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function forceWinner(raffleId) {
+    if (!confirm('¿Seleccionar un ganador aleatorio para esta rifa?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/force-winner/${raffleId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function deleteRaffle(raffleId) {
+    if (!confirm('¿ELIMINAR PERMANENTEMENTE esta rifa? Esta acción no se puede deshacer.')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/delete-raffle/${raffleId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            document.getElementById('raffle-row-' + raffleId).remove();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// Payment Management Functions
+function refundPayment(paymentId) {
+    if (!confirm('¿Procesar reembolso para este pago?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/admin-panel/superuser/refund-payment/${paymentId}/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+// Initialize analytics bars on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.analytics-bar-fill').forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        if (width) {
+            bar.style.width = width + '%';
+        }
+    });
+});
+</script>
+
+{% endblock %}

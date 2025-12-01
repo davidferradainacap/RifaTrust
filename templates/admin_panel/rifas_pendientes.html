@@ -1,0 +1,465 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Rifas Pendientes de Aprobación{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Rifas Pendientes</li>
+{% endblock %}
+
+{% block page_title %}🔍 Rifas Pendientes de Aprobación{% endblock %}
+{% block page_subtitle %}Revisa y aprueba las solicitudes de creación de rifas{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'admin_panel:dashboard' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Volver al Panel
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if messages %}
+    <div class="row mb-3">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if total_pendientes > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning border-warning shadow-sm">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-2 me-3"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">📊 Total Pendientes: <span class="badge bg-warning text-dark">{{ total_pendientes }}</span></h5>
+                        <p class="mb-0">Estas rifas están esperando tu revisión para poder ser publicadas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rifas_pendientes %}
+    <div class="row">
+        {% for rifa in rifas_pendientes %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                {% if rifa.imagen %}
+                <img src="{{ rifa.imagen.url }}" class="card-img-top" alt="{{ rifa.titulo }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ rifa.titulo }}</h5>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <strong>Organizador:</strong> {{ rifa.organizador.nombre }} {{ rifa.organizador.apellido }}<br>
+                            <strong>Solicitud:</strong> {{ rifa.fecha_solicitud|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-primary">ID: {{ rifa.id }}</span>
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>🎁 Premio:</strong> {{ rifa.premio_principal }}</p>
+                        <p class="mb-1"><strong>💰 Valor:</strong> ${{ rifa.valor_premio|floatformat:0 }}</p>
+                        <p class="mb-1"><strong>🎫 Precio boleto:</strong> ${{ rifa.precio_boleto|floatformat:0 }}</p>
+                        <p class="mb-1"><strong>📊 Total boletos:</strong> {{ rifa.total_boletos }}</p>
+                        <p class="mb-1"><strong>📅 Fecha sorteo:</strong> {{ rifa.fecha_sorteo|date:"d/m/Y" }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="mb-2"><strong>📄 Descripción:</strong></p>
+                        <p class="text-muted small">{{ rifa.descripcion|truncatewords:30 }}</p>
+                    </div>
+                    
+                    {% if rifa.documento_legal %}
+                    <div class="mb-3">
+                        <a href="{{ rifa.documento_legal.url }}" target="_blank" class="btn btn-sm btn-outline-info w-100">
+                            📄 Ver Documento Legal
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger small mb-3">
+                        ⚠️ Sin documento legal
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer bg-white border-top">
+                    <button type="button" class="btn btn-success btn-sm w-100 mb-2" onclick="showApproveModal({{ rifa.id }}, '{{ rifa.titulo|escapejs }}')">
+                        ✅ Aprobar
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="showRejectModal({{ rifa.id }}, '{{ rifa.titulo|escapejs }}')">
+                        ❌ Rechazar
+                    </button>
+                    <a href="{% url 'raffles:detail' rifa.id %}" class="btn btn-outline-primary btn-sm w-100 mt-2" target="_blank">
+                        👁️ Ver Detalles Completos
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>✅ ¡Todo al día!</h4>
+                <p class="mb-0">No hay rifas pendientes de revisión en este momento.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Aprobar -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">✅ Aprobar Rifa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas aprobar la rifa "<strong id="approveRifaTitulo"></strong>"?</p>
+                <p class="text-muted small">El organizador recibirá una notificación y podrá activar la rifa.</p>
+                
+                <div class="mb-3">
+                    <label for="approveComentarios" class="form-label">Comentarios (opcional):</label>
+                    <textarea class="form-control" id="approveComentarios" rows="3" placeholder="Agrega comentarios sobre la aprobación..."></textarea>
+                </div>
+                
+                <input type="hidden" id="approveRifaId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="submitApprove()">
+                    ✅ Confirmar Aprobación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rechazar -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">❌ Rechazar Rifa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas rechazar la rifa "<strong id="rejectRifaTitulo"></strong>"?</p>
+                <p class="text-danger small">⚠️ Esta acción notificará al organizador del rechazo.</p>
+                
+                <div class="mb-3">
+                    <label for="rejectMotivo" class="form-label"><strong>Motivo del rechazo:</strong> <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="rejectMotivo" rows="3" placeholder="Explica el motivo del rechazo..." required></textarea>
+                    <small class="text-muted">El organizador verá este motivo en la notificación.</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="rejectComentarios" class="form-label">Comentarios adicionales (opcional):</label>
+                    <textarea class="form-control" id="rejectComentarios" rows="2" placeholder="Comentarios internos adicionales..."></textarea>
+                </div>
+                
+                <input type="hidden" id="rejectRifaId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="submitReject()">
+                    ❌ Confirmar Rechazo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showApproveModal(rifaId, rifaTitulo) {
+    document.getElementById('approveRifaId').value = rifaId;
+    document.getElementById('approveRifaTitulo').textContent = rifaTitulo;
+    document.getElementById('approveComentarios').value = '';
+    new bootstrap.Modal(document.getElementById('approveModal')).show();
+}
+
+function showRejectModal(rifaId, rifaTitulo) {
+    document.getElementById('rejectRifaId').value = rifaId;
+    document.getElementById('rejectRifaTitulo').textContent = rifaTitulo;
+    document.getElementById('rejectMotivo').value = '';
+    document.getElementById('rejectComentarios').value = '';
+    new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+
+function submitApprove() {
+    const rifaId = document.getElementById('approveRifaId').value;
+    const comentarios = document.getElementById('approveComentarios').value;
+    
+    const formData = new FormData();
+    formData.append('accion', 'aprobar');
+    formData.append('comentarios', comentarios);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch(`/admin-panel/rifas-pendientes/${rifaId}/revisar/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la solicitud');
+        console.error('Error:', error);
+    });
+}
+
+function submitReject() {
+    const rifaId = document.getElementById('rejectRifaId').value;
+    const motivo = document.getElementById('rejectMotivo').value;
+    const comentarios = document.getElementById('rejectComentarios').value;
+    
+    if (!motivo.trim()) {
+        alert('Debes proporcionar un motivo del rechazo');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('accion', 'rechazar');
+    formData.append('motivo_rechazo', motivo);
+    formData.append('comentarios', comentarios);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch(`/admin-panel/rifas-pendientes/${rifaId}/revisar/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la solicitud');
+        console.error('Error:', error);
+    });
+}
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    border-bottom: 3px solid #ffc107;
+}
+
+/* Responsive Design */
+
+/* Tablets (max-width: 992px) */
+@media (max-width: 992px) {
+    .col-md-6 {
+        width: 100% !important;
+    }
+    
+    .fs-2 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Móviles (max-width: 768px) */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    
+    /* Alert de pendientes */
+    .alert .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .alert .fs-2 {
+        font-size: 2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .alert h5 {
+        font-size: 1rem !important;
+    }
+    
+    /* Cards */
+    .card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .card-title {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Badges */
+    .badge {
+        font-size: 0.8rem !important;
+        padding: 0.3rem 0.6rem !important;
+    }
+    
+    /* Botones */
+    .btn {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .btn-group {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+    
+    .btn-group .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Info items */
+    .d-flex.justify-content-between {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.25rem !important;
+    }
+    
+    .d-flex.justify-content-between small,
+    .d-flex.justify-content-between span {
+        width: 100% !important;
+    }
+    
+    /* Progress bar */
+    .progress {
+        height: 8px !important;
+    }
+}
+
+/* Móviles pequeños (max-width: 576px) */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    /* Reducir espaciado */
+    .alert {
+        padding: 1rem !important;
+    }
+    
+    .alert .fs-2 {
+        font-size: 1.75rem !important;
+    }
+    
+    .alert h5 {
+        font-size: 0.95rem !important;
+    }
+    
+    .alert p {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Cards más compactas */
+    .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .card-title {
+        font-size: 1rem !important;
+    }
+    
+    .card-text {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Imagen de card */
+    .card-img-top {
+        height: 180px !important;
+        object-fit: cover !important;
+    }
+    
+    /* Botones más pequeños */
+    .btn {
+        padding: 0.45rem 0.65rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Modales */
+    .modal-dialog {
+        margin: 0.5rem !important;
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem !important;
+    }
+    
+    .modal-header {
+        padding: 1rem !important;
+    }
+    
+    .modal-body {
+        padding: 1rem !important;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem !important;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* Prevenir overflow horizontal */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

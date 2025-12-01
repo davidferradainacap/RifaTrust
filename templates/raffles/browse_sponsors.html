@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buscar Sponsors{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+    
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'raffles:organizer_dashboard' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem; font-size: 0.95rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver al dashboard
+        </a>
+        
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+            🤝 Buscar Sponsors
+        </h1>
+        <p style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">
+            Encuentra sponsors para tus rifas y envíales invitaciones personalizadas
+        </p>
+    </div>
+
+    <!-- Mis Rifas Activas -->
+    {% if not mis_rifas_activas %}
+    <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 14px; padding: 2rem; margin-bottom: 2rem; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 1rem;">⚠️</div>
+        <h3 style="font-size: 1.2rem; font-weight: 600; color: #fbbf24; margin-bottom: 0.75rem;">No tienes rifas activas</h3>
+        <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 1.5rem;">
+            Necesitas tener al menos una rifa activa para poder invitar sponsors
+        </p>
+        <a href="{% url 'raffles:create' %}" class="btn btn-primary" style="padding: 0.75rem 2rem; text-decoration: none;">
+            Crear Rifa
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Lista de Sponsors -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">
+            👔 Sponsors Disponibles ({{ sponsors_disponibles.count }})
+        </h2>
+
+        {% if sponsors_disponibles %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for sponsor in sponsors_disponibles %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.5rem;">
+                <!-- Avatar/Icono del Sponsor -->
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2rem;">
+                    👔
+                </div>
+
+                <!-- Información del Sponsor -->
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">
+                        {{ sponsor.nombre }}
+                    </h3>
+                    <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem;">
+                        {{ sponsor.email }}
+                    </p>
+                    <p style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5);">
+                        Miembro desde {{ sponsor.fecha_registro|date:"m/Y" }}
+                    </p>
+                </div>
+
+                <!-- Estadísticas -->
+                <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: grid; gap: 0.5rem; font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: rgba(255, 255, 255, 0.6);">Solicitudes enviadas:</span>
+                            <span style="color: white; font-weight: 600;">{{ sponsor.solicitudes_patrocinio.count }}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: rgba(255, 255, 255, 0.6);">Aceptadas:</span>
+                            <span style="color: #22c55e; font-weight: 600;">{{ sponsor.solicitudes_patrocinio.filter.count }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Acción -->
+                {% if mis_rifas_activas %}
+                <a href="{% url 'raffles:send_sponsor_invitation' sponsor.id %}" 
+                   class="btn btn-primary" 
+                   style="width: 100%; text-align: center; padding: 0.75rem; text-decoration: none; font-size: 0.9rem;">
+                    📧 Enviar Invitación
+                </a>
+                {% else %}
+                <button disabled 
+                        class="btn btn-secondary" 
+                        style="width: 100%; text-align: center; padding: 0.75rem; font-size: 0.9rem; opacity: 0.5; cursor: not-allowed;">
+                    Sin rifas activas
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6);">No hay sponsors disponibles en este momento</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

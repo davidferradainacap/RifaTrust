@@ -1,0 +1,878 @@
+{% extends "admin_panel/base_admin.html" %}
+{% load humanize %}
+
+{% block title %}Gestión de Pagos - Panel Administrativo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        height: 100%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    .icon-blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .icon-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .icon-yellow { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .icon-red { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .icon-purple { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .icon-orange { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .icon-cyan { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+    .icon-teal { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        background: #e8f4f8;
+        border-radius: 20px;
+        margin: 4px;
+        font-size: 0.875rem;
+        color: #0066cc;
+    }
+    .filter-chip .btn-close {
+        font-size: 0.65rem;
+        margin-left: 8px;
+        padding: 0;
+    }
+    .payment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+    }
+    .avatar-blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .avatar-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .avatar-red { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .avatar-purple { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .avatar-orange { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+    }
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.8125rem;
+    }
+    .top-cliente-item {
+        border-left: 3px solid #0066cc;
+        background: #f8f9fa;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    .top-cliente-item:hover {
+        background: #e9ecef;
+        transform: translateX(4px);
+    }
+    .filters-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border: none;
+        border-radius: 12px;
+    }
+    .method-chart-item {
+        padding: 10px;
+        border-radius: 8px;
+        background: white;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-credit-card-2-front"></i> Gestión de Pagos</h2>
+            <p class="text-muted mb-0">Administración completa de transacciones y reembolsos</p>
+        </div>
+        <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-blue text-white">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Total Pagos</p>
+                            <h4 class="mb-0">{{ total_pagos }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-green text-white">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Completados</p>
+                            <h4 class="mb-0">{{ pagos_completados }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-yellow text-white">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Pendientes</p>
+                            <h4 class="mb-0">{{ pagos_pendientes }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-red text-white">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Fallidos</p>
+                            <h4 class="mb-0">{{ pagos_fallidos }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-purple text-white">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Procesando</p>
+                            <h4 class="mb-0">{{ pagos_procesando }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-orange text-white">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Reembolsados</p>
+                            <h4 class="mb-0">{{ pagos_reembolsados }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-cyan text-white">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Total Ingresos</p>
+                            <h4 class="mb-0">${{ total_ingresos|floatformat:0|intcomma }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon icon-teal text-white">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <p class="text-muted mb-1 small">Ingresos Hoy</p>
+                            <h4 class="mb-0">${{ ingresos_hoy|floatformat:0|intcomma }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card filters-card mb-4">
+        <div class="card-body">
+            <form method="get" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label"><i class="bi bi-search"></i> Buscar</label>
+                        <input type="text" name="search" class="form-control" placeholder="ID, usuario, email..." value="{{ request.GET.search }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-funnel"></i> Estado</label>
+                        <select name="estado" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="completado" {% if request.GET.estado == 'completado' %}selected{% endif %}>Completado</option>
+                            <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="procesando" {% if request.GET.estado == 'procesando' %}selected{% endif %}>Procesando</option>
+                            <option value="fallido" {% if request.GET.estado == 'fallido' %}selected{% endif %}>Fallido</option>
+                            <option value="reembolsado" {% if request.GET.estado == 'reembolsado' %}selected{% endif %}>Reembolsado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-credit-card"></i> Método</label>
+                        <select name="metodo_pago" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="webpay" {% if request.GET.metodo_pago == 'webpay' %}selected{% endif %}>Webpay</option>
+                            <option value="mercadopago" {% if request.GET.metodo_pago == 'mercadopago' %}selected{% endif %}>MercadoPago</option>
+                            <option value="paypal" {% if request.GET.metodo_pago == 'paypal' %}selected{% endif %}>PayPal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-calendar-range"></i> Desde</label>
+                        <input type="date" name="fecha_desde" class="form-control" value="{{ request.GET.fecha_desde }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-calendar-range"></i> Hasta</label>
+                        <input type="date" name="fecha_hasta" class="form-control" value="{{ request.GET.fecha_hasta }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-cash"></i> Monto Min</label>
+                        <input type="number" name="monto_min" class="form-control" placeholder="0" value="{{ request.GET.monto_min }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-cash"></i> Monto Max</label>
+                        <input type="number" name="monto_max" class="form-control" placeholder="999999" value="{{ request.GET.monto_max }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label"><i class="bi bi-sort-down"></i> Ordenar</label>
+                        <select name="sort" class="form-select">
+                            <option value="-fecha_creacion" {% if request.GET.sort == '-fecha_creacion' %}selected{% endif %}>Más Reciente</option>
+                            <option value="fecha_creacion" {% if request.GET.sort == 'fecha_creacion' %}selected{% endif %}>Más Antiguo</option>
+                            <option value="-monto" {% if request.GET.sort == '-monto' %}selected{% endif %}>Monto: Mayor</option>
+                            <option value="monto" {% if request.GET.sort == 'monto' %}selected{% endif %}>Monto: Menor</option>
+                            <option value="usuario__nombre" {% if request.GET.sort == 'usuario__nombre' %}selected{% endif %}>Usuario A-Z</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Aplicar Filtros
+                        </button>
+                        <a href="{% url 'admin_panel:payments_management' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if request.GET.search or request.GET.estado or request.GET.metodo_pago or request.GET.fecha_desde or request.GET.fecha_hasta or request.GET.monto_min or request.GET.monto_max %}
+    <div class="mb-3">
+        <span class="text-muted me-2">Filtros activos:</span>
+        {% if request.GET.search %}
+            <span class="filter-chip">
+                <i class="bi bi-search"></i> {{ request.GET.search }}
+                <button type="button" class="btn-close" onclick="removeFilter('search')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.estado %}
+            <span class="filter-chip">
+                <i class="bi bi-funnel"></i> Estado: {{ request.GET.estado }}
+                <button type="button" class="btn-close" onclick="removeFilter('estado')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.metodo_pago %}
+            <span class="filter-chip">
+                <i class="bi bi-credit-card"></i> Método: {{ request.GET.metodo_pago }}
+                <button type="button" class="btn-close" onclick="removeFilter('metodo_pago')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.fecha_desde %}
+            <span class="filter-chip">
+                <i class="bi bi-calendar"></i> Desde: {{ request.GET.fecha_desde }}
+                <button type="button" class="btn-close" onclick="removeFilter('fecha_desde')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.fecha_hasta %}
+            <span class="filter-chip">
+                <i class="bi bi-calendar"></i> Hasta: {{ request.GET.fecha_hasta }}
+                <button type="button" class="btn-close" onclick="removeFilter('fecha_hasta')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.monto_min %}
+            <span class="filter-chip">
+                <i class="bi bi-cash"></i> Min: ${{ request.GET.monto_min }}
+                <button type="button" class="btn-close" onclick="removeFilter('monto_min')"></button>
+            </span>
+        {% endif %}
+        {% if request.GET.monto_max %}
+            <span class="filter-chip">
+                <i class="bi bi-cash"></i> Max: ${{ request.GET.monto_max }}
+                <button type="button" class="btn-close" onclick="removeFilter('monto_max')"></button>
+            </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="bi bi-table"></i> Lista de Pagos ({{ pagos.paginator.count }} total)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Monto</th>
+                            <th>Método</th>
+                            <th>Estado</th>
+                            <th>Transaction ID</th>
+                            <th>Fecha</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pago in pagos %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="payment-avatar avatar-{% cycle 'blue' 'green' 'red' 'purple' 'orange' %}">
+                                        {{ pago.usuario.nombre|first|upper }}
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="fw-medium">{{ pago.usuario.nombre }}</div>
+                                        <small class="text-muted">{{ pago.usuario.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold">${{ pago.monto|floatformat:0|intcomma }}</span>
+                            </td>
+                            <td>
+                                {% if pago.metodo_pago == 'webpay' %}
+                                    <span class="badge bg-primary"><i class="bi bi-credit-card"></i> Webpay</span>
+                                {% elif pago.metodo_pago == 'mercadopago' %}
+                                    <span class="badge bg-info"><i class="bi bi-wallet2"></i> MercadoPago</span>
+                                {% elif pago.metodo_pago == 'paypal' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-paypal"></i> PayPal</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ pago.metodo_pago }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if pago.estado == 'completado' %}
+                                    <span class="badge bg-success badge-status"><i class="bi bi-check-circle"></i> Completado</span>
+                                {% elif pago.estado == 'pendiente' %}
+                                    <span class="badge bg-warning text-dark badge-status"><i class="bi bi-clock"></i> Pendiente</span>
+                                {% elif pago.estado == 'procesando' %}
+                                    <span class="badge bg-info badge-status"><i class="bi bi-arrow-repeat"></i> Procesando</span>
+                                {% elif pago.estado == 'fallido' %}
+                                    <span class="badge bg-danger badge-status"><i class="bi bi-x-circle"></i> Fallido</span>
+                                {% elif pago.estado == 'reembolsado' %}
+                                    <span class="badge bg-secondary badge-status"><i class="bi bi-arrow-counterclockwise"></i> Reembolsado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code class="small">{{ pago.transaction_id|truncatechars:15 }}</code>
+                            </td>
+                            <td>
+                                <div>{{ pago.fecha_creacion|date:"d/m/Y" }}</div>
+                                <small class="text-muted">{{ pago.fecha_creacion|date:"H:i" }}</small>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary" onclick="verDetalle({{ pago.id }})" title="Ver Detalle">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                {% if pago.estado == 'completado' %}
+                                    <button class="btn btn-sm btn-outline-danger" onclick="mostrarModalReembolso({{ pago.id }}, '{{ pago.usuario.nombre }}', {{ pago.monto }})" title="Reembolsar">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                No se encontraron pagos con los filtros aplicados
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if pagos.has_other_pages %}
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if pagos.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagos.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in pagos.paginator.page_range %}
+                {% if pagos.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > pagos.number|add:'-3' and num < pagos.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagos.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagos.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ pagos.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top 10 Clientes</h5>
+                </div>
+                <div class="card-body">
+                    {% for cliente in top_clientes %}
+                    <div class="top-cliente-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="payment-avatar avatar-{% cycle 'blue' 'green' 'red' 'purple' 'orange' %} me-3" style="width: 35px; height: 35px; font-size: 14px;">
+                                    {{ cliente.usuario__nombre|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-medium">{{ cliente.usuario__nombre }}</div>
+                                    <small class="text-muted">{{ cliente.total_compras }} compra{{ cliente.total_compras|pluralize }}</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-primary">${{ cliente.total_gastado|floatformat:0|intcomma }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-4">No hay datos disponibles</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Pagos por Método</h5>
+                </div>
+                <div class="card-body">
+                    {% for metodo in pagos_por_metodo %}
+                    <div class="method-chart-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-medium">
+                                {% if metodo.metodo_pago == 'webpay' %}
+                                    <i class="bi bi-credit-card text-primary"></i> Webpay
+                                {% elif metodo.metodo_pago == 'mercadopago' %}
+                                    <i class="bi bi-wallet2 text-info"></i> MercadoPago
+                                {% elif metodo.metodo_pago == 'paypal' %}
+                                    <i class="bi bi-paypal text-warning"></i> PayPal
+                                {% else %}
+                                    {{ metodo.metodo_pago }}
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-light text-dark">{{ metodo.total }} pago{{ metodo.total|pluralize }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if metodo.metodo_pago == 'webpay' %}bg-primary{% elif metodo.metodo_pago == 'mercadopago' %}bg-info{% elif metodo.metodo_pago == 'paypal' %}bg-warning{% else %}bg-secondary{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {% widthratio metodo.total_monto total_ingresos 100 %}%"
+                                 aria-valuenow="{{ metodo.total_monto }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ total_ingresos }}">
+                            </div>
+                        </div>
+                        <small class="text-muted">${{ metodo.total_monto|floatformat:0|intcomma }}</small>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-4">No hay datos disponibles</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detalleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-info-circle"></i> Detalle del Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reembolsoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-arrow-counterclockwise"></i> Procesar Reembolso</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Esta acción reembolsará el pago y no se puede deshacer.
+                </div>
+                <input type="hidden" id="reembolso_payment_id">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Usuario</label>
+                    <p id="reembolso_usuario" class="form-control-plaintext bg-light p-2 rounded"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Monto a Reembolsar</label>
+                    <p id="reembolso_monto" class="form-control-plaintext bg-light p-2 rounded text-danger fw-bold"></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo del Reembolso <span class="text-danger">*</span></label>
+                    <select class="form-select" id="reembolso_motivo" required>
+                        <option value="">Seleccione un motivo...</option>
+                        <option value="duplicado">Pago Duplicado</option>
+                        <option value="cancelacion">Cancelación de Rifa</option>
+                        <option value="error_sistema">Error del Sistema</option>
+                        <option value="solicitud_usuario">Solicitud del Usuario</option>
+                        <option value="fraude">Posible Fraude</option>
+                        <option value="otro">Otro Motivo</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Explicación Detallada <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reembolso_explicacion" rows="4" placeholder="Describa detalladamente el motivo del reembolso (mínimo 10 caracteres)" required></textarea>
+                    <small class="text-muted">Mínimo 10 caracteres. Esta información quedará registrada en el historial.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="procesarReembolso()">
+                    <i class="bi bi-arrow-counterclockwise"></i> Procesar Reembolso
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function removeFilter(filterName) {
+    const url = new URL(window.location);
+    url.searchParams.delete(filterName);
+    window.location.href = url.toString();
+}
+
+function verDetalle(paymentId) {
+    const modal = new bootstrap.Modal(document.getElementById('detalleModal'));
+    modal.show();
+    
+    fetch(`/admin-panel/payments/${paymentId}/detail/`)
+        .then(response => response.json())
+        .then(data => {
+            let html = `
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>ID de Pago:</strong><br>
+                        <span class="text-muted">${data.id}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Transaction ID:</strong><br>
+                        <code>${data.transaction_id}</code>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Usuario:</strong><br>
+                        <span class="text-muted">${data.usuario}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Email:</strong><br>
+                        <span class="text-muted">${data.email}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Monto:</strong><br>
+                        <span class="fs-5 fw-bold text-primary">$${data.monto}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Método de Pago:</strong><br>
+                        <span class="badge bg-primary">${data.metodo_pago}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Estado:</strong><br>
+                        <span class="badge bg-${data.estado === 'completado' ? 'success' : data.estado === 'pendiente' ? 'warning' : data.estado === 'fallido' ? 'danger' : 'info'}">${data.estado}</span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Fecha:</strong><br>
+                        <span class="text-muted">${data.fecha}</span>
+                    </div>
+                    ${data.descripcion ? `
+                    <div class="col-12 mb-3">
+                        <strong>Descripción:</strong><br>
+                        <span class="text-muted">${data.descripcion}</span>
+                    </div>
+                    ` : ''}
+                    ${data.notas_admin ? `
+                    <div class="col-12 mb-3">
+                        <strong>Notas Admin:</strong><br>
+                        <div class="alert alert-info mb-0">${data.notas_admin}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('detalleContent').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('detalleContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Error al cargar los detalles
+                </div>
+            `;
+        });
+}
+
+function mostrarModalReembolso(paymentId, usuario, monto) {
+    document.getElementById('reembolso_payment_id').value = paymentId;
+    document.getElementById('reembolso_usuario').textContent = usuario;
+    document.getElementById('reembolso_monto').textContent = '$' + monto.toLocaleString('es-CL');
+    document.getElementById('reembolso_motivo').value = '';
+    document.getElementById('reembolso_explicacion').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('reembolsoModal'));
+    modal.show();
+}
+
+function procesarReembolso() {
+    const paymentId = document.getElementById('reembolso_payment_id').value;
+    const motivo = document.getElementById('reembolso_motivo').value;
+    const explicacion = document.getElementById('reembolso_explicacion').value;
+    
+    if (!motivo) {
+        alert('Debe seleccionar un motivo');
+        return;
+    }
+    
+    if (!explicacion || explicacion.length < 10) {
+        alert('La explicación debe tener al menos 10 caracteres');
+        return;
+    }
+    
+    if (!confirm('¿Está seguro de procesar este reembolso?')) {
+        return;
+    }
+    
+    fetch(`/admin-panel/payments/${paymentId}/refund/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `motivo=${encodeURIComponent(motivo)}&explicacion=${encodeURIComponent(explicacion)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Reembolso procesado exitosamente');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar el reembolso');
+        console.error(error);
+    });
+}
+</script>
+
+<style>
+/* Responsive Design */
+
+/* Tablets (max-width: 992px) */
+@media (max-width: 992px) {
+    .col-md-3, .col-md-4, .col-md-6 {
+        width: 50% !important;
+    }
+}
+
+/* Móviles (max-width: 768px) */
+@media (max-width: 768px) {
+    .col-md-3, .col-md-4, .col-md-6 {
+        width: 100% !important;
+    }
+    
+    /* Stats cards */
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .card-body h3 {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Tabla responsive */
+    .table-responsive {
+        font-size: 0.85rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem !important;
+    }
+    
+    /* Ocultar columnas menos importantes */
+    .table td:nth-child(3),
+    .table th:nth-child(3),
+    .table td:nth-child(4),
+    .table th:nth-child(4) {
+        display: none !important;
+    }
+    
+    /* Badges */
+    .badge {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    /* Botones */
+    .btn {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .btn-sm {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.8rem !important;
+    }
+    
+    .btn-group {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+    
+    .btn-group .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* Móviles pequeños (max-width: 576px) */
+@media (max-width: 576px) {
+    .card-body h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Ocultar más columnas */
+    .table td:nth-child(2),
+    .table th:nth-child(2),
+    .table td:nth-child(5),
+    .table th:nth-child(5) {
+        display: none !important;
+    }
+    
+    .btn-sm {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Prevenir overflow horizontal */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container-fluid {
+        overflow-x: hidden !important;
+    }
+    
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

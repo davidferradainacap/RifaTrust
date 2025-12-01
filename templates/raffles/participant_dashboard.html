@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard Participante{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem 1rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Mi Dashboard</h1>
+            <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.6);">Bienvenido, {{ user.nombre }}</p>
+        </div>
+        <a href="{% url 'raffles:list' %}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">Explorar Rifas</a>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🎟️
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ total_boletos }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Boletos Comprados</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(34, 197, 94, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🎲
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ rifas_participando.count }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Rifas Participando</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(251, 191, 36, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    💰
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary);">CLP${{ total_gastado|floatformat:0|intcomma }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Total Invertido</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(168, 85, 247, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🏆
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ rifas_ganadas }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Rifas Ganadas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rifas Próximas a Finalizar -->
+    {% if rifas_proximas %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">🔥 Rifas Próximas a Finalizar</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem;">
+            {% for raffle in rifas_proximas %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">{{ raffle.titulo }}</h3>
+                <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.75rem;">Sorteo: {{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary);">CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1rem; text-decoration: none;">Ver</a>
+                        {% if raffle.estado == 'finalizada' %}
+                        <a href="{% url 'raffles:acta_sorteo' raffle.id %}" class="btn" style="font-size: 0.85rem; padding: 0.5rem 1rem; text-decoration: none; background: #4299e1; color: white;">📜</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rifas en las que Participo -->
+    {% if rifas_participando %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">🎯 Mis Rifas Activas</h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for raffle in rifas_participando %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">{{ raffle.titulo }}</h3>
+                    <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Mis boletos: <strong style="color: var(--primary);">{{ raffle.mis_boletos_count }}</strong> | Sorteo: {{ raffle.fecha_sorteo|date:"d/m/Y" }}</p>
+                    <div style="margin-top: 0.75rem;">
+                        <div style="height: 8px; background: rgba(15, 23, 42, 0.6); border-radius: 8px; overflow: hidden; border: 1px solid rgba(99, 102, 241, 0.15);">
+                            <div class="progress-fill" data-width="{{ raffle.porcentaje_vendido }}" style="height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);"></div>
+                        </div>
+                        <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.4rem;">{{ raffle.boletos_vendidos }}/{{ raffle.total_boletos }} boletos vendidos</p>
+                    </div>
+                </div>
+                <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-secondary" style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none; margin-left: 1.5rem; margin-top: 1rem;">Ver</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Últimos Boletos Comprados -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">📋 Últimos Boletos Comprados</h2>
+        {% if mis_boletos %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Rifa</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Número</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Estado</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Fecha</th>
+                        <th style="padding: 0.75rem; text-align: right; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for boleto in mis_boletos %}
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.1);">
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: white;">{{ boleto.rifa.titulo }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: var(--primary); font-weight: 600;">#{{ boleto.numero_boleto }}</td>
+                        <td style="padding: 1rem 0.75rem;">
+                            {% if boleto.estado == 'pagado' %}
+                            <span style="display: inline-block; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: rgb(34, 197, 94); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">Pagado</span>
+                            {% else %}
+                            <span style="display: inline-block; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: rgb(251, 191, 36); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">{{ boleto.estado|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">{{ boleto.fecha_compra|date:"d/m/Y" }}</td>
+                        <td style="padding: 1rem 0.75rem; text-align: right;">
+                            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                                <a href="{% url 'raffles:detail' boleto.rifa.id %}" style="color: var(--primary); font-size: 0.9rem; text-decoration: none; font-weight: 500;">Ver Rifa</a>
+                                {% if boleto.rifa.estado == 'finalizada' %}
+                                <a href="{% url 'raffles:acta_sorteo' boleto.rifa.id %}" style="color: #4299e1; font-size: 0.9rem; text-decoration: none; font-weight: 500;">📜 Acta</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎟️</div>
+            <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 1.5rem;">Aún no has comprado boletos</p>
+            <a href="{% url 'raffles:list' %}" class="btn btn-primary" style="padding: 0.75rem 2rem; text-decoration: none;">Explorar Rifas</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-fill').forEach(function(fill) {
+        const width = fill.getAttribute('data-width');
+        if (width) {
+            fill.style.width = width + '%';
+        }
+    });
+});
+</script>
+{% endblock %}

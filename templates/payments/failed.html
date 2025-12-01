@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Pago Fallido{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding: 3rem 1rem; text-align: center;">
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+        <svg style="width: 48px; height: 48px; color: rgb(239, 68, 68);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </div>
+
+    <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.75rem;">Pago Fallido</h1>
+    <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 2rem;">Hubo un problema al procesar tu pago</p>
+
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <div style="margin-bottom: 1.25rem;">
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">ID de Transacción</span>
+            <div style="font-size: 1rem; font-weight: 600; color: white; margin-top: 0.4rem; font-family: monospace;">{{ payment.transaction_id }}</div>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Monto</span>
+            <div style="font-size: 1.5rem; font-weight: 700; color: rgba(255, 255, 255, 0.8); margin-top: 0.4rem;">CLP${{ payment.monto|floatformat:0|intcomma }}</div>
+        </div>
+
+        <div>
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Estado</span>
+            <div style="display: inline-block; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: rgb(239, 68, 68); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; text-transform: capitalize;">
+                {{ payment.estado }}
+            </div>
+        </div>
+    </div>
+
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 10px; padding: 1.25rem; margin-bottom: 2rem;">
+        <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);"><strong style="color: white;">Posibles causas:</strong></p>
+        <ul style="list-style: none; padding: 0; margin: 0.75rem 0 0; text-align: left;">
+            <li style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.4rem;">• Fondos insuficientes</li>
+            <li style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.4rem;">• Información de tarjeta incorrecta</li>
+            <li style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.4rem;">• Tarjeta expirada o bloqueada</li>
+            <li style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7);">• Error de conexión</li>
+        </ul>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'payments:process_payment' payment.boletos.all.0.id %}" class="btn btn-primary" style="font-size: 0.95rem; padding: 0.875rem 1.5rem; text-decoration: none;">
+            Intentar Nuevamente
+        </a>
+        <a href="{% url 'raffles:list' %}" class="btn btn-secondary" style="font-size: 0.95rem; padding: 0.875rem 1.5rem; text-decoration: none;">
+            Volver a Rifas
+        </a>
+    </div>
+
+    <p style="margin-top: 2rem; font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">
+        Si el problema persiste, contáctanos para recibir ayuda
+    </p>
+</div>
+{% endblock %}

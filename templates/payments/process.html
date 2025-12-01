@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Procesar Pago{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding: 2rem 1rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Procesar Pago</h1>
+        <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.6);">Completa tu compra de manera segura</p>
+    </div>
+
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 1.15rem; font-weight: 600; color: white; margin-bottom: 1.25rem;">
+            Resumen de Compra
+        </h3>
+
+        <div style="background-color: rgba(15, 23, 42, 0.4); padding: 1.25rem; border-radius: 10px; margin-bottom: 1.5rem; border: 1px solid rgba(99, 102, 241, 0.1);">
+            {% for ticket in tickets %}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.9rem;">
+                <span style="color: rgba(255, 255, 255, 0.8);">{{ ticket.rifa.titulo }} - Boleto #{{ ticket.numero_boleto }}</span>
+                <span style="font-weight: 600; color: white;">CLP${{ ticket.rifa.precio_boleto|floatformat:0|intcomma }}</span>
+            </div>
+            {% endfor %}
+            
+            <div style="border-top: 1px solid rgba(99, 102, 241, 0.2); margin-top: 1rem; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.1rem; font-weight: 700; color: white;">Total</span>
+                <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">CLP${{ total_amount|floatformat:0|intcomma }}</span>
+            </div>
+        </div>
+
+        <form method="post" id="paymentForm">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 1.25rem;">
+                <label style="font-size: 0.9rem; font-weight: 600; color: white; margin-bottom: 0.5rem; display: block;">Método de Pago</label>
+                <select name="metodo_pago" class="form-select" required style="font-size: 0.95rem;">
+                    <option value="stripe">Tarjeta de Crédito/Débito (Stripe)</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="transferencia">Transferencia Bancaria</option>
+                </select>
+            </div>
+
+            <div id="card-element" style="padding: 1rem; background-color: rgba(255, 255, 255, 0.95); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 10px; margin-bottom: 1.25rem;">
+                <!-- Stripe Card Element se insertará aquí -->
+            </div>
+
+            <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;">
+                <p style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8);"><strong style="color: white;">🔒 Pago Seguro:</strong> Tu información está protegida con encriptación SSL</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <button type="submit" class="btn btn-primary" id="submitButton" style="font-size: 0.95rem; padding: 0.875rem;">
+                    Confirmar Pago
+                </button>
+                <a href="/raffles/" class="btn btn-secondary" style="font-size: 0.95rem; padding: 0.875rem; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Confirmación visual -->
+    <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.85rem;">
+        <p style="margin-bottom: 0.4rem;">✓ Recibirás una confirmación por correo electrónico</p>
+        <p style="margin: 0;">✓ Tus boletos estarán disponibles inmediatamente</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe('{{ stripe_public_key }}');
+const elements = stripe.elements();
+const cardElement = elements.create('card', {
+    style: {
+        base: {
+            fontSize: '16px',
+            color: '#111827',
+            fontFamily: '"Open Sans", sans-serif',
+            '::placeholder': {
+                color: '#9ca3af'
+            }
+        }
+    }
+});
+
+cardElement.mount('#card-element');
+
+const form = document.getElementById('paymentForm');
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitButton = document.getElementById('submitButton');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Procesando...';
+    
+    // Simular procesamiento (en producción, usar Stripe Payment Intent)
+    setTimeout(() => {
+        form.submit();
+    }, 1500);
+});
+</script>
+{% endblock %}

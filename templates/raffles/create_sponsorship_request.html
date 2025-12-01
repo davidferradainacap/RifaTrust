@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Solicitud de Patrocinio - {{ raffle.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1.5rem;">
+    
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'raffles:detail' raffle.id %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem; font-size: 0.95rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver a la rifa
+        </a>
+        
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+            🤝 Solicitud de Patrocinio
+        </h1>
+        <p style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">
+            Envía tu propuesta para patrocinar: <strong style="color: var(--primary);">{{ raffle.titulo }}</strong>
+        </p>
+    </div>
+
+    <!-- Info de la Rifa -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            {% if raffle.imagen %}
+            <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px;">
+            {% endif %}
+            <div>
+                <h3 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">{{ raffle.titulo }}</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6);">Organizador: {{ raffle.organizador.nombre }}</p>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6);">Premio Principal: {{ raffle.premio_principal }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" enctype="multipart/form-data" style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.4rem; font-weight: 600; color: white; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">🎁</span>
+                Información del Premio Adicional
+            </h2>
+
+            <!-- Nombre del Premio -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Nombre del Premio Adicional <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="text" name="nombre_premio_adicional" required maxlength="200"
+                       placeholder="Ej: iPhone 15 Pro Max 256GB"
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+            </div>
+
+            <!-- Descripción del Premio -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Descripción del Premio <span style="color: #ef4444;">*</span>
+                </label>
+                <textarea name="descripcion_premio" required rows="4"
+                          placeholder="Describe las características y especificaciones del premio..."
+                          style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Valor del Premio -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Valor Estimado del Premio (CLP$) <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="number" name="valor_premio" required min="0" step="0.01"
+                       placeholder="500000"
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+            </div>
+
+            <!-- Imagen del Premio -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Imagen del Premio <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="file" name="imagen_premio" accept="image/*" required
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+                <p style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.5rem;">Imagen del producto que aportarás como premio adicional</p>
+            </div>
+        </div>
+
+        <div style="border-top: 1px solid rgba(99, 102, 241, 0.15); padding-top: 2rem; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.4rem; font-weight: 600; color: white; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">🏢</span>
+                Información de tu Marca
+            </h2>
+
+            <!-- Nombre de la Marca -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Nombre de tu Marca <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="text" name="nombre_marca" required maxlength="200"
+                       placeholder="Ej: TechStore Chile"
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+            </div>
+
+            <!-- Logo de la Marca -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Logo de tu Marca <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="file" name="logo_marca" accept="image/*" required
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+                <p style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.5rem;">Tu logo aparecerá en la página de la rifa si se acepta el patrocinio</p>
+            </div>
+
+            <!-- Sitio Web -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Sitio Web (Opcional)
+                </label>
+                <input type="url" name="sitio_web"
+                       placeholder="https://www.tumarca.com"
+                       style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem;">
+            </div>
+
+            <!-- Mensaje de Patrocinio -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                    Mensaje de Patrocinio <span style="color: #ef4444;">*</span>
+                </label>
+                <textarea name="mensaje_patrocinio" required rows="5"
+                          placeholder="Explica por qué quieres patrocinar esta rifa y cómo tu marca puede aportar valor..."
+                          style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; color: white; font-size: 0.95rem; resize: vertical;"></textarea>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{% url 'raffles:detail' raffle.id %}" 
+               class="btn btn-secondary" 
+               style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="btn btn-primary" 
+                    style="padding: 0.75rem 2rem;">
+                Enviar Solicitud
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

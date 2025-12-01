@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ raffle.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reset y variables */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    :root {
+        --primary: #667eea;
+        --secondary: #764ba2;
+        --gold: #ffd700;
+        --red: #ff0000;
+        --success: #48bb78;
+    }
+    
+    /* Contenedor principal */
+    .raffle-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    /* Header con imagen */
+    .raffle-header {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .raffle-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .raffle-info {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .raffle-info h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        color: #1a202c;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+    
+    .info-icon {
+        font-size: 1.5rem;
+    }
+    
+    .info-label {
+        font-size: 0.75rem;
+        color: #718096;
+        text-transform: uppercase;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 1.1rem;
+    }
+    
+    /* Countdown */
+    .countdown-box {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        padding: 2rem;
+        border-radius: 16px;
+        text-align: center;
+        margin: 2rem 0;
+        color: white;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .countdown-label {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+    
+    .countdown-timer {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--gold);
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Ruleta */
+    .roulette-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        padding: 3rem;
+        border-radius: 20px;
+        margin: 2rem 0;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        border: 4px solid var(--gold);
+    }
+    
+    .roulette-title {
+        text-align: center;
+        font-size: 2.5rem;
+        color: var(--gold);
+        margin-bottom: 2rem;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    .roulette-wheel-wrapper {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        margin: 0 auto;
+    }
+    
+    .roulette-canvas {
+        border-radius: 50%;
+        box-shadow: 0 0 60px rgba(255, 215, 0, 0.4);
+    }
+    
+    .roulette-pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 25px solid transparent;
+        border-right: 25px solid transparent;
+        border-top: 50px solid var(--red);
+        filter: drop-shadow(0 5px 15px rgba(255, 0, 0, 0.8));
+        z-index: 100;
+    }
+    
+    .roulette-status {
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(0,0,0,0.3);
+        border-radius: 12px;
+        color: white;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+    
+    /* Winner Modal */
+    .winner-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .winner-modal.show {
+        display: flex;
+    }
+    
+    .winner-box {
+        background: linear-gradient(135deg, var(--gold) 0%, #ffed4e 100%);
+        padding: 4rem;
+        border-radius: 30px;
+        text-align: center;
+        max-width: 600px;
+        box-shadow: 0 30px 100px rgba(255, 215, 0, 0.6);
+        animation: scaleIn 0.5s ease-out;
+    }
+    
+    @keyframes scaleIn {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    .winner-box h1 {
+        font-size: 4rem;
+        color: var(--red);
+        margin-bottom: 2rem;
+    }
+    
+    .winner-ticket {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--red);
+    }
+    
+    .winner-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 1rem;
+    }
+    
+    .close-btn {
+        margin-top: 2rem;
+        padding: 1rem 3rem;
+        background: var(--red);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
+        transition: transform 0.3s;
+    }
+    
+    .close-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Participants */
+    .participants-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-top: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .participant-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        background: #f7fafc;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .participant-item:hover {
+        background: #edf2f7;
+        transform: translateX(5px);
+    }
+    
+    .participant-item.winner {
+        background: linear-gradient(135deg, var(--gold) 0%, #ffed4e 100%);
+        border: 3px solid var(--red);
+        animation: glow 2s infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        50% { box-shadow: 0 0 30px rgba(255, 215, 0, 1); }
+    }
+    
+    .participant-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="raffle-container">
+    
+    <!-- HEADER -->
+    <div class="raffle-header">
+        <div>
+            {% if raffle.imagen %}
+                <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" class="raffle-image">
+            {% else %}
+                <div class="raffle-image" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 6rem;">
+                    🎟️
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="raffle-info">
+            <h1>{{ raffle.titulo }}</h1>
+            
+            <div class="info-item">
+                <span class="info-icon">🏆</span>
+                <div>
+                    <div class="info-label">Premio</div>
+                    <div class="info-value">{{ raffle.premio_principal }}</div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-icon">📅</span>
+                <div>
+                    <div class="info-label">Fecha Sorteo</div>
+                    <div class="info-value">{{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-icon">💰</span>
+                <div>
+                    <div class="info-label">Precio</div>
+                    <div class="info-value" style="color: var(--success);">${{ raffle.precio_boleto|intcomma }}</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.875rem; color: #718096;">Boletos vendidos</span>
+                    <span style="font-weight: 600;">{{ sold_tickets }} / {{ raffle.total_boletos }}</span>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 50px; height: 10px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, var(--primary), var(--secondary)); height: 100%; width: {{ progress_percentage }}%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COUNTDOWN -->
+    <div class="countdown-box">
+        <div class="countdown-label">⏰ Tiempo restante para el sorteo</div>
+        <div class="countdown-timer" id="countdown">Cargando...</div>
+    </div>
+    
+    <!-- RULETA -->
+    {% if show_roulette %}
+    <div class="roulette-container" id="roulette-section" data-tickets='{{ tickets_json|safe }}'>
+        <h2 class="roulette-title">🎰 RULETA DE LA FORTUNA 🎰</h2>
+        
+        <div class="roulette-wheel-wrapper">
+            <div class="roulette-pointer"></div>
+            <canvas id="rouletteCanvas" width="500" height="500" class="roulette-canvas"></canvas>
+        </div>
+        
+        <div class="roulette-status" id="status">
+            <span id="statusText">⏳ Esperando inicio del sorteo...</span>
+        </div>
+    </div>
+    
+    <!-- WINNER MODAL -->
+    <div class="winner-modal" id="winnerModal">
+        <div class="winner-box">
+            <h1>🎉 ¡GANADOR! 🎉</h1>
+            <div style="background: white; padding: 2rem; border-radius: 20px; margin: 2rem 0;">
+                <div class="winner-ticket">Boleto #<span id="winnerTicket">0</span></div>
+                <div class="winner-name" id="winnerName">Nombre</div>
+            </div>
+            <button class="close-btn" onclick="document.getElementById('winnerModal').classList.remove('show')">
+                Cerrar
+            </button>
+        </div>
+    </div>
+    
+    <!-- PARTICIPANTS -->
+    <div class="participants-section">
+        <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: #1a202c;">
+            👥 Participantes ({{ sold_tickets }} boletos vendidos)
+        </h3>
+        <div id="participantsList">
+            {% for ticket in tickets %}
+            <div class="participant-item" data-ticket-id="{{ ticket.id }}">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="participant-number">{{ ticket.numero_boleto }}</div>
+                    <div>
+                        <div style="font-weight: 600; color: #2d3748;">{{ ticket.usuario.nombre }}</div>
+                        <div style="font-size: 0.875rem; color: #718096;">{{ ticket.usuario.email }}</div>
+                    </div>
+                </div>
+                <span style="background: var(--success); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
+                    PAGADO
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- DESCRIPCIÓN -->
+    <div style="background: white; padding: 2rem; border-radius: 16px; margin-top: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #1a202c;">📝 Descripción</h3>
+        <p style="color: #4a5568; line-height: 1.8;">{{ raffle.descripcion|default:"Sin descripción disponible." }}</p>
+    </div>
+    
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+console.log('🚀 Sistema iniciando...');
+
+// CONFIGURACIÓN
+const RAFFLE_DATE = new Date({{ fecha_sorteo_timestamp }});
+const RAFFLE_ID = {{ raffle.id }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+let sorteoRealizado = false;
+let isSpinning = false;
+let winnerData = null;
+
+console.log('📅 Fecha sorteo:', RAFFLE_DATE.toLocaleString('es-CL'));
+console.log('⏰ Tiempo restante:', Math.floor((RAFFLE_DATE - new Date()) / 1000), 'segundos');
+
+// ============================================================
+// COUNTDOWN
+// ============================================================
+function updateCountdown() {
+    const el = document.getElementById('countdown');
+    if (!el) return;
+    
+    const now = new Date();
+    const diff = RAFFLE_DATE - now;
+    
+    if (diff <= 0) {
+        if (!sorteoRealizado) {
+            el.textContent = '¡INICIANDO SORTEO!';
+            sorteoRealizado = true;
+            setTimeout(() => iniciarSorteo(), 2000);
+        } else {
+            el.textContent = '¡SORTEO FINALIZADO!';
+        }
+        return;
+    }
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    let time = '';
+    if (days > 0) time += days + 'd ';
+    if (hours > 0 || days > 0) time += hours + 'h ';
+    if (minutes > 0 || hours > 0 || days > 0) time += minutes + 'm ';
+    time += seconds + 's';
+    
+    el.textContent = time;
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// ============================================================
+// RULETA
+// ============================================================
+{% if show_roulette %}
+
+const section = document.getElementById('roulette-section');
+let tickets = [];
+
+try {
+    tickets = JSON.parse(section.getAttribute('data-tickets') || '[]');
+    console.log('✅ Tickets cargados:', tickets.length);
+} catch(e) {
+    console.error('❌ Error cargando tickets:', e);
+}
+
+if (tickets.length === 0) {
+    console.warn('⚠️ No hay tickets');
+}
+
+const canvas = document.getElementById('rouletteCanvas');
+const ctx = canvas.getContext('2d');
+const statusText = document.getElementById('statusText');
+
+let rotation = 0;
+let targetRotation = 0;
+let velocity = 0;
+let animating = false;
+
+const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+
+// Dibujar ruleta
+function draw() {
+    if (tickets.length === 0) return;
+    
+    const cx = 250;
+    const cy = 250;
+    const radius = 220;
+    const anglePerSegment = (2 * Math.PI) / tickets.length;
+    
+    ctx.clearRect(0, 0, 500, 500);
+    
+    tickets.forEach((ticket, i) => {
+        const startAngle = rotation + (anglePerSegment * i);
+        const endAngle = startAngle + anglePerSegment;
+        
+        // Segmento
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, startAngle, endAngle);
+        ctx.lineTo(cx, cy);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Texto
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(startAngle + anglePerSegment / 2);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('#' + ticket.numero_boleto, radius - 60, 5);
+        ctx.font = '12px Arial';
+        ctx.fillText(ticket.nombre.substring(0, 15), radius - 60, 20);
+        ctx.restore();
+    });
+    
+    // Centro
+    ctx.beginPath();
+    ctx.arc(cx, cy, 50, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffd700';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+}
+
+// Animación
+function animate() {
+    if (animating) {
+        rotation += velocity;
+        velocity *= 0.98;
+        
+        if (Math.abs(velocity) < 0.001) {
+            animating = false;
+            velocity = 0;
+            rotation = targetRotation;
+            anunciarGanador();
+        }
+        
+        draw();
+        requestAnimationFrame(animate);
+    }
+}
+
+// Girar a ganador
+function girarAGanador(winner) {
+    if (isSpinning || tickets.length === 0) return;
+    isSpinning = true;
+    animating = true;
+    
+    console.log('🎰 Girando ruleta...');
+    statusText.textContent = '🎰 Girando la ruleta...';
+    
+    const idx = tickets.findIndex(t => t.id === winner.id);
+    if (idx === -1) {
+        console.error('❌ Ganador no encontrado');
+        return;
+    }
+    
+    const anglePerSegment = (2 * Math.PI) / tickets.length;
+    const winnerAngle = anglePerSegment * idx;
+    const spins = 5 + Math.random() * 3;
+    targetRotation = (spins * 2 * Math.PI) - winnerAngle - (anglePerSegment / 2);
+    
+    velocity = 0.5;
+    animate();
+}
+
+// Anunciar ganador
+function anunciarGanador() {
+    if (!winnerData) return;
+    
+    console.log('🏆 Ganador:', winnerData);
+    statusText.textContent = '🎉 ¡GANADOR: #' + winnerData.numero_boleto + ' - ' + winnerData.nombre + '!';
+    
+    // Resaltar en lista
+    const item = document.querySelector('[data-ticket-id="' + winnerData.id + '"]');
+    if (item) {
+        item.classList.add('winner');
+        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Modal
+    setTimeout(() => {
+        document.getElementById('winnerTicket').textContent = winnerData.numero_boleto;
+        document.getElementById('winnerName').textContent = winnerData.nombre;
+        document.getElementById('winnerModal').classList.add('show');
+        confetti();
+    }, 1500);
+    
+    isSpinning = false;
+}
+
+// Confetti
+function confetti() {
+    for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+            const c = document.createElement('div');
+            c.style.cssText = 'position:fixed;width:10px;height:10px;background:' + colors[Math.floor(Math.random()*colors.length)] + ';left:' + Math.random()*100 + '%;top:-20px;animation:confetti-fall 4s linear forwards;';
+            document.body.appendChild(c);
+            setTimeout(() => c.remove(), 4000);
+        }, i * 30);
+    }
+}
+
+// CSS para confetti
+const style = document.createElement('style');
+style.textContent = '@keyframes confetti-fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}';
+document.head.appendChild(style);
+
+// Iniciar sorteo
+function iniciarSorteo() {
+    if (isSpinning) return;
+    
+    console.log('🎲 Iniciando sorteo...');
+    statusText.textContent = '🎲 Seleccionando ganador...';
+    
+    fetch('/raffles/' + RAFFLE_ID + '/select-winner/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': CSRF_TOKEN,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            winnerData = data.winner;
+            console.log('✅ Ganador seleccionado:', winnerData);
+            setTimeout(() => girarAGanador(winnerData), 500);
+        } else {
+            console.error('❌ Error:', data.error);
+            statusText.textContent = '❌ Error: ' + data.error;
+        }
+    })
+    .catch(err => {
+        console.error('❌ Error:', err);
+        statusText.textContent = '❌ Error de conexión';
+    });
+}
+
+window.iniciarSorteo = iniciarSorteo;
+
+// Verificar ganador existente
+fetch('/raffles/' + RAFFLE_ID + '/check-winner/')
+    .then(r => r.json())
+    .then(data => {
+        if (data.has_winner) {
+            winnerData = data.winner;
+            sorteoRealizado = true;
+            console.log('🏆 Ganador existente detectado');
+            statusText.textContent = '🏆 GANADOR: #' + winnerData.numero_boleto + ' - ' + winnerData.nombre;
+            const item = document.querySelector('[data-ticket-id="' + winnerData.id + '"]');
+            if (item) item.classList.add('winner');
+        } else {
+            draw();
+        }
+    });
+
+// Sincronización
+setInterval(() => {
+    if (!sorteoRealizado && new Date() >= RAFFLE_DATE) {
+        fetch('/raffles/' + RAFFLE_ID + '/check-winner/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.has_winner && !winnerData) {
+                    winnerData = data.winner;
+                    sorteoRealizado = true;
+                    girarAGanador(winnerData);
+                }
+            });
+    }
+}, 3000);
+
+{% endif %}
+
+console.log('✅ Sistema listo');
+</script>
+
+{% endblock %}

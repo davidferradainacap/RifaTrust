@@ -1,0 +1,199 @@
+/* ==================== ADMIN STYLES ====================
+   Estilos específicos para el panel administrativo
+   Autor: Sistema RifaTrust
+   Fecha: Noviembre 2025
+   ================================================== */
+
+/* Ya están incluidos en admin_styles.css (archivo principal) */
+/* Este archivo es para estilos adicionales específicos de administradores */
+
+/* ==================== ADMIN-SPECIFIC COMPONENTS ==================== */
+
+/* User Management Tables */
+.user-management-table .avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
+}
+
+.user-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Raffle Management */
+.raffle-progress-wrapper {
+    min-width: 120px;
+}
+
+.raffle-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* Payment Management */
+.payment-amount {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.transaction-id {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+/* ==================== AUDIT LOGS ==================== */
+.audit-log-entry {
+    padding: 0.75rem;
+    border-left: 3px solid var(--primary-color);
+    margin-bottom: 0.5rem;
+    background-color: var(--bg-primary);
+    border-radius: 0 8px 8px 0;
+}
+
+.audit-log-entry.create {
+    border-left-color: var(--success-color);
+}
+
+.audit-log-entry.update {
+    border-left-color: var(--warning-color);
+}
+
+.audit-log-entry.delete {
+    border-left-color: var(--danger-color);
+}
+
+.audit-timestamp {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== STATISTICS WIDGETS ==================== */
+.stat-widget {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.stat-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-widget-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-widget-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-widget-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==================== BULK ACTIONS BAR ==================== */
+.bulk-actions-bar {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    display: none;
+}
+
+.bulk-actions-bar.show {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== EXPORT OPTIONS ==================== */
+.export-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.export-option:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.export-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* ==================== RESPONSIVE ADJUSTMENTS ==================== */
+@media (max-width: 992px) {
+    .stat-widget {
+        padding: 1rem;
+    }
+
+    .stat-widget-value {
+        font-size: 1.5rem;
+    }
+
+    .bulk-actions-bar {
+        bottom: 1rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-management-table {
+        font-size: 0.875rem;
+    }
+
+    .stat-widget-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}

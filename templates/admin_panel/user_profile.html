@@ -1,0 +1,50 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% block title %}Perfil de Usuario{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:users_management' %}">Gestión de Usuarios</a></li>
+<li class="breadcrumb-item active" aria-current="page">Perfil de Usuario</li>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm" style="max-width: 600px; margin: auto;">
+        <div class="card-body">
+            <div class="d-flex align-items-center mb-4">
+                {% if user_obj.avatar %}
+                    <img src="{{ user_obj.avatar.url }}" class="rounded-circle me-3" width="80" height="80" alt="Avatar">
+                {% else %}
+                    <div class="avatar-circle bg-primary text-white me-3" style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:2rem;border-radius:50%;">
+                        {{ user_obj.nombre|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h4 class="mb-0">{{ user_obj.nombre }}</h4>
+                    <div class="text-muted">{{ user_obj.email }}</div>
+                    <span class="badge bg-{% if user_obj.rol == 'admin' or user_obj.rol == 'superuser' %}danger{% elif user_obj.rol == 'organizador' %}success{% elif user_obj.rol == 'sponsor' %}warning{% else %}primary{% endif %}">
+                        {{ user_obj.get_rol_display }}
+                    </span>
+                </div>
+            </div>
+            <hr>
+            <h6 class="fw-bold">Datos de la cuenta</h6>
+            <ul class="list-unstyled mb-3">
+                <li><strong>Estado:</strong> {% if user_obj.is_active %}<span class="text-success">Activo</span>{% else %}<span class="text-danger">Inactivo</span>{% endif %}</li>
+                <li><strong>Validación:</strong> {% if user_obj.cuenta_validada %}<span class="text-info">Validado</span>{% else %}<span class="text-warning">Sin validar</span>{% endif %}</li>
+                <li><strong>Fecha de registro:</strong> {{ user_obj.fecha_registro|date:"d/m/Y H:i" }}</li>
+                <li><strong>Última conexión:</strong> {% if user_obj.ultima_conexion %}{{ user_obj.ultima_conexion|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</li>
+            </ul>
+            {% if profile %}
+            <h6 class="fw-bold">Perfil</h6>
+            <ul class="list-unstyled">
+                <li><strong>Ciudad:</strong> {{ profile.ciudad|default:"-" }}</li>
+                <li><strong>País:</strong> {{ profile.pais|default:"-" }}</li>
+                <li><strong>Dirección:</strong> {{ profile.direccion|default:"-" }}</li>
+                <li><strong>Fecha de nacimiento:</strong> {{ profile.fecha_nacimiento|date:"d/m/Y"|default:"-" }}</li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

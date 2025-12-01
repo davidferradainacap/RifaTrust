@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Rifa - Sistema de Rifas{% endblock %}
+
+{% block content %}
+<div class="container-narrow" style="max-width: 800px;">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Crear Nueva Rifa</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding: 2rem;">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Errores generales del formulario -->
+                {% if form.non_field_errors %}
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: start; gap: 0.75rem;">
+                        <div style="font-size: 1.5rem;">⚠️</div>
+                        <div>
+                            <div style="font-weight: 700; color: #ef4444; font-size: 1.1rem; margin-bottom: 0.5rem;">Error de Validación</div>
+                            {% for error in form.non_field_errors %}
+                            <div style="color: #fca5a5; line-height: 1.6;">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Paso 1: Información Básica -->
+                <div class="form-step">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--primary-light);">
+                        📋 Información Básica
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Título de la Rifa <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.titulo }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Descripción <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.descripcion }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Imagen de la Rifa <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.imagen }}
+                    </div>
+                </div>
+
+                <!-- Paso 2: Premio -->
+                <div class="form-step" style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--primary-light);">
+                        🏆 Premio
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Premio Principal <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.premio_principal }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Descripción del Premio <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.descripcion_premio }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Imagen del Premio <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.imagen_premio }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">💰 Valor Estimado del Premio <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.valor_premio }}
+                        <small class="form-help" style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6);">
+                            Ingresa el valor aproximado del premio en CLP (Ej: 500000)
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Paso 2.5: Documento Legal -->
+                <div class="form-step" style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--primary-light);">
+                        📄 Documento de Autorización Legal
+                    </h3>
+                    
+                    <div style="background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--primary); padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: start; gap: 0.75rem;">
+                            <div style="font-size: 1.5rem;">ℹ️</div>
+                            <div>
+                                <div style="font-weight: 700; color: var(--primary-light); margin-bottom: 0.5rem;">Documento Requerido</div>
+                                <div style="color: rgba(255, 255, 255, 0.8); line-height: 1.6; font-size: 0.9rem;">
+                                    Para activar tu rifa, debes subir el documento legal que autoriza su realización. 
+                                    Este documento será revisado por el equipo de administración antes de aprobar la rifa.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Documento de Autorización <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.documento_legal }}
+                        <small class="form-help" style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6);">
+                            Formatos aceptados: PDF, Word (.doc, .docx) o imágenes (JPG, PNG). Máximo 10MB.
+                        </small>
+                        {% if form.documento_legal.errors %}
+                        <div style="color: #ff6b6b; font-size: 0.85rem; margin-top: 0.5rem;">
+                            {% for error in form.documento_legal.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Paso 3: Configuración -->
+                <div class="form-step" style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--primary-light);">
+                        ⚙️ Configuración
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Precio por Boleto <span style="color: #ff6b6b;">*</span></label>
+                            {{ form.precio_boleto }}
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Total de Boletos <span style="color: #ff6b6b;">*</span></label>
+                            {{ form.total_boletos }}
+                        </div>
+                    </div>
+
+                    <!-- Calculadora de Ingresos -->
+                    <div id="calculadora-ingresos" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; display: none;">
+                        <div style="font-size: 1rem; font-weight: 600; color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>💡</span>
+                            <span>Análisis de Rentabilidad</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+                            <div>
+                                <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Valor del Premio</div>
+                                <div id="calc-valor-premio" style="font-size: 1.3rem; font-weight: 700; color: #fbbf24;">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Ingreso Total</div>
+                                <div id="calc-ingreso-total" style="font-size: 1.3rem; font-weight: 700; color: #60a5fa;">$0</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Mínimo Requerido</div>
+                                <div id="calc-minimo-requerido" style="font-size: 1.3rem; font-weight: 700; color: #f87171;">$0</div>
+                            </div>
+                        </div>
+                        <div id="calc-mensaje" style="margin-top: 1rem; padding: 0.75rem; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.9rem;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Fecha del Sorteo <span style="color: #ff6b6b;">*</span></label>
+                        {{ form.fecha_sorteo }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 1.1rem; margin-bottom: 1rem;">Estado de la Rifa <span style="color: #ff6b6b;">*</span></label>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="{{ form.estado.name }}" value="borrador" {% if form.estado.value == 'borrador' %}checked{% endif %} style="display: none;" class="estado-radio">
+                                <div class="estado-option" style="background: rgba(156, 163, 175, 0.1); border: 2px solid rgba(156, 163, 175, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+                                    <div style="font-weight: 700; font-size: 1.1rem; color: white; margin-bottom: 0.5rem;">Borrador</div>
+                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Oculta al público. Podrás editarla antes de publicar.</div>
+                                </div>
+                            </label>
+                            
+                            <label style="cursor: pointer;">
+                                <input type="radio" name="{{ form.estado.name }}" value="pendiente_aprobacion" {% if form.estado.value == 'pendiente_aprobacion' %}checked{% endif %} style="display: none;" class="estado-radio">
+                                <div class="estado-option" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+                                    <div style="font-weight: 700; font-size: 1.1rem; color: white; margin-bottom: 0.5rem;">Solicitar Aprobación</div>
+                                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Enviar a revisión administrativa. Los administradores aprobarán tu rifa antes de publicarla.</div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="background: rgba(255, 107, 107, 0.1); border-left: 3px solid #ff6b6b; padding: 0.75rem 1rem; border-radius: 6px;">
+                            <span style="color: #ff6b6b; font-weight: 600; font-size: 0.9rem;">⚠️ Debes seleccionar una opción para crear la rifa</span>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        .estado-radio:checked + .estado-option {
+                            border-color: var(--primary) !important;
+                            background: rgba(99, 102, 241, 0.15) !important;
+                            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                            transform: scale(1.02);
+                        }
+                        .estado-option:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                        }
+                    </style>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            {{ form.permite_multiples_boletos }}
+                            <span>Permitir múltiples boletos por usuario</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Máximo de Boletos por Usuario</label>
+                        {{ form.max_boletos_por_usuario }}
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">✨ Crear Rifa</button>
+                    <a href="/raffles/organizer/dashboard/" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const valorPremioInput = document.querySelector('input[name="valor_premio"]');
+    const precioBoletoInput = document.querySelector('input[name="precio_boleto"]');
+    const totalBoletosInput = document.querySelector('input[name="total_boletos"]');
+    const calculadora = document.getElementById('calculadora-ingresos');
+    
+    function formatearPesos(valor) {
+        return new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    }
+    
+    function actualizarCalculadora() {
+        const valorPremio = parseFloat(valorPremioInput.value) || 0;
+        const precioBoleto = parseFloat(precioBoletoInput.value) || 0;
+        const totalBoletos = parseInt(totalBoletosInput.value) || 0;
+        
+        if (valorPremio > 0 && precioBoleto > 0 && totalBoletos > 0) {
+            calculadora.style.display = 'block';
+            
+            const ingresoTotal = precioBoleto * totalBoletos;
+            const minimoRequerido = valorPremio * 2;
+            
+            document.getElementById('calc-valor-premio').textContent = formatearPesos(valorPremio);
+            document.getElementById('calc-ingreso-total').textContent = formatearPesos(ingresoTotal);
+            document.getElementById('calc-minimo-requerido').textContent = formatearPesos(minimoRequerido);
+            
+            const mensaje = document.getElementById('calc-mensaje');
+            
+            if (totalBoletos < 100) {
+                mensaje.style.background = 'rgba(239, 68, 68, 0.2)';
+                mensaje.style.color = '#f87171';
+                mensaje.innerHTML = `❌ Mínimo requerido: 100 boletos. Actualmente tienes ${totalBoletos}.`;
+            } else if (ingresoTotal >= minimoRequerido) {
+                mensaje.style.background = 'rgba(34, 197, 94, 0.2)';
+                mensaje.style.color = '#4ade80';
+                mensaje.innerHTML = '✅ ¡Perfecto! La rifa cumple con todos los requisitos.';
+            } else {
+                const boletosMinimos = Math.max(100, Math.ceil(minimoRequerido / precioBoleto));
+                mensaje.style.background = 'rgba(239, 68, 68, 0.2)';
+                mensaje.style.color = '#f87171';
+                mensaje.innerHTML = `❌ Necesitas ${boletosMinimos.toLocaleString('es-CL')} boletos o aumentar el precio para cumplir el mínimo.`;
+            }
+        } else {
+            calculadora.style.display = 'none';
+        }
+    }
+    
+    if (valorPremioInput && precioBoletoInput && totalBoletosInput) {
+        valorPremioInput.addEventListener('input', actualizarCalculadora);
+        precioBoletoInput.addEventListener('input', actualizarCalculadora);
+        totalBoletosInput.addEventListener('input', actualizarCalculadora);
+        
+        // Ejecutar al cargar si hay valores
+        actualizarCalculadora();
+    }
+});
+</script>
+{% endblock %}

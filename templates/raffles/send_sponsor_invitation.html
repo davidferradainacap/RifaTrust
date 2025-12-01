@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invitar Sponsor{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1.5rem;">
+    
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{% url 'raffles:browse_sponsors' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem; font-size: 0.95rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver a buscar sponsors
+        </a>
+        
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+            📧 Invitar a {{ sponsor.nombre }}
+        </h1>
+        <p style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">
+            Envía una invitación personalizada para que este sponsor participe en una de tus rifas
+        </p>
+    </div>
+
+    <!-- Perfil del Sponsor -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">👔 Información del Sponsor</h2>
+        
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0;">
+                👔
+            </div>
+            <div style="flex: 1;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.25rem;">{{ sponsor.nombre }}</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">{{ sponsor.email }}</p>
+                <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5);">Miembro desde {{ sponsor.fecha_registro|date:"F Y" }}</p>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 1rem; text-align: center; min-width: 120px;">
+                <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e; margin-bottom: 0.25rem;">
+                    {{ sponsor.solicitudes_patrocinio.filter.count }}
+                </div>
+                <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6);">Patrocinios Aceptados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Invitación -->
+    <form method="post" style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        {% csrf_token %}
+        
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">📝 Detalles de la Invitación</h2>
+
+        <!-- Seleccionar Rifa -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.rifa.id_for_label }}" style="display: block; font-size: 0.95rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                🎯 Rifa a Patrocinar *
+            </label>
+            {{ form.rifa }}
+            {% if form.rifa.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.rifa.errors }}</div>
+            {% endif %}
+            <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.5rem;">
+                Selecciona cuál de tus rifas activas deseas que patrocine
+            </p>
+        </div>
+
+        <!-- Mensaje de Invitación -->
+        <div style="margin-bottom: 1.5rem;">
+            <label for="{{ form.mensaje_invitacion.id_for_label }}" style="display: block; font-size: 0.95rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                💬 Mensaje Personalizado *
+            </label>
+            {{ form.mensaje_invitacion }}
+            {% if form.mensaje_invitacion.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.mensaje_invitacion.errors }}</div>
+            {% endif %}
+            <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.5rem;">
+                Explica por qué te gustaría que participen como sponsor de tu rifa
+            </p>
+        </div>
+
+        <!-- Beneficios Ofrecidos -->
+        <div style="margin-bottom: 2rem;">
+            <label for="{{ form.beneficios_ofrecidos.id_for_label }}" style="display: block; font-size: 0.95rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-bottom: 0.5rem;">
+                ✨ Beneficios para el Sponsor *
+            </label>
+            {{ form.beneficios_ofrecidos }}
+            {% if form.beneficios_ofrecidos.errors %}
+                <div style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem;">{{ form.beneficios_ofrecidos.errors }}</div>
+            {% endif %}
+            <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.5rem;">
+                Describe qué visibilidad o beneficios recibirá el sponsor (ej: logo en carteles, mención en redes sociales, etc.)
+            </p>
+        </div>
+
+        <!-- Información Adicional -->
+        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 10px; padding: 1.25rem; margin-bottom: 2rem;">
+            <div style="display: flex; gap: 1rem;">
+                <div style="font-size: 1.5rem; flex-shrink: 0;">💡</div>
+                <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
+                    <strong>Consejos para tu invitación:</strong>
+                    <ul style="margin-top: 0.5rem; padding-left: 1.25rem;">
+                        <li>Sé específico sobre el alcance de tu rifa</li>
+                        <li>Menciona tu audiencia y participantes esperados</li>
+                        <li>Destaca qué hace especial a tu evento</li>
+                        <li>Ofrece beneficios claros de exposición de marca</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'raffles:browse_sponsors' %}" 
+               class="btn btn-secondary" 
+               style="flex: 1; text-align: center; padding: 0.875rem; text-decoration: none;">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="btn btn-primary" 
+                    style="flex: 2; padding: 0.875rem;">
+                📧 Enviar Invitación
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Estilos del formulario */
+    form select,
+    form textarea {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 8px;
+        color: white;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+    }
+
+    form select:focus,
+    form textarea:focus {
+        outline: none;
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    form textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    form select option {
+        background: #0f172a;
+        color: white;
+    }
+</style>
+{% endblock %}

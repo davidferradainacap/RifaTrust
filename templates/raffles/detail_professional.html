@@ -1,0 +1,1147 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ raffle.titulo }} - RifaTrust{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ESTILOS GENERALES ===== */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .raffle-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        color: white;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .raffle-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: hero-pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes hero-pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    .raffle-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .raffle-status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        animation: badge-float 3s ease-in-out infinite;
+    }
+    
+    @keyframes badge-float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    .status-active {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+    }
+    
+    .status-completed {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #333;
+        box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+    }
+    
+    .status-cancelled {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
+    
+    .raffle-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        line-height: 1.2;
+    }
+    
+    .raffle-description {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        opacity: 0.95;
+        white-space: pre-line;
+    }
+    
+    /* ===== INFORMACIÓN DE LA RIFA ===== */
+    .raffle-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+        border-color: #667eea;
+    }
+    
+    .info-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .icon-purple { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .icon-green { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+    .icon-orange { background: linear-gradient(135deg, #ff9a56, #ff6a88); color: white; }
+    .icon-blue { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+    
+    .info-card-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-card-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .info-card-subtitle {
+        font-size: 0.9rem;
+        color: #95a5a6;
+        margin-top: 0.25rem;
+    }
+    
+    /* ===== BARRA DE PROGRESO ===== */
+    .progress-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .progress-percentage {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .custom-progress {
+        height: 30px;
+        border-radius: 50px;
+        background: #e9ecef;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .custom-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 1rem;
+        color: white;
+        font-weight: 600;
+        transition: width 1s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .custom-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: progress-shine 2s infinite;
+    }
+    
+    @keyframes progress-shine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* ===== SECCIÓN DE RULETA ===== */
+    .roulette-section {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .roulette-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 70%);
+        animation: roulette-glow 6s ease-in-out infinite;
+    }
+    
+    @keyframes roulette-glow {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.1); }
+    }
+    
+    .roulette-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .roulette-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(255,215,0,0.5);
+        margin-bottom: 0.5rem;
+        animation: title-shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes title-shimmer {
+        0%, 100% { filter: brightness(1); }
+        50% { filter: brightness(1.3); }
+    }
+    
+    .roulette-subtitle {
+        color: rgba(255,255,255,0.8);
+        font-size: 1.1rem;
+    }
+    
+    /* ===== COUNTDOWN TIMER ===== */
+    .countdown-container {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid rgba(255,215,0,0.3);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .countdown-label {
+        text-align: center;
+        color: white;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .countdown-timer {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .countdown-item {
+        background: rgba(0,0,0,0.3);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        min-width: 100px;
+        text-align: center;
+        border: 2px solid rgba(255,215,0,0.5);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .countdown-value {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow: 0 0 20px rgba(255,215,0,0.8);
+        line-height: 1;
+        display: block;
+    }
+    
+    .countdown-unit {
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+    
+    .countdown-finished {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        border-radius: 15px;
+        color: #333;
+        font-size: 2rem;
+        font-weight: 800;
+        animation: finished-pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes finished-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    /* ===== SLOT MACHINE / RULETA ===== */
+    .slot-machine-container {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto 2rem;
+        background: rgba(0,0,0,0.4);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 4px solid #ffd700;
+        box-shadow: 0 0 50px rgba(255,215,0,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+    }
+    
+    .slot-machine-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .slot-machine-title {
+        color: #ffd700;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px rgba(255,215,0,0.8);
+    }
+    
+    .slot-window {
+        position: relative;
+        height: 300px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 15px;
+        overflow: hidden;
+        border: 3px solid rgba(255,215,0,0.6);
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    }
+    
+    .slot-items-container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .slot-items {
+        position: absolute;
+        width: 100%;
+        transition: transform 0.1s linear;
+        will-change: transform;
+    }
+    
+    .slot-item {
+        height: 120px;
+        margin: 10px 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        border: 3px solid rgba(255,255,255,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .slot-item:hover {
+        transform: scale(1.02);
+        border-color: #ffd700;
+    }
+    
+    .slot-item-content {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .slot-ticket-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow: 0 0 20px rgba(255,215,0,0.8), 2px 2px 4px rgba(0,0,0,0.5);
+        margin-bottom: 0.5rem;
+        line-height: 1;
+    }
+    
+    .slot-user-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: white;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    }
+    
+    .slot-user-email {
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.7);
+        margin-top: 0.25rem;
+    }
+    
+    /* ===== INDICADORES DE SELECCIÓN ===== */
+    .slot-pointer-left, .slot-pointer-right {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        animation: pointer-pulse 1s ease-in-out infinite;
+    }
+    
+    .slot-pointer-left {
+        left: 10px;
+        width: 0;
+        height: 0;
+        border-top: 25px solid transparent;
+        border-bottom: 25px solid transparent;
+        border-left: 35px solid #ff0000;
+        filter: drop-shadow(0 0 15px rgba(255,0,0,0.9));
+    }
+    
+    .slot-pointer-right {
+        right: 10px;
+        width: 0;
+        height: 0;
+        border-top: 25px solid transparent;
+        border-bottom: 25px solid transparent;
+        border-right: 35px solid #ff0000;
+        filter: drop-shadow(0 0 15px rgba(255,0,0,0.9));
+    }
+    
+    @keyframes pointer-pulse {
+        0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+        50% { opacity: 0.6; transform: translateY(-50%) scale(0.9); }
+    }
+    
+    .selection-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, #ff0000, transparent);
+        transform: translateY(-50%);
+        z-index: 9;
+        box-shadow: 0 0 20px rgba(255,0,0,0.8);
+    }
+    
+    /* ===== BOTÓN DE SORTEO ===== */
+    .spin-button {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        margin: 2rem auto;
+        padding: 1.5rem 3rem;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: white;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 15px 40px rgba(238, 90, 111, 0.5);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .spin-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+    
+    .spin-button:hover:not(:disabled)::before {
+        left: 100%;
+    }
+    
+    .spin-button:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 20px 50px rgba(238, 90, 111, 0.7);
+    }
+    
+    .spin-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: scale(1);
+    }
+    
+    .spin-button-icon {
+        margin-right: 0.5rem;
+        animation: spin-icon 2s linear infinite;
+    }
+    
+    @keyframes spin-icon {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* ===== LISTA DE PARTICIPANTES ===== */
+    .participants-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .participants-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .participants-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #2c3e50;
+    }
+    
+    .participants-count {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+    }
+    
+    .participants-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+    
+    .participant-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .participant-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+    
+    .participant-card.winner {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        border: 3px solid #f39c12;
+        animation: winner-celebration 1s ease-in-out infinite;
+        transform: scale(1.02);
+    }
+    
+    @keyframes winner-celebration {
+        0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.6); }
+        50% { box-shadow: 0 0 50px rgba(255,215,0,0.9); }
+    }
+    
+    .participant-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        flex-shrink: 0;
+    }
+    
+    .participant-info {
+        flex-grow: 1;
+    }
+    
+    .participant-ticket {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #667eea;
+        margin-bottom: 0.25rem;
+    }
+    
+    .participant-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+    
+    .participant-email {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .winner-crown {
+        font-size: 2rem;
+        animation: crown-bounce 0.5s ease-in-out infinite;
+    }
+    
+    @keyframes crown-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    /* ===== MODAL DE GANADOR ===== */
+    .winner-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: modal-fade-in 0.5s ease;
+    }
+    
+    @keyframes modal-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .winner-modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 30px;
+        padding: 4rem 3rem;
+        text-align: center;
+        max-width: 600px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        animation: modal-bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        border: 5px solid #ffd700;
+    }
+    
+    @keyframes modal-bounce-in {
+        from { transform: scale(0.3); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    .winner-icon {
+        font-size: 6rem;
+        margin-bottom: 1rem;
+        animation: winner-icon-rotate 1s ease-in-out infinite;
+    }
+    
+    @keyframes winner-icon-rotate {
+        0%, 100% { transform: rotate(-10deg); }
+        50% { transform: rotate(10deg); }
+    }
+    
+    .winner-modal-title {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #ffd700;
+        margin-bottom: 1rem;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+    }
+    
+    .winner-modal-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    
+    .winner-modal-ticket {
+        font-size: 1.5rem;
+        color: rgba(255,255,255,0.9);
+        margin-bottom: 2rem;
+    }
+    
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #ffd700;
+        position: absolute;
+        animation: confetti-fall 3s linear infinite;
+    }
+    
+    @keyframes confetti-fall {
+        to { transform: translateY(100vh) rotate(360deg); }
+    }
+    
+    /* ===== BOTÓN DE ACCIÓN ===== */
+    .action-button {
+        display: inline-block;
+        padding: 1.25rem 3rem;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .action-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(17, 153, 142, 0.6);
+        color: white;
+    }
+    
+    .action-button-secondary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    .action-button-secondary:hover {
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .raffle-title { font-size: 1.8rem; }
+        .roulette-title { font-size: 1.8rem; }
+        .raffle-info-grid { grid-template-columns: 1fr; }
+        .countdown-value { font-size: 2rem; }
+        .slot-ticket-number { font-size: 2rem; }
+        .slot-user-name { font-size: 1rem; }
+        .spin-button { font-size: 1.2rem; padding: 1.2rem 2rem; }
+        .participants-grid { grid-template-columns: 1fr; }
+        .winner-modal-title { font-size: 2rem; }
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="raffle-hero">
+        <div class="raffle-hero-content">
+            <div>
+                {% if raffle.estado == 'activa' %}
+                    <span class="raffle-status-badge status-active">
+                        <i class="bi bi-check-circle me-2"></i>Activa
+                    </span>
+                {% elif raffle.estado == 'completada' %}
+                    <span class="raffle-status-badge status-completed">
+                        <i class="bi bi-trophy me-2"></i>Finalizada
+                    </span>
+                {% elif raffle.estado == 'cancelada' %}
+                    <span class="raffle-status-badge status-cancelled">
+                        <i class="bi bi-x-circle me-2"></i>Cancelada
+                    </span>
+                {% endif %}
+            </div>
+            
+            <h1 class="raffle-title">{{ raffle.titulo }}</h1>
+            <p class="raffle-description">{{ raffle.descripcion }}</p>
+        </div>
+    </div>
+    
+    <!-- Information Grid -->
+    <div class="raffle-info-grid">
+        <div class="info-card">
+            <div class="info-card-icon icon-purple">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <div class="info-card-label">Premio</div>
+            <div class="info-card-value">{{ raffle.premio_principal }}</div>
+            <div class="info-card-subtitle">{{ raffle.descripcion_premio|truncatewords:10 }}</div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-card-icon icon-green">
+                <i class="bi bi-cash-coin"></i>
+            </div>
+            <div class="info-card-label">Precio del Boleto</div>
+            <div class="info-card-value">CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</div>
+            <div class="info-card-subtitle">Por boleto</div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-card-icon icon-orange">
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div class="info-card-label">Fecha de Sorteo</div>
+            <div class="info-card-value">{{ raffle.fecha_sorteo|date:"d/m/Y" }}</div>
+            <div class="info-card-subtitle">{{ raffle.fecha_sorteo|date:"H:i" }} hrs</div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-card-icon icon-blue">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="info-card-label">Organizador</div>
+            <div class="info-card-value">{{ raffle.organizador.nombre }}</div>
+            <div class="info-card-subtitle">{{ raffle.organizador.email }}</div>
+        </div>
+    </div>
+    
+    <!-- Progress Section -->
+    <div class="progress-section">
+        <div class="progress-header">
+            <div class="progress-title">
+                <i class="bi bi-ticket-perforated me-2"></i>
+                Boletos Vendidos
+            </div>
+            <div class="progress-percentage">{{ progress_percentage }}%</div>
+        </div>
+        
+        <div class="custom-progress">
+            <div class="custom-progress-bar" style="width: {{ progress_percentage }}%">
+                <span>{{ sold_tickets }} / {{ raffle.total_boletos }}</span>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between mt-3">
+            <span class="text-muted"><strong>Disponibles:</strong> {{ available_tickets }}</span>
+            <span class="text-muted"><strong>Vendidos:</strong> {{ sold_tickets }}</span>
+        </div>
+    </div>
+    
+    {% if show_roulette %}
+    <!-- Roulette Section -->
+    <div class="roulette-section">
+        <div class="roulette-header">
+            <div class="roulette-title">
+                🎰 SORTEO CON RULETA EN VIVO 🎰
+            </div>
+            <div class="roulette-subtitle">
+                ¡La emoción del sorteo en tiempo real!
+            </div>
+        </div>
+        
+        <!-- Countdown -->
+        <div class="countdown-container">
+            <div class="countdown-label">
+                ⏰ Tiempo restante para el sorteo
+            </div>
+            {% if not is_past_draw_time %}
+            <div class="countdown-timer" id="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="days">00</span>
+                    <span class="countdown-unit">Días</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="hours">00</span>
+                    <span class="countdown-unit">Horas</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="minutes">00</span>
+                    <span class="countdown-unit">Minutos</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="seconds">00</span>
+                    <span class="countdown-unit">Segundos</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="countdown-finished">
+                🎊 ¡SORTEO FINALIZADO! 🎊
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Slot Machine -->
+        <div class="slot-machine-container">
+            <div class="slot-machine-header">
+                <div class="slot-machine-title">
+                    🎲 Ruleta de Sorteo 🎲
+                </div>
+            </div>
+            
+            <div class="slot-window">
+                <div class="slot-pointer-left"></div>
+                <div class="slot-pointer-right"></div>
+                <div class="selection-line"></div>
+                
+                <div class="slot-items-container">
+                    <div class="slot-items" id="slotItems">
+                        {% for ticket in sold_tickets_list %}
+                        <div class="slot-item">
+                            <div class="slot-item-content">
+                                <div class="slot-ticket-number">🎫 #{{ ticket.numero_boleto }}</div>
+                                <div class="slot-user-name">{{ ticket.usuario.nombre }}</div>
+                                <div class="slot-user-email">{{ ticket.usuario.email }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <button class="spin-button" id="spinButton" {% if not is_organizer or raffle.estado != 'activa' %}disabled{% endif %}>
+                <span class="spin-button-icon">🎰</span>
+                Iniciar Sorteo
+            </button>
+        </div>
+        
+        <!-- Participants List -->
+        <div class="participants-section">
+            <div class="participants-header">
+                <h3 class="participants-title">
+                    <i class="bi bi-people-fill me-2"></i>Participantes
+                </h3>
+                <div class="participants-count">
+                    {{ sold_tickets }} boleto{{ sold_tickets|pluralize }} vendido{{ sold_tickets|pluralize }}
+                </div>
+            </div>
+            
+            <div class="participants-grid">
+                {% for ticket in sold_tickets_list %}
+                <div class="participant-card" id="participant-{{ ticket.id }}">
+                    <div class="participant-avatar">
+                        {{ ticket.usuario.nombre|first|upper }}
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-ticket">🎫 Boleto #{{ ticket.numero_boleto }}</div>
+                        <div class="participant-name">{{ ticket.usuario.nombre }}</div>
+                        <div class="participant-email">{{ ticket.usuario.email }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Action Buttons -->
+    <div class="text-center mt-4">
+        {% if raffle.estado == 'activa' and user.is_authenticated %}
+            <a href="{% url 'buy_ticket' raffle.id %}" class="action-button">
+                <i class="bi bi-cart-plus me-2"></i>Comprar Boleto
+            </a>
+        {% endif %}
+        <a href="{% url 'raffle_list' %}" class="action-button action-button-secondary ms-2">
+            <i class="bi bi-arrow-left me-2"></i>Ver Todas las Rifas
+        </a>
+    </div>
+</div>
+
+<!-- Winner Modal -->
+<div class="winner-modal" id="winnerModal">
+    <div class="winner-modal-content">
+        <div class="winner-icon">👑</div>
+        <h2 class="winner-modal-title">¡TENEMOS UN GANADOR!</h2>
+        <div class="winner-modal-name" id="winnerName"></div>
+        <div class="winner-modal-ticket" id="winnerTicket"></div>
+        <button class="action-button" onclick="document.getElementById('winnerModal').style.display='none'">
+            ¡Felicidades!
+        </button>
+    </div>
+</div>
+
+{% if show_roulette %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Countdown Timer
+    const countdownDate = new Date("{{ raffle.fecha_sorteo|date:'c' }}").getTime();
+    
+    const countdownTimer = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = countdownDate - now;
+        
+        if (distance < 0) {
+            clearInterval(countdownTimer);
+            document.getElementById('countdown').innerHTML = '<div class="countdown-finished">🎊 ¡SORTEO FINALIZADO! 🎊</div>';
+            return;
+        }
+        
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        document.getElementById('days').textContent = String(days).padStart(2, '0');
+        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+    }, 1000);
+    
+    // Slot Machine
+    const spinButton = document.getElementById('spinButton');
+    const slotItems = document.getElementById('slotItems');
+    const tickets = {{ sold_tickets_list|safe }};
+    
+    if (spinButton) {
+        spinButton.addEventListener('click', function() {
+            if (tickets.length === 0) {
+                alert('No hay boletos vendidos para sortear');
+                return;
+            }
+            
+            spinButton.disabled = true;
+            spinButton.textContent = '🎰 Sorteando...';
+            
+            // Animation parameters
+            let speed = 50;
+            let spins = 0;
+            const maxSpins = 50;
+            let currentPosition = 0;
+            
+            const spinInterval = setInterval(function() {
+                spins++;
+                currentPosition += 130; // Height of each item + margin
+                slotItems.style.transform = `translateY(-${currentPosition}px)`;
+                
+                // Slow down gradually
+                if (spins > maxSpins * 0.7) {
+                    speed += 10;
+                }
+                
+                if (spins >= maxSpins) {
+                    clearInterval(spinInterval);
+                    selectWinner();
+                }
+            }, speed);
+        });
+    }
+    
+    function selectWinner() {
+        // Select random winner
+        const winnerIndex = Math.floor(Math.random() * tickets.length);
+        const winner = tickets[winnerIndex];
+        
+        // Calculate final position to show winner in center
+        const finalPosition = winnerIndex * 130;
+        slotItems.style.transition = 'transform 2s ease-out';
+        slotItems.style.transform = `translateY(-${finalPosition}px)`;
+        
+        setTimeout(function() {
+            // Highlight winner
+            const participantCard = document.getElementById('participant-' + winner.id);
+            if (participantCard) {
+                participantCard.classList.add('winner');
+                participantCard.innerHTML = '<div class="winner-crown">👑</div>' + participantCard.innerHTML;
+            }
+            
+            // Show modal
+            document.getElementById('winnerName').textContent = winner.usuario__nombre;
+            document.getElementById('winnerTicket').textContent = '🎫 Boleto #' + winner.numero_boleto;
+            document.getElementById('winnerModal').style.display = 'flex';
+            
+            // Create confetti
+            createConfetti();
+            
+            // Send result to server
+            fetch('{% url "select_winner" raffle.id %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ticket_id: winner.id
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      setTimeout(function() {
+                          location.reload();
+                      }, 5000);
+                  }
+              });
+        }, 2000);
+    }
+    
+    function createConfetti() {
+        const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f7b731'];
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

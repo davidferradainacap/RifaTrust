@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Registrarse - Sistema de Rifas{% endblock %}
+
+{% block content %}
+<div class="container-narrow" style="max-width: 500px; margin: 3rem auto;">
+    <div class="card">
+        <div class="card-body" style="padding: 2.5rem;">
+            <div class="text-center mb-4">
+                <h1 style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                    Crear Cuenta
+                </h1>
+                <p style="color: rgba(255, 255, 255, 0.7);">
+                    Únete a nuestro sistema de rifas
+                </p>
+            </div>
+
+            <form method="post" id="registerForm">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre Completo</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                        <div class="form-error">{{ form.nombre.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">Correo Electrónico</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="form-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                    <span id="emailValidation" class="form-help"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_nacimiento.id_for_label }}">Fecha de Nacimiento</label>
+                    {{ form.fecha_nacimiento }}
+                    {% if form.fecha_nacimiento.errors %}
+                        <div class="form-error">{{ form.fecha_nacimiento.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help" style="color: rgb(239, 68, 68);">
+                        <small>Debes ser mayor de 18 años para registrarte</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.telefono.id_for_label }}">Teléfono (Opcional)</label>
+                    {{ form.telefono }}
+                    {% if form.telefono.errors %}
+                        <div class="form-error">{{ form.telefono.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.rol.id_for_label }}">Tipo de Cuenta</label>
+                    {{ form.rol }}
+                    <div class="form-help">
+                        <small>
+                            <strong>Participante:</strong> Compra boletos para rifas<br>
+                            <strong>Organizador:</strong> Crea y gestiona rifas<br>
+                            <strong>Sponsor:</strong> Cuenta especial (requiere validación del administrador)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.password1.id_for_label }}">Contraseña</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="form-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help" id="passwordStrength"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.password2.id_for_label }}">Confirmar Contraseña</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="form-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                    <span id="passwordMatch" class="form-help"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    Crear Cuenta
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <p style="color: rgba(255, 255, 255, 0.7);">
+                    ¿Ya tienes cuenta? <a href="/login/" style="color: var(--primary-light); font-weight: 600;">Iniciar Sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación en tiempo real del email
+document.getElementById('id_email').addEventListener('blur', function() {
+    const email = this.value;
+    const validation = document.getElementById('emailValidation');
+    
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(email)) {
+            validation.textContent = '✓ Email válido';
+            validation.style.color = 'var(--success)';
+        } else {
+            validation.textContent = '✗ Email inválido';
+            validation.style.color = 'var(--error)';
+        }
+    }
+});
+
+// Validación de fortaleza de contraseña
+document.getElementById('id_password1').addEventListener('input', function() {
+    const password = this.value;
+    const strength = document.getElementById('passwordStrength');
+    
+    if (password.length === 0) {
+        strength.textContent = '';
+        return;
+    }
+    
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^a-zA-Z0-9]/.test(password)) score++;
+    
+    if (score <= 1) {
+        strength.textContent = 'Débil';
+        strength.style.color = 'var(--error)';
+    } else if (score <= 2) {
+        strength.textContent = 'Media';
+        strength.style.color = 'var(--warning)';
+    } else {
+        strength.textContent = 'Fuerte';
+        strength.style.color = 'var(--success)';
+    }
+});
+
+// Validación de coincidencia de contraseñas
+document.getElementById('id_password2').addEventListener('input', function() {
+    const password1 = document.getElementById('id_password1').value;
+    const password2 = this.value;
+    const match = document.getElementById('passwordMatch');
+    
+    if (password2.length === 0) {
+        match.textContent = '';
+        return;
+    }
+    
+    if (password1 === password2) {
+        match.textContent = '✓ Las contraseñas coinciden';
+        match.style.color = 'var(--success)';
+    } else {
+        match.textContent = '✗ Las contraseñas no coinciden';
+        match.style.color = 'var(--error)';
+    }
+});
+</script>
+{% endblock %}

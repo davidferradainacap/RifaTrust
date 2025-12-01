@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Acta Digital del Sorteo - {{ raffle.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 2rem; border-radius: 16px 16px 0 0; color: white; text-align: center; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+        <h1 style="font-size: 2rem; font-weight: 900; margin: 0 0 0.5rem 0;">ACTA DIGITAL DE SORTEO</h1>
+        <p style="font-size: 1rem; opacity: 0.9; margin: 0;">Documento Público y Verificable</p>
+    </div>
+
+    <!-- Contenido del Acta -->
+    <div style="background: white; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 0 0 16px 16px;">
+        
+        <!-- Información de la Rifa -->
+        <div style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #667eea; padding-bottom: 0.5rem;">
+                📋 INFORMACIÓN DE LA RIFA
+            </h2>
+            <div style="display: grid; gap: 0.75rem;">
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Título:</span>
+                    <span style="color: #2d3748;">{{ raffle.titulo }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">ID de Rifa:</span>
+                    <span style="color: #2d3748; font-family: monospace; background: #f7fafc; padding: 0.25rem 0.5rem; border-radius: 4px;">{{ raffle.id }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Organizador:</span>
+                    <span style="color: #2d3748;">{{ raffle.organizador.nombre }} ({{ raffle.organizador.email }})</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Fecha programada:</span>
+                    <span style="color: #2d3748;">{{ raffle.fecha_sorteo|date:"d/m/Y H:i:s" }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Premio:</span>
+                    <span style="color: #2d3748;">{{ raffle.premio_principal }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos del Sorteo -->
+        <div style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #48bb78; padding-bottom: 0.5rem;">
+                🎲 DATOS DEL SORTEO
+            </h2>
+            <div style="display: grid; gap: 0.75rem;">
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Fecha y hora:</span>
+                    <span style="color: #2d3748;">{{ winner.fecha_sorteo|date:"d/m/Y H:i:s" }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Timestamp Unix:</span>
+                    <span style="color: #2d3748; font-family: monospace; background: #f7fafc; padding: 0.25rem 0.5rem; border-radius: 4px;">{{ winner.timestamp_sorteo }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Total participantes:</span>
+                    <span style="color: #2d3748; font-weight: 700; font-size: 1.1rem; color: #667eea;">{{ winner.participantes_totales|intcomma }}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 180px 1fr; gap: 1rem;">
+                    <span style="font-weight: 700; color: #4a5568;">Algoritmo:</span>
+                    <span style="color: #2d3748; font-family: monospace; background: #ebf8ff; padding: 0.25rem 0.5rem; border-radius: 4px; color: #2c5282;">{{ winner.algoritmo }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proceso de Selección -->
+        <div style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #ed8936; padding-bottom: 0.5rem;">
+                ⚙️ PROCESO DE SELECCIÓN ALEATORIA
+            </h2>
+            
+            <div style="background: #fffaf0; border-left: 4px solid #ed8936; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="color: #744210; line-height: 1.7; margin: 0;">
+                    El ganador fue seleccionado utilizando un algoritmo de aleatoriedad verificable basado en SHA256. 
+                    Este método garantiza transparencia y permite que cualquier persona pueda verificar de forma independiente 
+                    que el sorteo fue justo y no manipulado.
+                </p>
+            </div>
+
+            <div style="display: grid; gap: 1rem;">
+                <div>
+                    <div style="font-weight: 700; color: #4a5568; margin-bottom: 0.5rem;">1. Semilla Aleatoria (SHA256):</div>
+                    <div style="background: #f7fafc; padding: 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; word-break: break-all; color: #2d3748; border: 1px solid #e2e8f0;">
+                        {{ winner.seed_aleatorio }}
+                    </div>
+                </div>
+                
+                <div>
+                    <div style="font-weight: 700; color: #4a5568; margin-bottom: 0.5rem;">2. Hash de Verificación:</div>
+                    <div style="background: #f7fafc; padding: 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.85rem; word-break: break-all; color: #2d3748; border: 1px solid #e2e8f0;">
+                        {{ winner.hash_verificacion }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultado -->
+        <div style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #f6ad55; padding-bottom: 0.5rem;">
+                🏆 RESULTADO DEL SORTEO
+            </h2>
+            
+            <div style="background: linear-gradient(135deg, #fef5e7, #fdeaa5); padding: 2rem; border-radius: 12px; border: 3px solid #f6ad55; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
+                <div style="font-size: 1.1rem; color: #744210; margin-bottom: 0.5rem; font-weight: 600;">BOLETO GANADOR</div>
+                <div style="font-size: 4rem; font-weight: 900; color: #c05621; margin: 1rem 0;">#{{ winner.boleto.numero_boleto }}</div>
+                <div style="font-size: 1.3rem; font-weight: 700; color: #2d3748; margin-top: 1.5rem;">{{ winner.boleto.usuario.nombre }}</div>
+                <div style="font-size: 0.95rem; color: #744210; margin-top: 0.5rem;">{{ winner.boleto.usuario.email }}</div>
+            </div>
+        </div>
+
+        <!-- Cómo Verificar -->
+        <div style="margin-bottom: 2.5rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #4299e1; padding-bottom: 0.5rem;">
+                ✅ CÓMO VERIFICAR LA ALEATORIEDAD
+            </h2>
+            
+            <div style="background: #ebf8ff; border-left: 4px solid #4299e1; padding: 1.25rem; border-radius: 8px;">
+                <p style="color: #2c5282; line-height: 1.7; margin-bottom: 1rem;">
+                    Cualquier persona puede verificar de forma independiente que este sorteo fue justo siguiendo estos pasos:
+                </p>
+                <ol style="color: #2c5282; line-height: 1.8; margin: 0; padding-left: 1.5rem;">
+                    <li>Obtener la semilla aleatoria (hash SHA256) mostrada arriba</li>
+                    <li>Obtener el timestamp exacto del sorteo</li>
+                    <li>Obtener la lista completa de boletos participantes</li>
+                    <li>Recrear el proceso usando el mismo algoritmo</li>
+                    <li>Comparar el resultado con el boleto ganador</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Lista de Participantes -->
+        <div style="margin-bottom: 2rem;">
+            <h2 style="font-size: 1.3rem; color: #2d3748; margin-bottom: 1rem; border-bottom: 3px solid #9f7aea; padding-bottom: 0.5rem;">
+                👥 LISTA DE PARTICIPANTES ({{ total_participantes }} boletos)
+            </h2>
+            
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: #f7fafc; position: sticky; top: 0;">
+                        <tr>
+                            <th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #4a5568;">Boleto #</th>
+                            <th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #4a5568;">Participante</th>
+                            <th style="padding: 0.75rem; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #4a5568;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in participantes %}
+                        <tr style="{% if ticket.id == winner.boleto.id %}background: linear-gradient(90deg, #fef5e7, #fdeaa5);{% endif %}">
+                            <td style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; font-weight: {% if ticket.id == winner.boleto.id %}900{% else %}600{% endif %}; font-size: 1.1rem; color: {% if ticket.id == winner.boleto.id %}#c05621{% else %}#2d3748{% endif %};">
+                                #{{ ticket.numero_boleto }}
+                            </td>
+                            <td style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; color: #4a5568;">
+                                {{ ticket.usuario.nombre }}
+                            </td>
+                            <td style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                {% if ticket.id == winner.boleto.id %}
+                                <span style="background: #c05621; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700;">🏆 GANADOR</span>
+                                {% else %}
+                                <span style="background: #e2e8f0; color: #4a5568; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Participante</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer del Acta -->
+        <div style="background: #f7fafc; padding: 1.5rem; border-radius: 8px; border: 2px solid #e2e8f0; text-align: center;">
+            <p style="color: #718096; font-size: 0.9rem; margin: 0 0 0.5rem 0;">
+                📅 <strong>Documento generado:</strong> {{ winner.fecha_sorteo|date:"d/m/Y H:i:s" }}
+            </p>
+            <p style="color: #718096; font-size: 0.85rem; margin: 0;">
+                Este acta digital es un documento público y permanente del sorteo realizado.
+            </p>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+            <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-secondary" style="text-decoration: none;">
+                ← Volver a la Rifa
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Imprimir Acta
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+@media print {
+    .navbar, .btn, button {
+        display: none !important;
+    }
+    body {
+        background: white !important;
+    }
+}
+</style>
+{% endblock %}

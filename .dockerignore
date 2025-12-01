@@ -1,0 +1,77 @@
+# Docker ignore file
+# Prevent unnecessary files from being copied to Docker image
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+*.pot
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+DOCS/
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Docker files (no need to copy these into the image)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Node modules (if using frontend tools)
+node_modules/
+npm-debug.log
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Migration backups
+*.bak
+*.backup
+
+# Large files
+*.zip
+*.tar.gz
+*.rar

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Comprar Boleto - {{ raffle.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Comprar Boleto</h1>
+        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.7);">{{ raffle.titulo }}</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Información de la rifa -->
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 600; color: white; margin-bottom: 1.25rem;">Detalles</h2>
+            
+            {% if raffle.imagen %}
+            <div style="border-radius: 10px; overflow: hidden; margin-bottom: 1.25rem;">
+                <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100%; height: auto; display: block;">
+            </div>
+            {% endif %}
+
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Premio Principal</span>
+                <div style="font-size: 1.1rem; font-weight: 600; color: white; margin-top: 0.25rem;">{{ raffle.premio_principal }}</div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Precio por boleto</span>
+                <div style="font-size: 1.35rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem;">CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Disponibles</span>
+                <div style="font-size: 0.95rem; font-weight: 600; color: var(--secondary); margin-top: 0.25rem;">{{ raffle.boletos_disponibles }} de {{ raffle.total_boletos }}</div>
+            </div>
+
+            <div>
+                <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Fecha del sorteo</span>
+                <div style="font-size: 0.95rem; font-weight: 600; color: white; margin-top: 0.25rem;">{{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</div>
+            </div>
+        </div>
+
+        <!-- Formulario de compra -->
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 600; color: white; margin-bottom: 1.25rem;">Tu Compra</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="margin-bottom: 1.25rem;">
+                    <label for="cantidad" style="font-size: 0.9rem; font-weight: 600; color: white; margin-bottom: 0.5rem; display: block;">Cantidad de boletos</label>
+                    <input 
+                        type="number" 
+                        id="cantidad" 
+                        name="cantidad" 
+                        class="form-control" 
+                        min="1" 
+                        max="{% if raffle.permite_multiples_boletos %}{{ raffle.max_boletos_por_usuario }}{% else %}1{% endif %}" 
+                        value="1" 
+                        required
+                        style="font-size: 1rem; padding: 0.7rem;"
+                    >
+                    {% if raffle.permite_multiples_boletos %}
+                    <small style="color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.4rem; display: block;">
+                        Máximo {{ raffle.max_boletos_por_usuario }} boletos
+                    </small>
+                    {% endif %}
+                </div>
+
+                <div style="background-color: rgba(15, 23, 42, 0.4); padding: 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; border: 1px solid rgba(99, 102, 241, 0.1);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">Precio por boleto</span>
+                        <span style="font-weight: 600; color: white; font-size: 0.9rem;">CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">Cantidad</span>
+                        <span id="cantidad-display" style="font-weight: 600; color: white; font-size: 0.9rem;">1</span>
+                    </div>
+                    <hr style="margin: 0.75rem 0; border: none; border-top: 1px solid rgba(99, 102, 241, 0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 1.1rem; font-weight: 700; color: white;">Total</span>
+                        <span id="total-display" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.875rem; margin-bottom: 0.75rem;">
+                    Continuar al pago
+                </button>
+
+                <a href="/raffles/{{ raffle.id }}/" class="btn btn-secondary" style="width: 100%; font-size: 0.95rem; padding: 0.75rem; text-align: center; display: block; text-decoration: none;">
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const precioBoleto = parseFloat('{{ raffle.precio_boleto }}');
+    const cantidadInput = document.getElementById('cantidad');
+    
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', function() {
+            const cantidad = parseInt(this.value) || 1;
+            const total = cantidad * precioBoleto;
+            
+            const cantidadDisplay = document.getElementById('cantidad-display');
+            const totalDisplay = document.getElementById('total-display');
+            
+            if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
+            if (totalDisplay) totalDisplay.textContent = 'CLP$' + Math.round(total).toLocaleString('es-CL');
+        });
+    }
+})();
+</script>
+{% endblock %}

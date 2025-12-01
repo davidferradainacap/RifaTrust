@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Rifa{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+    <div class="dashboard-header" style="margin-bottom: 2rem;">
+        <div>
+            <h1 class="dashboard-title">Editar Rifa</h1>
+            <p class="dashboard-subtitle">{{ raffle.titulo }}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Errores generales del formulario -->
+                {% if form.non_field_errors %}
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: start; gap: 0.75rem;">
+                        <div style="font-size: 1.5rem;">⚠️</div>
+                        <div>
+                            <div style="font-weight: 700; color: #ef4444; font-size: 1.1rem; margin-bottom: 0.5rem;">Error de Validación</div>
+                            {% for error in form.non_field_errors %}
+                            <div style="color: #fca5a5; line-height: 1.6;">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="{{ form.titulo.id_for_label }}" style="font-weight: 600; color: white;">Título de la Rifa</label>
+                    {{ form.titulo }}
+                    {% if form.titulo.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.titulo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.descripcion.id_for_label }}" style="font-weight: 600; color: white;">Descripción</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.descripcion.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.precio_boleto.id_for_label }}" style="font-weight: 600; color: white;">Precio por Boleto</label>
+                        {{ form.precio_boleto }}
+                        {% if form.precio_boleto.errors %}
+                            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.precio_boleto.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.total_boletos.id_for_label }}" style="font-weight: 600; color: white;">Total de Boletos</label>
+                        {{ form.total_boletos }}
+                        {% if form.total_boletos.errors %}
+                            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.total_boletos.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Calculadora de Ingresos -->
+                <div id="calculadora-ingresos" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; display: none;">
+                    <div style="font-size: 1rem; font-weight: 600; color: white; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>💡</span>
+                        <span>Análisis de Rentabilidad</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Valor del Premio</div>
+                            <div id="calc-valor-premio" style="font-size: 1.3rem; font-weight: 700; color: #fbbf24;">$0</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Ingreso Total</div>
+                            <div id="calc-ingreso-total" style="font-size: 1.3rem; font-weight: 700; color: #60a5fa;">$0</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">Mínimo Requerido</div>
+                            <div id="calc-minimo-requerido" style="font-size: 1.3rem; font-weight: 700; color: #f87171;">$0</div>
+                        </div>
+                    </div>
+                    <div id="calc-mensaje" style="margin-top: 1rem; padding: 0.75rem; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.9rem;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.premio_principal.id_for_label }}" style="font-weight: 600; color: white;">Premio Principal</label>
+                    {{ form.premio_principal }}
+                    {% if form.premio_principal.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.premio_principal.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.valor_premio.id_for_label }}" style="font-weight: 600; color: white;">💰 Valor Estimado del Premio</label>
+                    {{ form.valor_premio }}
+                    <small style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.875rem;">
+                        Ingresa el valor aproximado del premio en CLP (Ej: 500000)
+                    </small>
+                    {% if form.valor_premio.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.valor_premio.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.documento_legal.id_for_label }}" style="font-weight: 600; color: white;">📄 Documento de Autorización Legal <span style="color: #ff6b6b;">*</span></label>
+                    {% if raffle.documento_legal %}
+                    <div style="background: rgba(72, 187, 120, 0.1); border-left: 3px solid #48bb78; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #48bb78;">
+                            <span>✅</span>
+                            <span style="font-weight: 600;">Documento ya subido:</span>
+                            <a href="{{ raffle.documento_legal.url }}" target="_blank" style="color: var(--primary-light); text-decoration: underline;">Ver documento</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="background: rgba(255, 107, 107, 0.1); border-left: 3px solid #ff6b6b; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <span style="color: #ff6b6b; font-weight: 600;">⚠️ No has subido ningún documento aún</span>
+                    </div>
+                    {% endif %}
+                    {{ form.documento_legal }}
+                    <small style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.875rem;">
+                        Formatos aceptados: PDF, Word (.doc, .docx) o imágenes (JPG, PNG). Máximo 10MB.
+                        {% if raffle.documento_legal %}Subir un nuevo archivo reemplazará el actual.{% endif %}
+                    </small>
+                    {% if form.documento_legal.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.documento_legal.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.fecha_inicio.id_for_label }}" style="font-weight: 600; color: white;">Fecha de Inicio</label>
+                        {{ form.fecha_inicio }}
+                        {% if form.fecha_inicio.errors %}
+                            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.fecha_inicio.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.fecha_sorteo.id_for_label }}" style="font-weight: 600; color: white;">Fecha del Sorteo</label>
+                        {{ form.fecha_sorteo }}
+                        {% if form.fecha_sorteo.errors %}
+                            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.fecha_sorteo.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.imagen.id_for_label }}" style="font-weight: 600; color: white;">Imagen de la Rifa</label>
+                    {% if raffle.imagen %}
+                    <div style="margin-bottom: 1rem;">
+                        <img src="{{ raffle.imagen.url }}" alt="Imagen actual" style="max-width: 200px; border-radius: 8px;">
+                        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.5rem;">Imagen actual</p>
+                    </div>
+                    {% endif %}
+                    {{ form.imagen }}
+                    {% if form.imagen.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.imagen.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.estado.id_for_label }}" style="font-weight: 600; color: white; font-size: 1.1rem; margin-bottom: 1rem; display: block;">Estado <span style="color: #ff6b6b;">*</span></label>
+                    
+                    {% if raffle.estado == 'aprobada' %}
+                    <!-- Mensaje de aprobación -->
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="font-size: 3rem;">✅</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.2rem; color: #10b981; margin-bottom: 0.5rem;">¡Rifa Aprobada!</div>
+                                <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem;">
+                                    Tu rifa ha sido revisada y aprobada por el equipo administrativo. 
+                                    {% if raffle.comentarios_revision %}
+                                    <br><strong>Comentarios:</strong> {{ raffle.comentarios_revision }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="{{ form.estado.name }}" value="aprobada" {% if form.estado.value == 'aprobada' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
+                            <div class="estado-option-edit" style="background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">✅</div>
+                                <div style="font-weight: 700; font-size: 1.1rem; color: white; margin-bottom: 0.5rem;">Mantener Aprobada</div>
+                                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Aún oculta al público</div>
+                            </div>
+                        </label>
+                        
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="{{ form.estado.name }}" value="activa" {% if form.estado.value == 'activa' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
+                            <div class="estado-option-edit" style="background: rgba(34, 197, 94, 0.15); border: 2px solid rgba(34, 197, 94, 0.5); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🚀</div>
+                                <div style="font-weight: 700; font-size: 1.1rem; color: #10b981; margin-bottom: 0.5rem;">Activar Rifa</div>
+                                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); line-height: 1.4;">Publicar para la venta de boletos</div>
+                            </div>
+                        </label>
+                    </div>
+                    {% else %}
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="{{ form.estado.name }}" value="borrador" {% if form.estado.value == 'borrador' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
+                            <div class="estado-option-edit" style="background: rgba(156, 163, 175, 0.1); border: 2px solid rgba(156, 163, 175, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📝</div>
+                                <div style="font-weight: 700; font-size: 1.1rem; color: white; margin-bottom: 0.5rem;">Borrador</div>
+                                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Oculta al público</div>
+                            </div>
+                        </label>
+                        
+                        <label style="cursor: pointer;">
+                            <input type="radio" name="{{ form.estado.name }}" value="pendiente_aprobacion" {% if form.estado.value == 'pendiente_aprobacion' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
+                            <div class="estado-option-edit" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
+                                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+                                <div style="font-weight: 700; font-size: 1.1rem; color: white; margin-bottom: 0.5rem;">Solicitar Aprobación</div>
+                                <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Enviar a revisión administrativa</div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.estado.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.estado.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <style>
+                    .estado-radio-edit:checked + .estado-option-edit {
+                        border-color: var(--primary) !important;
+                        background: rgba(99, 102, 241, 0.15) !important;
+                        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                        transform: scale(1.02);
+                    }
+                    .estado-option-edit:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    }
+                </style>
+
+                <div class="form-group">
+                    {{ form.permite_multiples_boletos }}
+                    <label for="{{ form.permite_multiples_boletos.id_for_label }}" style="margin-left: 0.5rem; color: white;">Permitir compra de múltiples boletos</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.max_boletos_por_usuario.id_for_label }}" style="font-weight: 600; color: white;">Máximo de Boletos por Usuario</label>
+                    {{ form.max_boletos_por_usuario }}
+                    {% if form.max_boletos_por_usuario.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.max_boletos_por_usuario.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Cambios</button>
+                    <a href="/raffles/organizer/dashboard/" class="btn btn-secondary" style="flex: 1; text-align: center;">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const valorPremioInput = document.querySelector('input[name="valor_premio"]');
+    const precioBoletoInput = document.querySelector('input[name="precio_boleto"]');
+    const totalBoletosInput = document.querySelector('input[name="total_boletos"]');
+    const calculadora = document.getElementById('calculadora-ingresos');
+    const form = document.querySelector('form');
+    
+    function formatearPesos(valor) {
+        return new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0
+        }).format(valor);
+    }
+    
+    function actualizarCalculadora() {
+        const valorPremio = parseFloat(valorPremioInput.value) || 0;
+        const precioBoleto = parseFloat(precioBoletoInput.value) || 0;
+        const totalBoletos = parseInt(totalBoletosInput.value) || 0;
+        
+        if (valorPremio > 0 && precioBoleto > 0 && totalBoletos > 0) {
+            calculadora.style.display = 'block';
+            
+            const ingresoTotal = precioBoleto * totalBoletos;
+            const minimoRequerido = valorPremio * 2;
+            
+            document.getElementById('calc-valor-premio').textContent = formatearPesos(valorPremio);
+            document.getElementById('calc-ingreso-total').textContent = formatearPesos(ingresoTotal);
+            document.getElementById('calc-minimo-requerido').textContent = formatearPesos(minimoRequerido);
+            
+            const mensaje = document.getElementById('calc-mensaje');
+            
+            if (totalBoletos < 100) {
+                mensaje.style.background = 'rgba(239, 68, 68, 0.2)';
+                mensaje.style.color = '#f87171';
+                mensaje.innerHTML = `❌ Mínimo requerido: 100 boletos. Actualmente tienes ${totalBoletos}.`;
+            } else if (ingresoTotal >= minimoRequerido) {
+                mensaje.style.background = 'rgba(34, 197, 94, 0.2)';
+                mensaje.style.color = '#4ade80';
+                mensaje.innerHTML = '✅ ¡Perfecto! La rifa cumple con todos los requisitos.';
+            } else {
+                const boletosMinimos = Math.max(100, Math.ceil(minimoRequerido / precioBoleto));
+                mensaje.style.background = 'rgba(239, 68, 68, 0.2)';
+                mensaje.style.color = '#f87171';
+                mensaje.innerHTML = `❌ Necesitas ${boletosMinimos.toLocaleString('es-CL')} boletos o aumentar el precio para cumplir el mínimo.`;
+            }
+        } else {
+            calculadora.style.display = 'none';
+        }
+    }
+    
+    if (valorPremioInput && precioBoletoInput && totalBoletosInput) {
+        valorPremioInput.addEventListener('input', actualizarCalculadora);
+        precioBoletoInput.addEventListener('input', actualizarCalculadora);
+        totalBoletosInput.addEventListener('input', actualizarCalculadora);
+        
+        // Ejecutar al cargar si hay valores
+        actualizarCalculadora();
+    }
+    
+    // Detectar cuando se selecciona "activa" para rifas aprobadas
+    const estadoRadios = document.querySelectorAll('input[name="estado"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const estadoSeleccionado = document.querySelector('input[name="estado"]:checked');
+            if (estadoSeleccionado && estadoSeleccionado.value === 'activa') {
+                // Agregar campo oculto para indicar activación
+                const activarInput = document.createElement('input');
+                activarInput.type = 'hidden';
+                activarInput.name = 'activar';
+                activarInput.value = 'true';
+                form.appendChild(activarInput);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,777 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ raffle.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===================================================================
+       ESTILOS PROFESIONALES PARA RULETA TIPO CASINO
+       ================================================================ */
+    
+    .countdown-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 20px;
+        margin: 2rem 0;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        color: white;
+    }
+    
+    .countdown-timer {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow: 0 0 20px rgba(255,215,0,0.8);
+        font-family: 'Arial Black', sans-serif;
+        letter-spacing: 3px;
+    }
+    
+    /* Ruleta Circular Profesional estilo Casino */
+    .casino-roulette-container {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        padding: 3rem 2rem;
+        border-radius: 30px;
+        margin: 3rem 0;
+        box-shadow: 
+            0 20px 80px rgba(0,0,0,0.6),
+            inset 0 0 100px rgba(255,215,0,0.1);
+        border: 5px solid #ffd700;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .casino-roulette-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
+        animation: rotate-glow 30s linear infinite;
+    }
+    
+    @keyframes rotate-glow {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .roulette-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,0,0,0.5);
+        margin-bottom: 2rem;
+        animation: pulse-glow 2s ease-in-out infinite;
+        position: relative;
+        z-index: 10;
+    }
+    
+    @keyframes pulse-glow {
+        0%, 100% { 
+            text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,0,0,0.5);
+            transform: scale(1);
+        }
+        50% { 
+            text-shadow: 0 0 50px rgba(255,215,0,1), 0 0 90px rgba(255,0,0,0.8);
+            transform: scale(1.02);
+        }
+    }
+    
+    /* Canvas Ruleta */
+    .roulette-canvas-wrapper {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    #rouletteCanvas {
+        display: block;
+        margin: 0 auto;
+        border-radius: 50%;
+        box-shadow: 
+            0 0 60px rgba(255,215,0,0.6),
+            0 0 120px rgba(255,0,0,0.4),
+            inset 0 0 100px rgba(0,0,0,0.8);
+        position: relative;
+        z-index: 5;
+    }
+    
+    /* Indicador Central (Flecha) */
+    .roulette-pointer {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 30px solid transparent;
+        border-right: 30px solid transparent;
+        border-top: 60px solid #ff0000;
+        filter: drop-shadow(0 5px 20px rgba(255,0,0,1));
+        z-index: 100;
+        animation: pointer-pulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes pointer-pulse {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        50% { transform: translateX(-50%) scale(1.1); }
+    }
+    
+    /* Centro dorado */
+    .roulette-center-circle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, #ffd700 0%, #ffed4e 50%, #ffa500 100%);
+        border-radius: 50%;
+        border: 5px solid #fff;
+        box-shadow: 
+            0 0 40px rgba(255,215,0,1),
+            inset 0 0 30px rgba(255,255,255,0.5);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        animation: center-spin 10s linear infinite;
+    }
+    
+    @keyframes center-spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* Status y Controles */
+    .roulette-status {
+        text-align: center;
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        border: 2px solid rgba(255,215,0,0.3);
+        position: relative;
+        z-index: 10;
+    }
+    
+    .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    
+    .status-icon {
+        font-size: 2rem;
+        margin-right: 0.5rem;
+        display: inline-block;
+        animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* Winner Announcement */
+    .winner-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .winner-modal.show {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .winner-content {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+        padding: 4rem;
+        border-radius: 30px;
+        text-align: center;
+        box-shadow: 0 30px 100px rgba(255,215,0,0.8);
+        animation: scaleIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 600px;
+        border: 8px solid #fff;
+    }
+    
+    @keyframes scaleIn {
+        from { 
+            transform: scale(0) rotate(-180deg);
+            opacity: 0;
+        }
+        to { 
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+    }
+    
+    .winner-content h1 {
+        font-size: 4rem;
+        color: #c00;
+        margin-bottom: 2rem;
+        text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        animation: winner-bounce 1s ease-in-out infinite;
+    }
+    
+    @keyframes winner-bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .winner-info {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin: 2rem 0;
+        box-shadow: inset 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .winner-ticket {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #c00;
+    }
+    
+    .winner-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-top: 1rem;
+    }
+    
+    /* Confetti Animation */
+    .confetti {
+        position: fixed;
+        width: 15px;
+        height: 15px;
+        background: #f00;
+        position: absolute;
+        animation: confetti-fall 4s linear forwards;
+    }
+    
+    @keyframes confetti-fall {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+    
+    /* Participants List */
+    .participants-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        margin-top: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .participant-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .participant-card:hover {
+        transform: translateX(10px);
+        border-color: #667eea;
+        box-shadow: 0 5px 20px rgba(102,126,234,0.3);
+    }
+    
+    .participant-card.winner-participant {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        border: 3px solid #c00;
+        animation: winner-glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes winner-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(255,215,0,1), 0 0 60px rgba(255,0,0,0.5);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+    
+    <!-- Header con Imagen -->
+    <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem; align-items: start;">
+        <div>
+            <div style="border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); position: relative; aspect-ratio: 16/9;">
+                {% if raffle.imagen %}
+                    <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                {% else %}
+                    <div style="width: 100%; height: 100%; background: rgba(99, 102, 241, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 6rem; opacity: 0.3;">🎟️</span>
+                    </div>
+                {% endif %}
+                <div style="position: absolute; top: 1rem; right: 1rem;">
+                    <span class="badge badge-success" style="font-size: 0.9rem; padding: 0.5rem 1rem;">{{ raffle.estado|title }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+            <h1 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 1.5rem; color: #1a202c;">{{ raffle.titulo }}</h1>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="bi bi-trophy-fill" style="color: #ffd700; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">Premio</div>
+                        <div style="font-weight: 600; color: #2d3748;">{{ raffle.premio_principal }}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="bi bi-calendar-event" style="color: #667eea; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">Sorteo</div>
+                        <div style="font-weight: 600; color: #2d3748;">{{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="bi bi-cash-coin" style="color: #48bb78; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">Precio</div>
+                        <div style="font-weight: 700; color: #48bb78; font-size: 1.5rem;">${{ raffle.precio_boleto|intcomma }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.875rem; color: #4a5568;">Boletos vendidos</span>
+                    <span style="font-weight: 600; color: #2d3748;">{{ sold_tickets }} / {{ raffle.total_boletos }}</span>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 9999px; height: 12px; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); height: 100%; width: {{ progress_percentage }}%; transition: width 0.5s ease;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COUNTDOWN TIMER (SIEMPRE VISIBLE) -->
+    <div class="countdown-section" id="countdown-section">
+        <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">⏰ Tiempo restante para el sorteo</div>
+        <div class="countdown-timer" id="countdown-timer">Cargando...</div>
+    </div>
+
+    <!-- RULETA CASINO (Solo si hay tickets vendidos) -->
+    {% if show_roulette %}
+    <div class="casino-roulette-container" id="casino-roulette" data-tickets='{{ tickets_json|safe }}'>
+        <h2 class="roulette-title">🎰 RULETA DE LA FORTUNA 🎰</h2>
+        
+        <div class="roulette-canvas-wrapper">
+            <div class="roulette-pointer"></div>
+            <canvas id="rouletteCanvas" width="500" height="500"></canvas>
+            <div class="roulette-center-circle">🎯</div>
+        </div>
+        
+        <div class="roulette-status">
+            <span class="status-icon" id="statusIcon">⏳</span>
+            <span class="status-text" id="statusText">Esperando inicio del sorteo...</span>
+        </div>
+    </div>
+    
+    <!-- Winner Modal -->
+    <div class="winner-modal" id="winnerModal">
+        <div class="winner-content">
+            <h1>🎉 ¡GANADOR! 🎉</h1>
+            <div class="winner-info">
+                <div class="winner-ticket">Boleto #<span id="winnerTicket">0</span></div>
+                <div class="winner-name" id="winnerName">Nombre</div>
+            </div>
+            <button onclick="document.getElementById('winnerModal').classList.remove('show')" 
+                    style="background: #c00; color: white; border: none; padding: 1rem 3rem; border-radius: 50px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 30px rgba(192,0,0,0.4); transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.transform='scale(1)'">
+                Cerrar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Participants List -->
+    <div class="participants-section">
+        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: #1a202c;">
+            👥 Participantes ({{ sold_tickets }} boletos vendidos)
+        </h3>
+        <div id="participants-list">
+            {% for ticket in tickets %}
+            <div class="participant-card" data-ticket-id="{{ ticket.id }}">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem;">
+                        {{ ticket.numero_boleto }}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #2d3748;">{{ ticket.usuario.nombre }}</div>
+                        <div style="font-size: 0.875rem; color: #718096;">{{ ticket.usuario.email }}</div>
+                    </div>
+                </div>
+                <div style="background: #48bb78; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
+                    PAGADO
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Descripción -->
+    <div style="background: white; padding: 2rem; border-radius: 16px; margin-top: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; color: #1a202c;">📝 Descripción</h3>
+        <p style="color: #4a5568; line-height: 1.8;">{{ raffle.descripcion|default:"Sin descripción disponible." }}</p>
+    </div>
+
+</div>
+
+<!-- ===================================================================
+     JAVASCRIPT: SISTEMA COMPLETO DE COUNTDOWN Y RULETA
+     ================================================================ -->
+<script>
+(function() {
+    'use strict';
+    
+    console.log('🚀 Sistema de Ruleta Casino v2.0 Iniciando...');
+    
+    // ══════════════════════════════════════════════════════════════
+    // CONFIGURACIÓN GLOBAL
+    // ══════════════════════════════════════════════════════════════
+    const RAFFLE_DATE = new Date({{ fecha_sorteo_timestamp }});
+    const RAFFLE_ID = {{ raffle.id }};
+    const CSRF_TOKEN = '{{ csrf_token }}';
+    
+    let sorteoRealizado = false;
+    let isSpinning = false;
+    let winnerData = null;
+    
+    console.log('📅 Configuración:');
+    console.log('   • Fecha sorteo:', RAFFLE_DATE.toLocaleString('es-CL'));
+    console.log('   • Tiempo restante:', Math.floor((RAFFLE_DATE - new Date()) / 1000), 'segundos');
+    
+    // ══════════════════════════════════════════════════════════════
+    // COUNTDOWN TIMER
+    // ══════════════════════════════════════════════════════════════
+    function updateCountdown() {
+        const el = document.getElementById('countdown-timer');
+        if (!el) return;
+        
+        const now = new Date();
+        const diff = RAFFLE_DATE - now;
+        
+        if (diff <= 0) {
+            if (!sorteoRealizado) {
+                el.innerHTML = '¡INICIANDO SORTEO! 🎊';
+                sorteoRealizado = true;
+                setTimeout(iniciarSorteoAutomatico, 2000);
+            } else {
+                el.innerHTML = '¡SORTEO FINALIZADO! 🏆';
+            }
+            return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        let time = '';
+        if (days > 0) time += `${days}d `;
+        if (hours > 0 || days > 0) time += `${hours}h `;
+        if (minutes > 0 || hours > 0 || days > 0) time += `${minutes}m `;
+        time += `${seconds}s`;
+        
+        el.innerHTML = time;
+    }
+    
+    // Iniciar countdown
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    
+    // ══════════════════════════════════════════════════════════════
+    // RULETA CANVAS
+    // ══════════════════════════════════════════════════════════════
+    {% if show_roulette %}
+    
+    const rouletteContainer = document.getElementById('casino-roulette');
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let tickets = [];
+    try {
+        tickets = JSON.parse(rouletteContainer.getAttribute('data-tickets') || '[]');
+        console.log(`✅ ${tickets.length} tickets cargados`);
+    } catch (e) {
+        console.error('❌ Error cargando tickets:', e);
+    }
+    
+    if (tickets.length === 0) {
+        console.warn('⚠️ No hay tickets para la ruleta');
+    }
+    
+    let currentRotation = 0;
+    let targetRotation = 0;
+    let spinVelocity = 0;
+    let isAnimating = false;
+    
+    // Colores vibrantes para la ruleta
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+    
+    // Dibujar la ruleta
+    function drawRoulette() {
+        if (tickets.length === 0) return;
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 220;
+        const anglePerSegment = (2 * Math.PI) / tickets.length;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Dibujar segmentos
+        tickets.forEach((ticket, index) => {
+            const startAngle = currentRotation + (anglePerSegment * index);
+            const endAngle = startAngle + anglePerSegment;
+            
+            // Segmento
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.lineTo(centerX, centerY);
+            ctx.fillStyle = colors[index % colors.length];
+            ctx.fill();
+            
+            // Borde
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Texto
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + anglePerSegment / 2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText('#' + ticket.numero_boleto, radius - 60, 0);
+            ctx.font = '12px Arial';
+            ctx.fillText(ticket.nombre.substring(0, 15), radius - 60, 20);
+            ctx.restore();
+        });
+        
+        // Círculo central
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 50, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffd700';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+    }
+    
+    // Animación de la ruleta
+    function animate() {
+        if (isAnimating) {
+            currentRotation += spinVelocity;
+            spinVelocity *= 0.98; // Desaceleración
+            
+            if (Math.abs(spinVelocity) < 0.001) {
+                isAnimating = false;
+                spinVelocity = 0;
+                currentRotation = targetRotation;
+                announceWinner();
+            }
+            
+            drawRoulette();
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    // Girar la ruleta al ganador
+    function spinToWinner(winner) {
+        if (isSpinning || tickets.length === 0) return;
+        isSpinning = true;
+        isAnimating = true;
+        
+        console.log('🎰 Girando ruleta...');
+        
+        const winnerIndex = tickets.findIndex(t => t.id === winner.id);
+        if (winnerIndex === -1) {
+            console.error('❌ Ganador no encontrado');
+            return;
+        }
+        
+        const anglePerSegment = (2 * Math.PI) / tickets.length;
+        const winnerAngle = anglePerSegment * winnerIndex;
+        
+        // Calcular rotación objetivo (varias vueltas + posición del ganador en la flecha superior)
+        const spins = 5 + Math.random() * 3; // 5-8 vueltas completas
+        targetRotation = (spins * 2 * Math.PI) - winnerAngle - (anglePerSegment / 2);
+        
+        spinVelocity = 0.5; // Velocidad inicial
+        
+        updateStatus('🎰', 'Girando la ruleta...');
+        
+        animate();
+    }
+    
+    // Anunciar ganador
+    function announceWinner() {
+        if (!winnerData) return;
+        
+        console.log('🏆 Anunciando ganador:', winnerData);
+        
+        updateStatus('🎉', `¡GANADOR: #${winnerData.numero_boleto} - ${winnerData.nombre}!`);
+        
+        // Resaltar participant card
+        const card = document.querySelector(`[data-ticket-id="${winnerData.id}"]`);
+        if (card) {
+            card.classList.add('winner-participant');
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Mostrar modal
+        setTimeout(() => {
+            document.getElementById('winnerTicket').textContent = winnerData.numero_boleto;
+            document.getElementById('winnerName').textContent = winnerData.nombre;
+            document.getElementById('winnerModal').classList.add('show');
+            createConfetti();
+        }, 1500);
+        
+        isSpinning = false;
+    }
+    
+    // Actualizar status
+    function updateStatus(icon, text) {
+        const iconEl = document.getElementById('statusIcon');
+        const textEl = document.getElementById('statusText');
+        if (iconEl) iconEl.textContent = icon;
+        if (textEl) textEl.textContent = text;
+    }
+    
+    // Crear confetti
+    function createConfetti() {
+        for (let i = 0; i < 100; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = confetti.style.width;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }, i * 30);
+        }
+    }
+    
+    // Iniciar sorteo automático
+    function iniciarSorteoAutomatico() {
+        if (isSpinning) return;
+        
+        console.log('🎲 Iniciando sorteo automático...');
+        updateStatus('🎲', 'Seleccionando ganador...');
+        
+        fetch(`/raffles/${RAFFLE_ID}/select-winner/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                winnerData = data.winner;
+                console.log('✅ Ganador seleccionado:', winnerData);
+                setTimeout(() => spinToWinner(winnerData), 500);
+            } else {
+                console.error('❌ Error:', data.error);
+                updateStatus('❌', 'Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error de conexión:', error);
+            updateStatus('❌', 'Error de conexión');
+        });
+    }
+    
+    // Exponer función globalmente
+    window.iniciarSorteoAutomatico = iniciarSorteoAutomatico;
+    
+    // Verificar si ya hay ganador
+    fetch(`/raffles/${RAFFLE_ID}/check-winner/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_winner) {
+                winnerData = data.winner;
+                sorteoRealizado = true;
+                console.log('🏆 Ganador existente detectado');
+                updateStatus('🏆', `GANADOR: #${winnerData.numero_boleto} - ${winnerData.nombre}`);
+                
+                // Resaltar en la lista
+                const card = document.querySelector(`[data-ticket-id="${winnerData.id}"]`);
+                if (card) card.classList.add('winner-participant');
+            } else {
+                // Dibujar ruleta inicial
+                drawRoulette();
+            }
+        });
+    
+    // Sincronización multi-cliente
+    setInterval(() => {
+        if (!sorteoRealizado && new Date() >= RAFFLE_DATE) {
+            fetch(`/raffles/${RAFFLE_ID}/check-winner/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.has_winner && !winnerData) {
+                        winnerData = data.winner;
+                        sorteoRealizado = true;
+                        spinToWinner(winnerData);
+                    }
+                });
+        }
+    }, 3000);
+    
+    {% endif %}
+    
+    console.log('✅ Sistema inicializado correctamente');
+    
+})();
+</script>
+
+{% endblock %}

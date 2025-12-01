@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Invitación{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1.5rem;">
+    
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        {% if request.user.rol == 'sponsor' %}
+        <a href="{% url 'raffles:sponsor_dashboard' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem; font-size: 0.95rem;">
+        {% else %}
+        <a href="{% url 'raffles:organizer_dashboard' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary); text-decoration: none; margin-bottom: 1rem; font-size: 0.95rem;">
+        {% endif %}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver al dashboard
+        </a>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+                    📧 Invitación de Patrocinio
+                </h1>
+                <p style="font-size: 1.05rem; color: rgba(255, 255, 255, 0.6);">
+                    Detalles de la invitación enviada por el organizador
+                </p>
+            </div>
+            
+            <!-- Badge de Estado -->
+            {% if solicitud.estado == 'pendiente' %}
+            <span style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(251, 191, 36, 0.3);">
+                ⏳ Pendiente
+            </span>
+            {% elif solicitud.estado == 'aceptada' %}
+            <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(34, 197, 94, 0.3);">
+                ✅ Aceptada
+            </span>
+            {% elif solicitud.estado == 'rechazada' %}
+            <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">
+                ❌ Rechazada
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información de la Rifa -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">🎯 Rifa a Patrocinar</h2>
+        
+        <div style="display: flex; gap: 1.5rem; align-items: start;">
+            {% if solicitud.rifa.imagen %}
+            <img src="{{ solicitud.rifa.imagen.url }}" alt="{{ solicitud.rifa.titulo }}" 
+                 style="width: 150px; height: 150px; object-fit: cover; border-radius: 10px; flex-shrink: 0;">
+            {% else %}
+            <div style="width: 150px; height: 150px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; flex-shrink: 0;">
+                🎟️
+            </div>
+            {% endif %}
+            
+            <div style="flex: 1;">
+                <h3 style="font-size: 1.3rem; font-weight: 600; color: white; margin-bottom: 0.75rem;">
+                    {{ solicitud.rifa.titulo }}
+                </h3>
+                <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 1rem; line-height: 1.6;">
+                    {{ solicitud.rifa.descripcion|truncatewords:30 }}
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 0.75rem;">
+                        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">💰 Precio por Boleto</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #22c55e;">${{ solicitud.rifa.precio_boleto }}</div>
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 0.75rem;">
+                        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">🎫 Total Boletos</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: white;">{{ solicitud.rifa.total_boletos }}</div>
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 0.75rem;">
+                        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.25rem;">📅 Fecha Sorteo</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: white;">{{ solicitud.rifa.fecha_sorteo|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Organizador -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">👤 Organizador</h2>
+        
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0;">
+                👔
+            </div>
+            <div>
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.25rem;">{{ solicitud.organizador.nombre }}</h3>
+                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6);">{{ solicitud.organizador.email }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje de Invitación -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1rem;">💬 Mensaje del Organizador</h2>
+        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.8); line-height: 1.7; white-space: pre-wrap;">{{ solicitud.mensaje_invitacion }}</p>
+    </div>
+
+    <!-- Beneficios Ofrecidos -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1rem;">✨ Beneficios para ti como Sponsor</h2>
+        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.8); line-height: 1.7; white-space: pre-wrap;">{{ solicitud.beneficios_ofrecidos }}</p>
+    </div>
+
+    <!-- Propuesta del Sponsor (si aceptó) -->
+    {% if solicitud.estado == 'aceptada' and solicitud.propuesta_premio %}
+    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: #22c55e; margin-bottom: 1.5rem;">🎁 Tu Propuesta Aceptada</h2>
+        
+        <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem;">Premio Propuesto:</div>
+            <div style="font-size: 1.05rem; color: white; font-weight: 500;">{{ solicitud.propuesta_premio }}</div>
+        </div>
+        
+        {% if solicitud.propuesta_valor %}
+        <div>
+            <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem;">Valor del Premio:</div>
+            <div style="font-size: 1.3rem; color: #22c55e; font-weight: 700;">${{ solicitud.propuesta_valor }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Motivo de Rechazo (si rechazó) -->
+    {% if solicitud.estado == 'rechazada' and solicitud.motivo_rechazo %}
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: #ef4444; margin-bottom: 1rem;">❌ Motivo del Rechazo</h2>
+        <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.8); line-height: 1.7; white-space: pre-wrap;">{{ solicitud.motivo_rechazo }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Fechas -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.9rem;">
+            <div>
+                <span style="color: rgba(255, 255, 255, 0.6);">📅 Invitación enviada:</span>
+                <span style="color: white; font-weight: 500; margin-left: 0.5rem;">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if solicitud.fecha_respuesta %}
+            <div>
+                <span style="color: rgba(255, 255, 255, 0.6);">✅ Respondida:</span>
+                <span style="color: white; font-weight: 500; margin-left: 0.5rem;">{{ solicitud.fecha_respuesta|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botones de Acción (solo si es el sponsor y está pendiente) -->
+    {% if request.user == solicitud.sponsor and solicitud.estado == 'pendiente' %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">🤝 Responder a la Invitación</h2>
+        
+        <!-- Formulario de Aceptación -->
+        <form id="form-aceptar" method="post" action="{% url 'raffles:accept_organizer_request' solicitud.pk %}" style="margin-bottom: 1.5rem;">
+            {% csrf_token %}
+            
+            <div style="background: rgba(15, 23, 42, 0.4); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1rem; font-weight: 600; color: white; margin-bottom: 1rem;">
+                    📝 Propuesta de Premio (Opcional)
+                </h3>
+                
+                <div style="margin-bottom: 1rem;">
+                    <label for="propuesta_premio" style="display: block; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem;">
+                        Descripción del premio que aportarás:
+                    </label>
+                    <textarea id="propuesta_premio" name="propuesta_premio" 
+                              placeholder="Ej: Kit de productos premium de mi marca valorado en $50.000"
+                              style="width: 100%; min-height: 80px; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; color: white; font-size: 0.95rem; resize: vertical;"></textarea>
+                </div>
+                
+                <div>
+                    <label for="propuesta_valor" style="display: block; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem;">
+                        Valor aproximado del premio (CLP):
+                    </label>
+                    <input type="number" id="propuesta_valor" name="propuesta_valor" min="1" step="1" 
+                           placeholder="50000"
+                           style="width: 100%; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; color: white; font-size: 0.95rem;">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1rem; margin-bottom: 1rem;">
+                ✅ Aceptar Invitación
+            </button>
+        </form>
+        
+        <!-- Botón de Rechazo -->
+        <button onclick="document.getElementById('modal-rechazar').style.display='flex'" 
+                class="btn btn-danger" 
+                style="width: 100%; padding: 1rem; font-size: 1rem;">
+            ❌ Rechazar Invitación
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Rechazo -->
+{% if request.user == solicitud.sponsor and solicitud.estado == 'pendiente' %}
+<div id="modal-rechazar" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; z-index: 1000; padding: 1rem;">
+    <div style="background: #1e293b; border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 14px; padding: 2rem; max-width: 500px; width: 100%;">
+        <h3 style="font-size: 1.3rem; font-weight: 600; color: white; margin-bottom: 1rem;">❌ Rechazar Invitación</h3>
+        <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 1.5rem;">
+            Por favor indica el motivo por el cual rechazas esta invitación de patrocinio:
+        </p>
+        
+        <form method="post" action="{% url 'raffles:reject_organizer_request' solicitud.pk %}">
+            {% csrf_token %}
+            <textarea name="motivo_rechazo" required 
+                      placeholder="Ej: En este momento no cuento con presupuesto disponible para patrocinios..."
+                      style="width: 100%; min-height: 120px; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; color: white; font-size: 0.95rem; margin-bottom: 1.5rem; resize: vertical;"></textarea>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" 
+                        onclick="document.getElementById('modal-rechazar').style.display='none'" 
+                        class="btn btn-secondary" 
+                        style="flex: 1; padding: 0.75rem;">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="btn btn-danger" 
+                        style="flex: 1; padding: 0.75rem;">
+                    Confirmar Rechazo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .btn-success {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard Organizador{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem 1rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">Dashboard de Organizador</h1>
+            <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.6);">Gestiona tus rifas</p>
+        </div>
+        <a href="{% url 'raffles:create' %}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">+ Crear Nueva Rifa</a>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(99, 102, 241, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🎯
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ rifas_activas }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Rifas Activas</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(34, 197, 94, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    💰
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary);">CLP${{ total_ingresos|floatformat:0|intcomma }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Ingresos Totales</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(251, 191, 36, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    👥
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ total_participantes }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Participantes Únicos</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1.75rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 50px; height: 50px; background: rgba(168, 85, 247, 0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    ✅
+                </div>
+                <div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: white;">{{ rifas_finalizadas }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Rifas Finalizadas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rifa Más Vendida -->
+    {% if rifa_mas_vendida %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.25rem;">🏆 Rifa Más Popular</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <div>
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">{{ rifa_mas_vendida.titulo }}</h3>
+                <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.6);">{{ rifa_mas_vendida.total_vendidos }} boletos vendidos • {{ rifa_mas_vendida.total_participantes }} participantes</p>
+            </div>
+            <a href="{% url 'raffles:detail' rifa_mas_vendida.id %}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">Ver Detalles</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rifas Próximas a Sortear -->
+    {% if rifas_proximas_sorteo %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">⏰ Rifas Próximas a Sortear</h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for raffle in rifas_proximas_sorteo %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">{{ raffle.titulo }}</h3>
+                    <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Sorteo: <strong>{{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</strong></p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-secondary" style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none;">Ver</a>
+                    {% if raffle.estado == 'finalizada' %}
+                    <a href="{% url 'raffles:acta_sorteo' raffle.id %}" class="btn" style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none; background: #4299e1; color: white;">📜 Acta</a>
+                    {% else %}
+                    <a href="{% url 'raffles:edit' raffle.id %}" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none;">Editar</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Solicitudes de Patrocinio Recibidas -->
+    {% if solicitudes_patrocinio %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">
+            🤝 Solicitudes de Patrocinio Recibidas 
+            {% if solicitudes_pendientes > 0 %}
+            <span style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9rem; margin-left: 0.5rem;">{{ solicitudes_pendientes }}</span>
+            {% endif %}
+        </h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for solicitud in solicitudes_patrocinio|slice:":5" %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: white;">{{ solicitud.nombre_marca }}</h3>
+                            {% if solicitud.estado == 'pendiente' %}
+                            <span style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏳ Pendiente</span>
+                            {% elif solicitud.estado == 'aceptada' %}
+                            <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✅ Aceptada</span>
+                            {% elif solicitud.estado == 'rechazada' %}
+                            <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">❌ Rechazada</span>
+                            {% endif %}
+                        </div>
+                        <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem;">
+                            <strong>Rifa:</strong> {{ solicitud.rifa.titulo }}
+                        </p>
+                        <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem;">
+                            <strong>Premio ofrecido:</strong> {{ solicitud.nombre_premio_adicional }}
+                        </p>
+                        <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">
+                            <strong>Valor:</strong> ${{ solicitud.valor_premio|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{% url 'raffles:sponsorship_request_detail' solicitud.pk %}" 
+                           class="btn btn-primary" 
+                           style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none; white-space: nowrap;">
+                            Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if solicitudes_patrocinio|length > 5 %}
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6);">Mostrando 5 de {{ total_solicitudes_patrocinio }} solicitudes</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Invitaciones Enviadas a Sponsors -->
+    {% if invitaciones_enviadas %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <h2 style="font-size: 1.35rem; font-weight: 600; color: white;">
+                📧 Invitaciones a Sponsors Enviadas
+                {% if invitaciones_pendientes > 0 %}
+                <span style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9rem; margin-left: 0.5rem;">{{ invitaciones_pendientes }}</span>
+                {% endif %}
+            </h2>
+            <a href="{% url 'raffles:browse_sponsors' %}" 
+               class="btn btn-primary" 
+               style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none;">
+                🔍 Buscar Más Sponsors
+            </a>
+        </div>
+        <div style="display: grid; gap: 1rem;">
+            {% for invitacion in invitaciones_enviadas|slice:":5" %}
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 10px; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: white;">{{ invitacion.sponsor.nombre }}</h3>
+                            {% if invitacion.estado == 'pendiente' %}
+                            <span style="background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">⏳ Pendiente</span>
+                            {% elif invitacion.estado == 'aceptada' %}
+                            <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✅ Aceptada</span>
+                            {% elif invitacion.estado == 'rechazada' %}
+                            <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">❌ Rechazada</span>
+                            {% endif %}
+                        </div>
+                        <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem;">
+                            <strong>Rifa:</strong> {{ invitacion.rifa.titulo }}
+                        </p>
+                        <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">
+                            <strong>Enviada:</strong> {{ invitacion.fecha_solicitud|date:"d/m/Y H:i" }}
+                        </p>
+                        {% if invitacion.estado == 'aceptada' and invitacion.propuesta_premio %}
+                        <p style="font-size: 0.9rem; color: #22c55e; margin-top: 0.5rem;">
+                            <strong>✅ Premio aceptado:</strong> {{ invitacion.propuesta_premio }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="{% url 'raffles:organizer_request_detail' invitacion.pk %}" 
+                           class="btn btn-primary" 
+                           style="font-size: 0.9rem; padding: 0.6rem 1.25rem; text-decoration: none; white-space: nowrap;">
+                            Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if invitaciones_enviadas|length > 5 %}
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6);">Mostrando 5 de {{ total_invitaciones_enviadas }} invitaciones</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Ventas Recientes (Últimos 7 días) -->
+    {% if ventas_recientes %}
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">📈 Ventas Recientes (Últimos 7 días)</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Rifa</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Comprador</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Boleto</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Fecha</th>
+                        <th style="padding: 0.75rem; text-align: right; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas_recientes %}
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.1);">
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: white;">{{ venta.rifa.titulo }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: rgba(255, 255, 255, 0.8);">{{ venta.usuario.nombre }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: var(--primary); font-weight: 600;">#{{ venta.numero_boleto }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">{{ venta.fecha_compra|date:"d/m/Y H:i" }}</td>
+                        <td style="padding: 1rem 0.75rem; text-align: right; font-size: 0.95rem; color: var(--primary); font-weight: 600;">${{ venta.rifa.precio_boleto|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding: 2rem; text-align: center; color: rgba(255, 255, 255, 0.5);">No hay ventas recientes en los últimos 7 días</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mis Rifas -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 600; color: white; margin-bottom: 1.5rem;">📋 Mis Rifas</h2>
+        {% if mis_rifas %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Título</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Estado</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Vendidos</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Participantes</th>
+                        <th style="padding: 0.75rem; text-align: left; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Sorteo</th>
+                        <th style="padding: 0.75rem; text-align: right; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rifa in mis_rifas %}
+                    <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.1);">
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: white; font-weight: 600;">{{ rifa.titulo }}</td>
+                        <td style="padding: 1rem 0.75rem;">
+                            {% if rifa.estado == 'activa' %}
+                            <span style="display: inline-block; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: rgb(34, 197, 94); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">✅ Activa</span>
+                            {% elif rifa.estado == 'aprobada' %}
+                            <span style="display: inline-block; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); color: rgb(34, 197, 94); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">✅ Aprobada</span>
+                            {% elif rifa.estado == 'pendiente_aprobacion' %}
+                            <span style="display: inline-block; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: rgb(99, 102, 241); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">🔍 En Revisión</span>
+                            {% elif rifa.estado == 'rechazada' %}
+                            <span style="display: inline-block; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: rgb(239, 68, 68); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">❌ Rechazada</span>
+                            {% elif rifa.estado == 'finalizada' %}
+                            <span style="display: inline-block; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: rgb(99, 102, 241); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">🏁 Finalizada</span>
+                            {% else %}
+                            <span style="display: inline-block; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: rgb(251, 191, 36); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">{{ rifa.estado|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: rgba(255, 255, 255, 0.8);">{{ rifa.total_vendidos }}/{{ rifa.total_boletos }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.95rem; color: var(--primary); font-weight: 600;">{{ rifa.total_participantes }}</td>
+                        <td style="padding: 1rem 0.75rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">{{ rifa.fecha_sorteo|date:"d/m/Y" }}</td>
+                        <td style="padding: 1rem 0.75rem; text-align: right;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a href="{% url 'raffles:detail' rifa.id %}" style="color: var(--primary); font-size: 0.9rem; text-decoration: none; font-weight: 500;">Ver</a>
+                                <span style="color: rgba(255, 255, 255, 0.3);">|</span>
+                                <a href="{% url 'raffles:edit' rifa.id %}" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; text-decoration: none; font-weight: 500;">Editar</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+            <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 1.5rem;">Aún no has creado ninguna rifa</p>
+            <a href="{% url 'raffles:create' %}" class="btn btn-primary" style="padding: 0.75rem 2rem; text-decoration: none;">Crear Mi Primera Rifa</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

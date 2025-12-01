@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">🔔 Notificaciones</h1>
+            <p style="font-size: 0.95rem; color: rgba(255, 255, 255, 0.6);">Mantente al tanto de tus rifas y sorteos</p>
+        </div>
+        
+        {% if notifications %}
+        <form method="post" action="{% url 'mark_all_read' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm">
+                Marcar todas como leídas
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Filtros -->
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="?filter=all" class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+            Todas ({{ total_count }})
+        </a>
+        <a href="?filter=unread" class="btn btn-sm {% if filter_type == 'unread' %}btn-primary{% else %}btn-secondary{% endif %}">
+            No leídas ({{ unread_count }})
+        </a>
+        <a href="?filter=ganador" class="btn btn-sm {% if filter_type == 'ganador' %}btn-primary{% else %}btn-secondary{% endif %}">
+            🏆 Ganador
+        </a>
+        <a href="?filter=sorteo" class="btn btn-sm {% if filter_type == 'sorteo' %}btn-primary{% else %}btn-secondary{% endif %}">
+            🎰 Sorteos
+        </a>
+        <a href="?filter=compra" class="btn btn-sm {% if filter_type == 'compra' %}btn-primary{% else %}btn-secondary{% endif %}">
+            🎫 Compras
+        </a>
+    </div>
+
+    <!-- Lista de notificaciones -->
+    {% if notifications %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for notification in notifications %}
+            <div class="notification-item {% if not notification.leida %}unread{% endif %}" style="border-radius: 14px; padding: 1.5rem; transition: all 0.3s ease;">
+                <div style="display: flex; gap: 1rem; align-items: start;">
+                    <!-- Icono según tipo -->
+                    <div class="notification-icon notification-icon-{{ notification.tipo }}" style="flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                        {% if notification.tipo == 'ganador' %}
+                            🏆
+                        {% elif notification.tipo == 'sorteo' %}
+                            🎰
+                        {% elif notification.tipo == 'compra' %}
+                            🎫
+                        {% elif notification.tipo == 'pago' %}
+                            💳
+                        {% elif notification.tipo == 'rifa_creada' %}
+                            ✨
+                        {% elif notification.tipo == 'rifa_cancelada' %}
+                            ❌
+                        {% elif notification.tipo == 'sistema' %}
+                            ⚙️
+                        {% else %}
+                            📢
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenido -->
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <h3 style="font-size: 1.1rem; font-weight: 600; color: white; margin: 0;">
+                                {{ notification.titulo }}
+                                {% if not notification.leida %}
+                                    <span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; margin-left: 0.5rem;"></span>
+                                {% endif %}
+                            </h3>
+                            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); white-space: nowrap; margin-left: 1rem;">
+                                {{ notification.fecha_creacion|timesince }} atrás
+                            </span>
+                        </div>
+                        
+                        <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; margin: 0.5rem 0; line-height: 1.5;">
+                            {{ notification.mensaje }}
+                        </p>
+                        
+                        <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                            {% if notification.enlace %}
+                            <a href="{{ notification.enlace }}" class="btn btn-primary btn-sm">
+                                Ver detalles
+                            </a>
+                            {% endif %}
+                            
+                            {% if not notification.leida %}
+                            <form method="post" action="{% url 'mark_notification_read' notification.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-secondary btn-sm">
+                                    Marcar como leída
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if filter_type != 'all' %}&filter={{ filter_type }}{% endif %}" class="btn btn-secondary btn-sm">Primera</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if filter_type != 'all' %}&filter={{ filter_type }}{% endif %}" class="btn btn-secondary btn-sm">Anterior</a>
+            {% endif %}
+            
+            <span style="color: white; padding: 0.5rem 1rem; background: rgba(30, 41, 59, 0.4); border-radius: 8px; font-size: 0.9rem;">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if filter_type != 'all' %}&filter={{ filter_type }}{% endif %}" class="btn btn-secondary btn-sm">Siguiente</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if filter_type != 'all' %}&filter={{ filter_type }}{% endif %}" class="btn btn-secondary btn-sm">Última</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <!-- Estado vacío -->
+        <div style="text-align: center; padding: 4rem 2rem; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
+            <h3 style="font-size: 1.5rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">No hay notificaciones</h3>
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.95rem;">
+                {% if filter_type == 'unread' %}
+                    ¡Genial! No tienes notificaciones sin leer.
+                {% else %}
+                    Cuando tengas nuevas notificaciones, aparecerán aquí.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.notification-item {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.notification-item.unread {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-left: 4px solid var(--primary);
+}
+
+.notification-icon-ganador {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+}
+
+.notification-icon-sorteo {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.notification-icon-compra {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.notification-icon-pago,
+.notification-icon-rifa_creada,
+.notification-icon-rifa_cancelada,
+.notification-icon-sistema,
+.notification-icon {
+    background: linear-gradient(135deg, #6c757d, #495057);
+}
+</style>
+{% endblock %}

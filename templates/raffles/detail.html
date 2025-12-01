@@ -1,0 +1,756 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ raffle.titulo }}{% endblock %}
+
+{% block content %}
+<div class="raffle-glass-card" style="max-width: 1400px; margin: 0 auto; min-height: 100vh;">
+    
+    <!-- Hero Section con imagen y info principal -->
+    <div class="raffle-glass-card raffle-glass-section" style="overflow: hidden;">
+        <div class="hero-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0;">
+            <!-- Imagen -->
+            <div style="position: relative; min-height: 500px;">
+                {% if raffle.imagen %}
+                    <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--glass-radius);">
+                {% else %}
+                    <div class="raffle-glass-card" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 8rem; background: var(--glass-bg);">🎟️</div>
+                {% endif %}
+
+                <!-- Badge de estado -->
+                <div class="raffle-glass-badge" style="position: absolute; top: 1.5rem; left: 1.5rem; font-size: 1.3rem; font-weight: 900; background: linear-gradient(90deg, #ffd700 60%, #ffed4e 100%); color: #c53030; box-shadow: 0 4px 24px rgba(255,215,0,0.35); border: 2px solid #ffd700; text-shadow: 0 2px 10px #fff; animation: badgePulse 1.5s infinite alternate; letter-spacing: 2px;">
+                    {% if raffle.estado == 'finalizada' %}
+                        ✅ Finalizada
+                    {% elif raffle.estado == 'activa' %}
+                        <span style="color: #c53030;">🎰 Activa</span>
+                    {% else %}
+                        📋 {{ raffle.get_estado_display }}
+                    {% endif %}
+                </div>
+                <style>
+                @keyframes badgePulse {
+                  0% { box-shadow: 0 0 12px #ffd700, 0 0 0 #ffed4e; }
+                  100% { box-shadow: 0 0 32px #ffd700, 0 0 24px #ffed4e; }
+                }
+                </style>
+            </div>
+            
+            <!-- Información principal -->
+            <div style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h1 class="raffle-glass-label" style="font-size: 2.3rem; margin-bottom: 1.2rem; color: #ffd700; font-weight: 900; letter-spacing: -1px;">{{ raffle.titulo }}</h1>
+                    <!-- Stats Grid compacto -->
+                    <div style="display: grid; gap: 1rem;">
+                        <!-- Premio -->
+                        <div class="raffle-glass-card" style="background: var(--glass-bg); color: #fff; position: relative; overflow: hidden; border: 2px solid #ffd700;">
+                            <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; transform: translate(40%, -40%);"></div>
+                            <div style="position: relative; z-index: 1;">
+                                <span class="raffle-glass-label" style="color: #ffd700;">🏆 Premio</span>
+                                <div style="font-weight: 900; color: #fff; font-size: 1.3rem; margin-bottom: 0.4rem;">{{ raffle.premio_principal }}</div>
+                                {% if raffle.valor_premio %}
+                                <span class="raffle-glass-prize" style="color: #ffd700; font-size: 1.7rem;">${{ raffle.valor_premio|floatformat:0|intcomma }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- Precio y Fecha -->
+                        <div class="stats-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="raffle-glass-card" style="background: var(--glass-bg); color: #fff; border: 2px solid #48bb78;">
+                                <span class="raffle-glass-label" style="color: #48bb78;">💰 Precio</span>
+                                <span class="raffle-glass-price" style="color: #48bb78; font-size: 1.3rem; font-weight: 900;">${{ raffle.precio_boleto|floatformat:0|intcomma }}</span>
+                            </div>
+                            <div class="raffle-glass-card" style="background: var(--glass-bg); color: #fff; border: 2px solid #f56565;">
+                                <span class="raffle-glass-label" style="color: #f56565;">⏰ Sorteo</span>
+                                <span style="font-weight: 800; color: #fff; font-size: 1rem; line-height: 1.3;">{{ raffle.fecha_sorteo|date:"d/m/Y" }}<br>{{ raffle.fecha_sorteo|date:"H:i" }} hrs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Progress Bar -->
+                <div style="margin-top: 1.5rem;">
+                    <div class="raffle-glass-card" style="padding: 1.25rem; background: var(--glass-bg); color: #fff; border: 2px solid #667eea;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span class="raffle-glass-label" style="color: #667eea;">📊 Progreso</span>
+                            <span style="font-weight: 900; font-size: 1.1rem; color: #ffd700;">{{ raffle.porcentaje_vendido|floatformat:1 }}%</span>
+                        </div>
+                        <div class="raffle-glass-progress" style="margin-bottom: 0.6rem;">
+                            <div class="raffle-glass-progress-bar" style="width: {{ raffle.porcentaje_vendido }}%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #718096; font-weight: 600;">
+                            <span>{{ sold_tickets|intcomma }} vendidos</span>
+                            <span>{{ raffle.total_boletos|intcomma }} totales</span>
+                        </div>
+                    </div>
+                    
+                    {% if raffle.documento_legal %}
+                    <div style="margin-top: 0.75rem; text-align: center;">
+                        <a href="{{ raffle.documento_legal.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.25rem; background: #4299e1; color: white; text-decoration: none; border-radius: 50px; font-size: 0.8rem; font-weight: 700; transition: all 0.3s; box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);">
+                            <span>📄 Autorización</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sponsor Banner (si la rifa tiene sponsor aceptado) -->
+    {% if sponsors_aceptados %}
+        {% for sponsor_request in sponsors_aceptados %}
+        <div class="raffle-glass-card raffle-glass-section" style="border: 2px solid var(--glass-yellow); margin: 2rem 0; position: relative; overflow: hidden; background: var(--glass-bg); color: #fff;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255, 215, 0, 0.15); border-radius: 50%;"></div>
+            <div style="position: relative; z-index: 1;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="raffle-glass-label" style="background: linear-gradient(135deg, #ffa500, #ff8c00); color: #fff; padding: 0.5rem 1.2rem; border-radius: 50px; font-size: 1rem; box-shadow: 0 2px 10px rgba(255, 165, 0, 0.18);">🤝 Patrocinado por</span>
+                        <h3 style="font-size: 2rem; margin: 0; color: #ffd700; font-weight: 900; letter-spacing: -1px;">{{ sponsor_request.nombre_marca }}</h3>
+                    </div>
+                    {% if sponsor_request.sitio_web %}
+                    <a href="{{ sponsor_request.sitio_web }}" target="_blank" class="raffle-glass-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; background: #ffd700; color: #222; font-weight: 700;">🌐 Visitar</a>
+                    {% endif %}
+                </div>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div class="raffle-glass-card" style="flex: 1 1 320px; text-align: center; border: 2px solid var(--glass-yellow); min-width: 280px; background: var(--glass-bg); color: #fff;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎁</div>
+                        <div class="raffle-glass-label" style="color: #ffd700; margin-bottom: 0.5rem; font-size: 1rem;">PREMIO ADICIONAL</div>
+                        <h4 style="font-size: 1.3rem; font-weight: 900; color: #fff; margin: 0 0 0.5rem 0; line-height: 1.2;">{{ sponsor_request.nombre_premio_adicional }}</h4>
+                        <div class="raffle-glass-prize" style="font-size: 2rem; color: #ffd700;">${{ sponsor_request.valor_premio|floatformat:0|intcomma }}</div>
+                        <div style="font-size: 1rem; color: #e2e8f0; line-height: 1.5; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #ffd700;">{{ sponsor_request.descripcion_premio }}</div>
+                    </div>
+                    <div class="raffle-glass-card" style="flex: 1 1 320px; min-width: 280px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #fff;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fff; font-weight: 900; box-shadow: 0 2px 10px rgba(102, 126, 234, 0.18); flex-shrink: 0;">{{ sponsor_request.sponsor.nombre.0|upper }}</div>
+                            <div>
+                                <div class="raffle-glass-label" style="font-size: 1.1rem; color: #fff; font-weight: 800; text-transform: none;">{{ sponsor_request.sponsor.nombre }}</div>
+                                <div class="raffle-glass-label" style="font-size: 0.95rem; color: #ffd700; font-weight: 600;">Patrocinador Oficial</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 1.1rem; color: #e2e8f0; line-height: 1.7; font-style: italic; margin: 0; padding-left: 1rem; border-left: 3px solid #ffd700;">"{{ sponsor_request.mensaje_patrocinio }}"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <!-- Countdown (solo si NO hay ganador y está activa) -->
+    {% if not has_winner and raffle.estado == 'activa' %}
+    <div id="countdownCard" class="raffle-glass-card" style="padding: 2rem 1rem; border-radius: 18px; text-align: center; margin: 2rem 0; box-shadow: var(--glass-shadow); border: var(--glass-border); background: var(--glass-bg); color: #fff;">
+        <div class="raffle-glass-label" style="font-size: 1.1rem; color: #ffd700; text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: 1px;">⏰ Tiempo para el sorteo</div>
+        <div id="countdown" style="font-size: 2.3rem; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(102,126,234,0.18); letter-spacing: 2px;">Cargando...</div>
+    </div>
+    {% endif %}
+    
+    <!-- Cuadrícula de Boletos del Sorteo -->
+    {% if not has_winner and raffle.estado == 'activa' %}
+    <div style="background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 3rem; border-radius: 20px; margin: 2rem 0; box-shadow: 0 20px 60px rgba(0,0,0,0.4); border: 4px solid #ffd700;">
+        {% if show_roulette %}
+        <h2 style="text-align: center; font-size: 2.5rem; color: #ffd700; margin-bottom: 2rem; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);">🎰 SORTEO EN VIVO 🎰</h2>
+        {% else %}
+        <h2 style="text-align: center; font-size: 2.5rem; color: #ffd700; margin-bottom: 2rem; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);">🎟️ BOLETOS PARTICIPANTES 🎟️</h2>
+        {% endif %}
+        
+        <div id="status" style="text-align: center; margin-bottom: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 12px; color: white; font-size: 1.2rem; font-weight: bold;">
+            {% if show_roulette %}⏳ Esperando inicio del sorteo...{% else %}📋 Boletos listos para sorteo{% endif %}
+        </div>
+        
+        <div id="ticketsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; max-height: 700px; overflow-y: auto; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 12px;">
+            <!-- Los boletos se generarán aquí con JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Modal Ganador -->
+    <div id="winnerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: linear-gradient(135deg, #ffd700, #ffed4e); padding: 4rem; border-radius: 30px; text-align: center; max-width: 600px; box-shadow: 0 30px 100px rgba(255, 215, 0, 0.6);">
+            <h1 style="font-size: 4rem; color: #ff0000; margin-bottom: 2rem;">🎉 ¡GANADOR! 🎉</h1>
+            <div style="background: linear-gradient(135deg, rgba(102,126,234,0.13), rgba(118,75,162,0.13)); backdrop-filter: blur(18px); padding: 2rem; border-radius: 20px; margin: 2rem 0; border: 2px solid rgba(255, 255, 255, 0.5);">
+                <div style="font-size: 3rem; font-weight: 900; color: #ff0000;">Boleto #<span id="winnerTicket">0</span></div>
+                <div id="winnerName" style="font-size: 2rem; font-weight: bold; color: #333; margin-top: 1rem;">Nombre</div>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                <button onclick="document.getElementById('winnerModal').style.display='none'" style="padding: 1rem 3rem; background: #ff0000; color: white; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);">Cerrar</button>
+                <a href="{% url 'raffles:acta_sorteo' raffle.id %}" style="padding: 1rem 3rem; background: #4299e1; color: white; text-decoration: none; border-radius: 50px; font-size: 1.2rem; font-weight: bold; box-shadow: 0 10px 30px rgba(66, 153, 225, 0.4); display: inline-block;">📜 Ver Acta</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Botón de Sorteo (cuando pasó la ventana de 3 minutos pero aún no hay ganador) -->
+    {% if show_draw_button and not show_roulette and is_organizer %}
+    <div style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f); padding: 3rem; border-radius: 20px; margin: 2rem 0; text-align: center; box-shadow: 0 20px 60px rgba(255, 107, 107, 0.4); border: 4px solid #ffd700;">
+        <h2 style="font-size: 2.5rem; color: white; margin-bottom: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">⏰ Tiempo de Sorteo</h2>
+        <p style="color: rgba(255,255,255,0.95); font-size: 1.2rem; margin-bottom: 2rem;">La ventana de animación ha finalizado. Haz clic para realizar el sorteo.</p>
+        <button onclick="iniciarSorteoDirecto()" style="padding: 1.5rem 4rem; background: #ffd700; color: #333; border: none; border-radius: 50px; font-size: 1.5rem; font-weight: 900; cursor: pointer; box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5); transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px;">
+            🎲 Realizar Sorteo Ahora
+        </button>
+        <div id="sorteoDirectoStatus" style="margin-top: 1.5rem; font-size: 1.1rem; font-weight: 700; color: white;"></div>
+    </div>
+    {% endif %}
+    
+    <!-- Vista completa si la rifa está finalizada -->
+    {% if raffle.estado == 'finalizada' %}
+    <div style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.1); margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.3);">
+        
+        <!-- Header celebratorio con gradiente -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 4rem 2rem; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); animation: shine 3s infinite;"></div>
+            
+            <div style="position: relative; z-index: 1; text-align: center;">
+                <div style="font-size: 5rem; margin-bottom: 1rem; animation: bounce 1s infinite;">🎉</div>
+                <h2 style="font-size: 3rem; color: #ffd700; margin: 0 0 1rem 0; text-shadow: 0 4px 20px rgba(0,0,0,0.3); font-weight: 900; letter-spacing: -1px;">¡SORTEO FINALIZADO!</h2>
+                <div style="font-size: 1.1rem; color: rgba(255,255,255,0.95); font-weight: 600;">
+                    📅 {{ raffle.fecha_sorteo|date:"d/m/Y" }} • ⏰ {{ raffle.fecha_sorteo|date:"H:i" }} hrs
+                </div>
+            </div>
+        </div>
+        
+        {% if raffle.ganador %}
+        <!-- Contenido principal en grid -->
+        <div class="winner-content" style="padding: 3rem;">
+            <div class="winner-grid" style="display: grid; grid-template-columns: {% if raffle.imagen_premio %}1fr 1fr{% else %}1fr{% endif %}; gap: 3rem; margin-bottom: 3rem;">
+                
+                <!-- Card del Ganador -->
+                <div>
+                    <!-- Info del ganador -->
+                    <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); padding: 3rem; border-radius: 20px; margin-bottom: 2rem; border: 2px solid #e2e8f0;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.75rem; color: #667eea; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 2rem;">👑 GANADOR DEL SORTEO</div>
+                            <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: white; font-weight: 900; box-shadow: 0 20px 50px rgba(102, 126, 234, 0.4); border: 5px solid white;">{{ raffle.ganador.boleto.usuario.nombre.0|upper }}</div>
+                            <div style="font-size: 2.5rem; font-weight: 900; color: #1a202c; margin-bottom: 1rem; line-height: 1.2;">{{ raffle.ganador.boleto.usuario.nombre }}</div>
+                            <div style="font-size: 1rem; color: #718096; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 50px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.4);">{{ raffle.ganador.boleto.usuario.email }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Boleto ganador -->
+                    <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 3rem; border-radius: 20px; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);">
+                        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <div style="position: relative; z-index: 1; text-align: center;">
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 1rem;">🎟️ BOLETO GANADOR</div>
+                            <div style="font-size: 5rem; font-weight: 900; color: #ffd700; text-shadow: 0 6px 30px rgba(0,0,0,0.4);">#{{ raffle.ganador.boleto.numero_boleto }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Premio -->
+                    <div style="background: linear-gradient(135deg, #48bb78, #38a169); padding: 3rem; border-radius: 20px; position: relative; overflow: hidden; box-shadow: 0 15px 40px rgba(72, 187, 120, 0.4);">
+                        <div style="position: absolute; bottom: -50px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <div style="position: relative; z-index: 1; text-align: center;">
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 1rem;">🏆 PREMIO GANADO</div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: white; margin-bottom: 1.5rem; line-height: 1.3;">{{ raffle.premio_principal }}</div>
+                            {% if raffle.valor_premio %}
+                            <div style="font-size: 3rem; font-weight: 900; color: #ffd700; text-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-bottom: 0.5rem;">${{ raffle.valor_premio|floatformat:0|intcomma }}</div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1.5px;">VALOR DEL PREMIO</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Imagen del Premio (si existe) -->
+                {% if raffle.imagen_premio %}
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); padding: 2rem; border-radius: 20px; border: 2px solid #e2e8f0; flex: 1; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ raffle.imagen_premio.url }}" alt="{{ raffle.premio_principal }}" style="width: 100%; max-height: 500px; object-fit: contain; border-radius: 16px;">
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #f7fafc, #edf2f7); padding: 2rem; border-radius: 20px; text-align: center; border: 2px solid #e2e8f0;">
+                        <div style="font-size: 0.75rem; color: #667eea; text-transform: uppercase; font-weight: 800; letter-spacing: 2px; margin-bottom: 1rem;">🎁 DETALLES DEL PREMIO</div>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: #2d3748; margin-bottom: 1rem;">{{ raffle.premio_principal }}</div>
+                        {% if raffle.descripcion_premio %}
+                        <p style="color: #4a5568; font-size: 1rem; line-height: 1.8; margin: 0;">{{ raffle.descripcion_premio }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="action-buttons" style="display: flex; gap: 1.5rem; justify-content: center; padding-top: 2rem; border-top: 3px solid #f7fafc; flex-wrap: wrap;">
+                <a href="{% url 'raffles:acta_sorteo' raffle.id %}" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.5rem 3.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 50px; font-size: 1.15rem; font-weight: 800; box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4); transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="font-size: 1.5rem;">📜</span>
+                    <span>Ver Acta Digital</span>
+                </a>
+                <a href="{% url 'raffles:list' %}" style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.5rem 3.5rem; background: linear-gradient(135deg, #48bb78, #38a169); color: white; text-decoration: none; border-radius: 50px; font-size: 1.15rem; font-weight: 800; box-shadow: 0 15px 40px rgba(72, 187, 120, 0.4); transition: all 0.3s; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span style="font-size: 1.5rem;">🎟️</span>
+                    <span>Ver Más Rifas</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes shine {
+            0% { left: -100%; }
+            50%, 100% { left: 100%; }
+        }
+    </style>
+    {% endif %}
+    
+    <!-- Descripción y Detalles -->
+    <div class="description-grid" style="display: grid; grid-template-columns: {% if raffle.imagen_premio %}1.5fr 1fr{% else %}1fr{% endif %}; gap: 2rem;">
+        <!-- Descripción -->
+        <div class="raffle-glass-card" style="padding: 3rem; border-radius: 20px; box-shadow: var(--glass-shadow); border: var(--glass-border); background: var(--glass-bg); color: #fff;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 3px solid #ffd700;">
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">📝</div>
+                <h3 class="raffle-glass-label" style="font-size: 1.8rem; margin: 0; color: #ffd700; font-weight: 900;">Descripción</h3>
+            </div>
+            <div style="color: #e2e8f0; line-height: 1.9; font-size: 1.1rem; white-space: pre-wrap;">{{ raffle.descripcion|default:"Sin descripción disponible." }}</div>
+
+            {% if raffle.descripcion_premio %}
+            <div class="raffle-glass-card" style="margin-top: 3rem; padding: 2rem; background: var(--glass-bg); border-radius: 16px; border-left: 4px solid #ffd700; color: #fff;">
+                <h4 class="raffle-glass-label" style="font-size: 1.3rem; margin-bottom: 1rem; color: #ffd700; display: flex; align-items: center; gap: 0.75rem; font-weight: 800;">
+                    <span style="font-size: 1.5rem;">🏆</span>
+                    <span>Detalles del Premio</span>
+                </h4>
+                <p style="color: #e2e8f0; line-height: 1.8; margin: 0; font-size: 1.1rem;">{{ raffle.descripcion_premio }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Imagen del Premio -->
+        {% if raffle.imagen_premio %}
+        <div style="background: linear-gradient(135deg, rgba(102,126,234,0.13), rgba(118,75,162,0.13)); backdrop-filter: blur(18px); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); display: flex; flex-direction: column; border: 1px solid rgba(255, 255, 255, 0.3);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 3px solid #f7fafc;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #48bb78, #38a169); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);">🎁</div>
+                <h4 style="font-size: 1.3rem; margin: 0; color: #2d3748; font-weight: 900;">Premio</h4>
+            </div>
+            
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; background: linear-gradient(135deg, #f7fafc, #edf2f7); border-radius: 16px; margin-bottom: 1.5rem;">
+                <img src="{{ raffle.imagen_premio.url }}" alt="{{ raffle.premio_principal }}" style="width: 100%; max-height: 350px; object-fit: contain; border-radius: 12px;">
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 1.5rem; border-radius: 12px; text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">{{ raffle.premio_principal }}</div>
+                {% if raffle.valor_premio %}
+                <div style="font-size: 2rem; font-weight: 900; color: #ffd700; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">${{ raffle.valor_premio|floatformat:0|intcomma }}</div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.25rem;">VALOR ESTIMADO</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+
+<script>
+(function() {
+    'use strict';
+    
+    const RAFFLE_DATE = new Date({{ fecha_sorteo_timestamp }});
+    const RAFFLE_ID = {{ raffle.id }};
+    const CSRF = '{{ csrf_token }}';
+    
+    let sorteoRealizado = false;
+    let spinning = false;
+    let winner = null;
+    
+    // COUNTDOWN - Sin límite de tiempo, solo esperar hasta que llegue la hora
+    
+    function updateCountdown() {
+        const el = document.getElementById('countdown');
+        const card = document.getElementById('countdownCard');
+        if (!el) return;
+        
+        const now = new Date();
+        const diff = RAFFLE_DATE - now;
+        
+        if (diff <= 0) {
+            // El sorteo ya comenzó - ocultar el card del countdown
+            if (card) {
+                card.style.display = 'none';
+            }
+            
+            // Iniciar sorteo solo una vez (solo si hay boletos)
+            if (!sorteoRealizado && {{ sold_tickets }} > 0) {
+                sorteoRealizado = true;
+                setTimeout(iniciarSorteo, 2000);
+            }
+            return;
+        }
+        
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        
+        let time = '';
+        if (d > 0) time += d + 'd ';
+        if (h > 0 || d > 0) time += h + 'h ';
+        if (m > 0 || h > 0 || d > 0) time += m + 'm ';
+        time += s + 's';
+        
+        el.textContent = time;
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    
+    // CUADRÍCULA DE BOLETOS - Siempre se muestra si no hay ganador
+    {% if not has_winner and raffle.estado == 'activa' %}
+    
+    const statusEl = document.getElementById('status');
+    const ticketsGrid = document.getElementById('ticketsGrid');
+    
+    const tickets = {{ tickets_json|safe }};
+    const SHOW_ANIMATION = {{ show_roulette|yesno:"true,false" }};
+    
+    if (!tickets || tickets.length === 0) {
+        statusEl.textContent = '⚠️ No hay participantes';
+    }
+    
+    let animationInterval = null;
+    let currentHighlight = 0;
+    
+    // Crear los cuadros de boletos
+    function createTicketBoxes() {
+        ticketsGrid.innerHTML = '';
+        tickets.forEach((ticket, idx) => {
+            const box = document.createElement('div');
+            box.id = 'ticket-box-' + ticket.id;
+            box.style.cssText = `
+                padding: 0.4rem 0.3rem;
+                background: linear-gradient(135deg, #2d3748, #1a202c);
+                border: 2px solid #4a5568;
+                border-radius: 6px;
+                text-align: center;
+                transition: all 0.3s;
+                cursor: pointer;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                min-height: 55px;
+            `;
+            box.innerHTML = `
+                <div style="font-size: 1rem; font-weight: 900; color: #ffd700; margin-bottom: 0.15rem; line-height: 1.1; word-break: break-all;">#${ticket.numero_boleto}</div>
+                <div style="font-size: 0.6rem; color: #a0aec0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ticket.nombre.substring(0, 12)}</div>
+            `;
+            ticketsGrid.appendChild(box);
+        });
+    }
+    
+    // Iluminar un cuadro
+    function highlightBox(idx) {
+        tickets.forEach((ticket, i) => {
+            const box = document.getElementById('ticket-box-' + ticket.id);
+            if (i === idx) {
+                box.style.background = 'linear-gradient(135deg, #ffd700, #ffed4e)';
+                box.style.border = '2px solid #ff0000';
+                box.style.transform = 'scale(1.05)';
+                box.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.8)';
+            } else {
+                box.style.background = 'linear-gradient(135deg, #2d3748, #1a202c)';
+                box.style.border = '2px solid #4a5568';
+                box.style.transform = 'scale(1)';
+                box.style.boxShadow = 'none';
+            }
+        });
+    }
+    
+    // Animar selección aleatoria
+        function animateSelection(winnerTicket) {
+            if (spinning || tickets.length === 0) return;
+            spinning = true;
+            
+            statusEl.textContent = '🎰 Seleccionando ganador...';
+            
+            let speed = 5; // velocidad ultra rápida
+            let iterations = 0;
+            // Asegurar que recorra todos los boletos al menos 5 veces antes de elegir
+            const totalIterations = tickets.length * 5 + Math.floor(Math.random() * 30);
+            
+            const animate = () => {
+                // Seleccionar un índice completamente ALEATORIO
+                currentHighlight = Math.floor(Math.random() * tickets.length);
+                highlightBox(currentHighlight);
+                iterations++;
+                
+                // Calcular velocidad progresiva (desacelerar gradualmente)
+                const progress = iterations / totalIterations;
+                
+                if (progress < 0.8) {
+                    // Fase ultra rápida - primeros 80%
+                    speed = 5;
+                } else if (progress < 0.9) {
+                    // Fase rápida - 80-90%
+                    speed = 20;
+                } else if (progress < 0.96) {
+                    // Fase media - 90-96%
+                    speed = 60;
+                } else if (progress < 0.99) {
+                    // Fase lenta - 96-99%
+                    speed = 150;
+                } else {
+                    // Fase muy lenta - último 1%
+                    speed = 300;
+                }
+                
+                if (iterations >= totalIterations) {
+                    // Detener y mostrar ganador
+                    clearInterval(animationInterval);
+                    const winnerIdx = tickets.findIndex(t => t.id === winnerTicket.id);
+                    if (winnerIdx !== -1) {
+                        highlightBox(winnerIdx);
+                        setTimeout(() => anunciar(winnerTicket), 1000);
+                    }
+                } else {
+                    // Continuar con la nueva velocidad
+                    animationInterval = setTimeout(animate, speed);
+                }
+            };
+            
+            // Iniciar animación
+            animationInterval = setTimeout(animate, speed);
+        }    function anunciar(w) {
+        if (!w) return;
+        
+        statusEl.textContent = '🎉 ¡GANADOR: #' + w.numero_boleto + ' - ' + w.nombre + '!';
+        
+        setTimeout(() => {
+            document.getElementById('winnerTicket').textContent = w.numero_boleto;
+            document.getElementById('winnerName').textContent = w.nombre;
+            document.getElementById('winnerModal').style.display = 'flex';
+            confetti();
+            
+            // Recargar página después de 5 segundos para mostrar vista de rifa finalizada
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+        }, 1000);
+        
+        spinning = false;
+    }
+    
+    function confetti() {
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+        for (let i = 0; i < 100; i++) {
+            setTimeout(() => {
+                const c = document.createElement('div');
+                c.style.cssText = 'position:fixed;width:10px;height:10px;background:' + colors[Math.floor(Math.random()*colors.length)] + ';left:' + Math.random()*100 + '%;top:-20px;';
+                document.body.appendChild(c);
+                const anim = c.animate([
+                    { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                    { transform: 'translateY(100vh) rotate(720deg)', opacity: 0 }
+                ], { duration: 4000 });
+                anim.onfinish = () => c.remove();
+            }, i * 30);
+        }
+    }
+    
+    function iniciarSorteo() {
+        if (spinning) return;
+        
+        statusEl.textContent = '🎲 Seleccionando ganador...';
+        
+        fetch('/raffles/' + RAFFLE_ID + '/select-winner/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                winner = data.winner;
+                setTimeout(() => animateSelection(winner), 500);
+            } else {
+                statusEl.textContent = '❌ ' + (data.error || 'Error desconocido');
+            }
+        })
+        .catch(err => {
+            statusEl.textContent = '❌ Error de conexión';
+            console.error('Error:', err);
+        });
+    }
+    
+    window.iniciarSorteo = iniciarSorteo;
+    
+    // Sorteo directo (sin animación) para después de la ventana de 3 minutos
+    window.iniciarSorteoDirecto = function() {
+        const statusDiv = document.getElementById('sorteoDirectoStatus');
+        if (!statusDiv) return;
+        
+        statusDiv.textContent = '🎲 Seleccionando ganador...';
+        
+        fetch('/raffles/' + RAFFLE_ID + '/select-winner/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                statusDiv.textContent = '✅ ¡Ganador seleccionado!';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                statusDiv.textContent = '❌ ' + (data.error || 'Error desconocido');
+            }
+        })
+        .catch(err => {
+            statusDiv.textContent = '❌ Error de conexión';
+            console.error('Error:', err);
+        });
+    };
+    
+    // Crear los cuadros de boletos
+    if (tickets.length > 0) {
+        createTicketBoxes();
+    }
+    
+    // Verificar si ya hay ganador
+    fetch('/raffles/' + RAFFLE_ID + '/check-winner/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.has_winner) {
+                winner = data.winner;
+                sorteoRealizado = true;
+                statusEl.textContent = '🏆 GANADOR: #' + winner.numero_boleto + ' - ' + winner.nombre;
+                
+                // Resaltar el ganador en la tabla
+                const winnerIdx = tickets.findIndex(t => t.id === winner.id);
+                if (winnerIdx !== -1) {
+                    highlightBox(winnerIdx);
+                }
+            }
+        });
+    
+    // Solo hacer polling de animación automática si estamos en la ventana de 3 minutos
+    if (SHOW_ANIMATION) {
+        setInterval(() => {
+            if (!sorteoRealizado && new Date() >= RAFFLE_DATE) {
+                fetch('/raffles/' + RAFFLE_ID + '/check-winner/')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.has_winner && !winner) {
+                            winner = data.winner;
+                            sorteoRealizado = true;
+                            animateSelection(winner);
+                        }
+                    });
+            }
+        }, 3000);
+    }
+    
+    {% endif %}
+    
+})();
+</script>
+
+<style>
+    /* Responsive Design - Media Queries */
+    
+    /* Tablets y pantallas medianas (max-width: 1024px) */
+    @media (max-width: 1024px) {
+        .hero-grid {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .description-grid {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .winner-grid {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    
+    /* Móviles (max-width: 768px) */
+    @media (max-width: 768px) {
+        /* Ajustar padding del contenedor principal */
+        body > div {
+            padding: 1rem !important;
+        }
+        
+        /* Hero section */
+        .hero-grid > div:first-child {
+            min-height: 300px !important;
+        }
+        
+        .hero-grid > div:last-child {
+            padding: 2rem !important;
+        }
+        
+        .hero-grid h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        /* Stats grid */
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+        
+        /* Winner content */
+        .winner-content {
+            padding: 1.5rem !important;
+        }
+        
+        .winner-content h2 {
+            font-size: 2rem !important;
+        }
+        
+        /* Botones de acción */
+        .action-buttons {
+            flex-direction: column !important;
+            gap: 1rem !important;
+        }
+        
+        .action-buttons a {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 1.25rem 2rem !important;
+            font-size: 1rem !important;
+        }
+    }
+    
+    /* Móviles pequeños (max-width: 480px) */
+    @media (max-width: 480px) {
+        /* Reducir tamaños de fuente */
+        .hero-grid h1 {
+            font-size: 1.25rem !important;
+        }
+        
+        /* Avatares más pequeños */
+        .winner-content [style*="width: 120px"] {
+            width: 80px !important;
+            height: 80px !important;
+            font-size: 2.5rem !important;
+        }
+        
+        /* Boleto ganador más pequeño */
+        .winner-grid [style*="font-size: 5rem"] {
+            font-size: 3rem !important;
+        }
+        
+        /* Premio valor más pequeño */
+        .winner-grid [style*="font-size: 3rem"] {
+            font-size: 2rem !important;
+        }
+        
+        /* Sorteo finalizado header */
+        [style*="font-size: 5rem"] {
+            font-size: 3rem !important;
+        }
+        
+        [style*="font-size: 3rem"] {
+            font-size: 2rem !important;
+        }
+        
+        /* Padding reducido */
+        .winner-content {
+            padding: 1rem !important;
+        }
+        
+        [style*="padding: 3rem"] {
+            padding: 1.5rem !important;
+        }
+        
+        [style*="padding: 2rem"] {
+            padding: 1.25rem !important;
+        }
+    }
+</style>
+
+{% endblock %}

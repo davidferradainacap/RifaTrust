@@ -1,0 +1,622 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Rifas Pausadas - Panel de Administración{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">
+            ⏸️ Rifas Pausadas - Revisión Administrativa
+        </h1>
+        <p style="color: rgba(255, 255, 255, 0.7);">
+            Rifas que expiraron sin vender todos los boletos y requieren decisión administrativa
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div style="background: {% if message.tags == 'success' %}rgba(34, 197, 94, 0.1){% elif message.tags == 'warning' %}rgba(251, 191, 36, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; border-left: 4px solid {% if message.tags == 'success' %}#22c55e{% elif message.tags == 'warning' %}#fbbf24{% else %}#ef4444{% endif %}; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <p style="color: white; margin: 0;">{{ message }}</p>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Resumen -->
+    <div style="background: rgba(251, 191, 36, 0.1); border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 3rem;">⚠️</div>
+            <div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #fbbf24;">{{ total_pausadas }} Rifa{{ total_pausadas|pluralize }} en Espera</div>
+                <div style="color: rgba(255, 255, 255, 0.7); margin-top: 0.25rem;">
+                    Estas rifas necesitan una decisión: extender plazo, aprobar sorteo parcial o cancelar
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if rifas_pausadas %}
+        <div style="display: grid; gap: 1.5rem;">
+            {% for rifa in rifas_pausadas %}
+            <div style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <div style="display: grid; grid-template-columns: 200px 1fr 300px; gap: 1.5rem;">
+                    <!-- Imagen -->
+                    <div style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea, #764ba2);">
+                        {% if rifa.imagen %}
+                        <img src="{{ rifa.imagen.url }}" alt="{{ rifa.titulo }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <div style="font-size: 4rem;">🎟️</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Información -->
+                    <div style="padding: 1.5rem 0;">
+                        <h3 style="font-size: 1.3rem; font-weight: 700; color: #1a202c; margin-bottom: 0.75rem;">{{ rifa.titulo }}</h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">👤 Organizador</div>
+                                <div style="font-weight: 600; color: #2d3748;">{{ rifa.organizador.nombre }}</div>
+                                <div style="font-size: 0.65rem; color: #a0aec0;">{{ rifa.organizador.email }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">📅 Fecha Creación</div>
+                                <div style="font-weight: 600; color: #2d3748;">{{ rifa.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">⏰ Fecha Expiración</div>
+                                <div style="font-weight: 600; color: #e53e3e;">{{ rifa.fecha_sorteo|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">⏸️ Pausada El</div>
+                                <div style="font-weight: 600; color: #f59e0b;">{{ rifa.fecha_pausa|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">🏆 Premio</div>
+                                <div style="font-weight: 600; color: #667eea;">{{ rifa.premio_principal }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">💰 Valor Premio</div>
+                                <div style="font-weight: 700; color: #48bb78;">
+                                    {% if rifa.valor_premio %}
+                                        ${{ rifa.valor_premio|floatformat:0|intcomma }}
+                                    {% else %}
+                                        <span style="color: #a0aec0; font-style: italic;">No especificado</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">💵 Precio Boleto</div>
+                                <div style="font-weight: 600; color: #2d3748;">${{ rifa.precio_boleto|floatformat:0|intcomma }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.7rem; color: #718096; text-transform: uppercase; margin-bottom: 0.25rem;">🎫 Total Boletos</div>
+                                <div style="font-weight: 600; color: #2d3748;">{{ rifa.total_boletos|intcomma }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Progreso de Ventas -->
+                        <div style="background: #f7fafc; padding: 1rem; border-radius: 8px; border-left: 4px solid #fbbf24;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.75rem; color: #4a5568; font-weight: 600;">📊 Boletos Vendidos</span>
+                                <span style="font-weight: 800; color: #2d3748;">{{ rifa.boletos_vendidos|intcomma }} / {{ rifa.total_boletos|intcomma }}</span>
+                            </div>
+                            <div style="background: #e2e8f0; border-radius: 50px; height: 10px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, #fbbf24, #f59e0b); height: 100%; width: {{ rifa.porcentaje_vendido }}%; border-radius: 50px;"></div>
+                            </div>
+                            <div style="text-align: center; margin-top: 0.5rem; font-size: 0.75rem; color: #718096; font-weight: 600;">{{ rifa.porcentaje_vendido|floatformat:1 }}% completado</div>
+                        </div>
+
+                        <!-- Análisis Financiero -->
+                        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div style="background: rgba(72, 187, 120, 0.1); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #48bb78;">
+                                <div style="font-size: 0.65rem; color: #22543d; font-weight: 600; margin-bottom: 0.25rem;">💵 Ingreso Actual</div>
+                                <div style="font-size: 1rem; font-weight: 900; color: #38a169;">${{ rifa.ingreso_actual|floatformat:0|intcomma }}</div>
+                            </div>
+                            <div style="background: rgba(99, 102, 241, 0.1); padding: 0.75rem; border-radius: 6px; border-left: 3px solid #667eea;">
+                                <div style="font-size: 0.65rem; color: #434190; font-weight: 600; margin-bottom: 0.25rem;">💰 Potencial Total</div>
+                                <div style="font-size: 1rem; font-weight: 900; color: #5a67d8;">${{ rifa.ingreso_potencial|floatformat:0|intcomma }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Documento Legal -->
+                        {% if rifa.documento_legal %}
+                        <div style="margin-top: 1rem; background: rgba(66, 153, 225, 0.1); padding: 0.75rem 1rem; border-radius: 6px; border-left: 3px solid #4299e1;">
+                            <div style="font-size: 0.7rem; color: #2c5282; font-weight: 600; margin-bottom: 0.5rem;">📄 Documento de Autorización</div>
+                            <a href="{{ rifa.documento_legal.url }}" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; background: #4299e1; color: white; text-decoration: none; border-radius: 4px; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;">
+                                <span>Ver Documento</span>
+                                <span>↗️</span>
+                            </a>
+                        </div>
+                        {% else %}
+                        <div style="margin-top: 1rem; background: rgba(245, 101, 101, 0.1); padding: 0.75rem 1rem; border-radius: 6px; border-left: 3px solid #f56565;">
+                            <div style="font-size: 0.7rem; color: #c53030; font-weight: 600;">⚠️ Sin documento legal</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Estado y Configuración -->
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(156, 163, 175, 0.1); border-radius: 6px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem;">
+                                <div>
+                                    <span style="color: #718096;">🔄 Estado Anterior:</span>
+                                    <span style="font-weight: 600; color: #2d3748; margin-left: 0.25rem;">
+                                        {% if rifa.estado == 'pausada' %}Activa{% else %}{{ rifa.estado|title }}{% endif %}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span style="color: #718096;">🎲 Múltiples Boletos:</span>
+                                    <span style="font-weight: 600; color: #2d3748; margin-left: 0.25rem;">
+                                        {% if rifa.permite_multiples_boletos %}Sí (Max: {{ rifa.max_boletos_por_usuario }}){% else %}No{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Descripción -->
+                        {% if rifa.descripcion %}
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(226, 232, 240, 0.5); border-radius: 6px;">
+                            <div style="font-size: 0.75rem; color: #4a5568; font-weight: 600; margin-bottom: 0.25rem;">📝 Descripción:</div>
+                            <div style="font-size: 0.8rem; color: #2d3748; line-height: 1.4; max-height: 60px; overflow-y: auto;">{{ rifa.descripcion|truncatewords:30 }}</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Premio Descripción -->
+                        {% if rifa.descripcion_premio %}
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(139, 92, 246, 0.1); border-radius: 6px;">
+                            <div style="font-size: 0.75rem; color: #6b21a8; font-weight: 600; margin-bottom: 0.25rem;">🎁 Descripción del Premio:</div>
+                            <div style="font-size: 0.8rem; color: #2d3748; line-height: 1.4; max-height: 60px; overflow-y: auto;">{{ rifa.descripcion_premio|truncatewords:20 }}</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Imágenes -->
+                        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem;">
+                            <div>
+                                <span style="color: #718096;">🖼️ Imagen Rifa:</span>
+                                <span style="font-weight: 600; color: {% if rifa.imagen %}#48bb78{% else %}#ef4444{% endif %}; margin-left: 0.25rem;">
+                                    {% if rifa.imagen %}✓ Sí{% else %}✗ No{% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <span style="color: #718096;">🎁 Imagen Premio:</span>
+                                <span style="font-weight: 600; color: {% if rifa.imagen_premio %}#48bb78{% else %}#ef4444{% endif %}; margin-left: 0.25rem;">
+                                    {% if rifa.imagen_premio %}✓ Sí{% else %}✗ No{% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Motivo -->
+                        {% if rifa.motivo_pausa %}
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 6px; border-left: 3px solid #fbbf24;">
+                            <div style="font-size: 0.75rem; color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem;">⚠️ Motivo de Pausa:</div>
+                            <div style="font-size: 0.85rem; color: #4a5568; line-height: 1.4;">{{ rifa.motivo_pausa }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Acciones -->
+                    <div style="background: #f7fafc; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="font-weight: 700; color: #2d3748; margin-bottom: 0.5rem; text-align: center;">🎯 Acciones</div>
+                        
+                        <!-- Extender Plazo -->
+                        <button onclick="mostrarModalExtension({{ rifa.id }}, '{{ rifa.titulo|escapejs }}')" 
+                                style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                            ⏰ Extender Plazo
+                        </button>
+
+                        <!-- Aprobar Sorteo -->
+                        <button onclick="mostrarModalAprobar({{ rifa.id }}, '{{ rifa.titulo|escapejs }}', {{ rifa.boletos_vendidos }}, {{ rifa.total_boletos }})" 
+                                style="background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                            ✅ Aprobar Sorteo
+                        </button>
+
+                        <!-- Cancelar Rifa -->
+                        <button onclick="mostrarModalCancelar({{ rifa.id }}, '{{ rifa.titulo|escapejs }}')" 
+                                style="background: linear-gradient(135deg, #f56565, #e53e3e); color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                            ❌ Cancelar Rifa
+                        </button>
+
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(99, 102, 241, 0.1); border-radius: 6px; text-align: center;">
+                            <div style="font-size: 0.7rem; color: #667eea; font-weight: 600;">Ingreso Actual</div>
+                            <div style="font-size: 1.1rem; font-weight: 900; color: #667eea;">
+                                ${{ rifa.ingreso_actual|floatformat:0|intcomma }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 16px;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: #2d3748; margin-bottom: 0.5rem;">No Hay Rifas Pausadas</h3>
+            <p style="color: #718096;">Todas las rifas activas están funcionando correctamente</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal Extender Plazo -->
+<div id="modalExtension" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-bottom: 1rem;">⏰ Extender Plazo</h3>
+        <p style="color: #4a5568; margin-bottom: 1.5rem;" id="textoExtension"></p>
+        
+        <form id="formExtension" onsubmit="procesarExtension(event)">
+            <input type="hidden" id="rifaIdExtension">
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 0.5rem;">Días de Extensión</label>
+                <select name="dias_extension" required style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                    <option value="3">3 días</option>
+                    <option value="7" selected>7 días (1 semana)</option>
+                    <option value="14">14 días (2 semanas)</option>
+                    <option value="30">30 días (1 mes)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 0.5rem;">Comentarios (opcional)</label>
+                <textarea name="comentarios" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;" placeholder="Justificación de la extensión..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Confirmar Extensión
+                </button>
+                <button type="button" onclick="cerrarModal('modalExtension')" style="flex: 1; background: #e2e8f0; color: #2d3748; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Aprobar -->
+<div id="modalAprobar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-bottom: 1rem;">✅ Aprobar Sorteo Parcial</h3>
+        <p style="color: #4a5568; margin-bottom: 1.5rem;" id="textoAprobar"></p>
+        
+        <div style="background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; color: #92400e; font-weight: 600;">⚠️ Advertencia:</div>
+            <div style="font-size: 0.85rem; color: #78350f; margin-top: 0.25rem;">
+                El sorteo se realizará solo con los boletos vendidos. El organizador recibirá el ingreso proporcional.
+            </div>
+        </div>
+        
+        <form id="formAprobar" onsubmit="procesarAprobar(event)">
+            <input type="hidden" id="rifaIdAprobar">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 0.5rem;">Comentarios (opcional)</label>
+                <textarea name="comentarios" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;" placeholder="Justificación de la aprobación..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Aprobar Sorteo
+                </button>
+                <button type="button" onclick="cerrarModal('modalAprobar')" style="flex: 1; background: #e2e8f0; color: #2d3748; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Cancelar -->
+<div id="modalCancelar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 550px; width: 90%;">
+        <h3 style="font-size: 1.5rem; font-weight: 700; color: #e53e3e; margin-bottom: 1rem;">❌ Cancelar Rifa</h3>
+        <p style="color: #4a5568; margin-bottom: 1.5rem;" id="textoCancelar"></p>
+        
+        <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; color: #991b1b; font-weight: 600;">⚠️ Acción Irreversible:</div>
+            <div style="font-size: 0.85rem; color: #7f1d1d; margin-top: 0.25rem;">
+                Esta acción no se puede deshacer. La rifa quedará permanentemente cancelada.
+            </div>
+        </div>
+
+        <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; color: #1e40af; font-weight: 600;">💳 Reembolsos Automáticos:</div>
+            <div style="font-size: 0.85rem; color: #1e3a8a; margin-top: 0.25rem;">
+                Todos los boletos pagados serán reembolsados automáticamente y de forma segura. Los usuarios recibirán su dinero de vuelta.
+            </div>
+        </div>
+        
+        <form id="formCancelar" onsubmit="procesarCancelar(event)">
+            <input type="hidden" id="rifaIdCancelar">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; color: #2d3748; margin-bottom: 0.5rem;">Motivo de Cancelación *</label>
+                <textarea name="comentarios" rows="3" required style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;" placeholder="Explica por qué se cancela esta rifa..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" style="flex: 1; background: linear-gradient(135deg, #f56565, #e53e3e); color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Confirmar Cancelación
+                </button>
+                <button type="button" onclick="cerrarModal('modalCancelar')" style="flex: 1; background: #e2e8f0; color: #2d3748; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    No Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function mostrarModalExtension(rifaId, rifaTitulo) {
+    document.getElementById('rifaIdExtension').value = rifaId;
+    document.getElementById('textoExtension').textContent = `Rifa: "${rifaTitulo}"`;
+    document.getElementById('modalExtension').style.display = 'flex';
+}
+
+function mostrarModalAprobar(rifaId, rifaTitulo, boletosVendidos, totalBoletos) {
+    document.getElementById('rifaIdAprobar').value = rifaId;
+    document.getElementById('textoAprobar').textContent = `Rifa: "${rifaTitulo}" - ${boletosVendidos} de ${totalBoletos} boletos vendidos`;
+    document.getElementById('modalAprobar').style.display = 'flex';
+}
+
+function mostrarModalCancelar(rifaId, rifaTitulo) {
+    document.getElementById('rifaIdCancelar').value = rifaId;
+    document.getElementById('textoCancelar').textContent = `¿Estás seguro de cancelar la rifa "${rifaTitulo}"?`;
+    document.getElementById('modalCancelar').style.display = 'flex';
+}
+
+function cerrarModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function procesarExtension(event) {
+    event.preventDefault();
+    const rifaId = document.getElementById('rifaIdExtension').value;
+    const formData = new FormData(event.target);
+    formData.append('accion', 'extender');
+    
+    procesarDecision(rifaId, formData);
+}
+
+function procesarAprobar(event) {
+    event.preventDefault();
+    const rifaId = document.getElementById('rifaIdAprobar').value;
+    const formData = new FormData(event.target);
+    formData.append('accion', 'aprobar');
+    
+    procesarDecision(rifaId, formData);
+}
+
+function procesarCancelar(event) {
+    event.preventDefault();
+    const rifaId = document.getElementById('rifaIdCancelar').value;
+    const formData = new FormData(event.target);
+    formData.append('accion', 'cancelar');
+    
+    procesarDecision(rifaId, formData);
+}
+
+function procesarDecision(rifaId, formData) {
+    // Obtener CSRF token de las cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrfToken = getCookie('csrftoken');
+    
+    fetch(`/admin-panel/rifas-pausadas/${rifaId}/revisar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la solicitud');
+        console.error(error);
+    });
+}
+
+// Cerrar modales con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('[id^="modal"]').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+});
+</script>
+
+<style>
+/* Responsive Design */
+
+/* Tablets (max-width: 1024px) */
+@media (max-width: 1024px) {
+    div[style*="max-width: 1400px"] {
+        padding: 1.5rem !important;
+    }
+    
+    /* Tarjetas de rifas - cambiar grid a 2 columnas */
+    div[style*="grid-template-columns: 200px 1fr 300px"] {
+        grid-template-columns: 180px 1fr 280px !important;
+        gap: 1rem !important;
+    }
+    
+    /* Reducir altura de imagen */
+    div[style*="height: 200px"][style*="overflow: hidden"] {
+        height: 180px !important;
+    }
+}
+
+/* Tablets pequeñas (max-width: 768px) */
+@media (max-width: 768px) {
+    div[style*="max-width: 1400px"] {
+        padding: 1rem !important;
+    }
+    
+    /* Títulos */
+    h1[style*="font-size: 2rem"] {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Resumen - hacer columna única */
+    div[style*="display: flex"][style*="gap: 1rem"] > div[style*="font-size: 3rem"] {
+        font-size: 2.5rem !important;
+    }
+    
+    div[style*="display: flex"][style*="gap: 1rem"] > div > div[style*="font-size: 1.5rem"] {
+        font-size: 1.2rem !important;
+    }
+    
+    /* Tarjetas de rifas - hacer columna única */
+    div[style*="grid-template-columns: 200px 1fr 300px"],
+    div[style*="grid-template-columns: 180px 1fr 280px"] {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+    }
+    
+    /* Imagen - full width */
+    div[style*="height: 200px"][style*="overflow: hidden"],
+    div[style*="height: 180px"][style*="overflow: hidden"] {
+        height: 250px !important;
+    }
+    
+    /* Información - mejor padding */
+    div[style*="padding: 1.5rem 0"] {
+        padding: 1.5rem !important;
+    }
+    
+    /* Grids de información - 1 columna */
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* Acciones - full width */
+    div[style*="background: #f7fafc"][style*="padding: 1.5rem"] {
+        padding: 1.5rem !important;
+    }
+    
+    /* Botones de acción */
+    button[style*="padding: 0.75rem 1rem"] {
+        padding: 0.75rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Modales */
+    div[style*="max-width: 500px"],
+    div[style*="max-width: 550px"] {
+        width: 95% !important;
+        padding: 1.5rem !important;
+    }
+    
+    h3[style*="font-size: 1.5rem"] {
+        font-size: 1.3rem !important;
+    }
+}
+
+/* Móviles (max-width: 576px) */
+@media (max-width: 576px) {
+    div[style*="max-width: 1400px"] {
+        padding: 0.75rem !important;
+    }
+    
+    h1[style*="font-size: 2rem"],
+    h1[style*="font-size: 1.5rem"] {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Emojis más pequeños */
+    div[style*="font-size: 3rem"],
+    div[style*="font-size: 2.5rem"] {
+        font-size: 2rem !important;
+    }
+    
+    div[style*="font-size: 4rem"] {
+        font-size: 3rem !important;
+    }
+    
+    /* Reducir padding general */
+    div[style*="padding: 1.5rem"] {
+        padding: 1rem !important;
+    }
+    
+    /* Información de rifa */
+    h3[style*="font-size: 1.3rem"] {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Análisis financiero - valores más pequeños */
+    div[style*="font-size: 1rem"][style*="font-weight: 900"] {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Botones */
+    button[style*="padding: 0.75rem"] {
+        padding: 0.65rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Modales más pequeños */
+    div[style*="max-width: 500px"],
+    div[style*="max-width: 550px"] {
+        padding: 1rem !important;
+    }
+    
+    h3[style*="font-size: 1.5rem"],
+    h3[style*="font-size: 1.3rem"] {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Inputs y textareas */
+    input[style*="padding: 0.75rem"],
+    textarea[style*="padding: 0.75rem"],
+    select[style*="padding: 0.75rem"] {
+        padding: 0.65rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Botones de modal */
+    button[type="submit"][style*="padding: 0.75rem"],
+    button[type="button"][style*="padding: 0.75rem"] {
+        padding: 0.65rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Landscape móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+    div[style*="height: 250px"] {
+        height: 180px !important;
+    }
+}
+
+/* Prevenir overflow horizontal */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    * {
+        max-width: 100% !important;
+    }
+}
+</style>
+{% endblock %}

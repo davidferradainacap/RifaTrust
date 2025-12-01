@@ -1,0 +1,595 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Auditoría - Panel Admin{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Auditoría</li>
+{% endblock %}
+
+{% block page_title %}Registro de Auditoría{% endblock %}
+{% block page_subtitle %}Monitoreo completo de todas las acciones del sistema{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-primary" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar
+    </button>
+    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+        <i class="bi bi-download"></i> Exportar
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">
+                <i class="bi bi-file-text"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ total_logs }}</div>
+                <div class="stat-label">Total Registros</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-success">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ logs_today }}</div>
+                <div class="stat-label">Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-warning">
+            <div class="stat-icon">
+                <i class="bi bi-calendar-week"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ logs_this_week }}</div>
+                <div class="stat-label">Esta Semana</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card stat-info">
+            <div class="stat-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ unique_users }}</div>
+                <div class="stat-label">Usuarios Activos</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-container mb-4">
+    <form method="get" action="" id="filtersForm" class="filters-form">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-search"></i> Búsqueda
+                </label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Buscar por usuario, acción o descripción..." 
+                       value="{{ current_search|default:'' }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-funnel"></i> Acción
+                </label>
+                <select name="accion" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas las acciones</option>
+                    <option value="crear" {% if request.GET.accion == 'crear' %}selected{% endif %}>Crear</option>
+                    <option value="editar" {% if request.GET.accion == 'editar' %}selected{% endif %}>Editar</option>
+                    <option value="eliminar" {% if request.GET.accion == 'eliminar' %}selected{% endif %}>Eliminar</option>
+                    <option value="login" {% if request.GET.accion == 'login' %}selected{% endif %}>Login</option>
+                    <option value="logout" {% if request.GET.accion == 'logout' %}selected{% endif %}>Logout</option>
+                    <option value="reembolso" {% if request.GET.accion == 'reembolso' %}selected{% endif %}>Reembolso</option>
+                    <option value="pago" {% if request.GET.accion == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-person"></i> Usuario
+                </label>
+                <select name="usuario" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos los usuarios</option>
+                    {% for user in users_list %}
+                    <option value="{{ user.id }}" {% if request.GET.usuario == user.id|stringformat:"s" %}selected{% endif %}>
+                        {{ user.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-calendar"></i> Desde
+                </label>
+                <input type="date" name="fecha_desde" class="form-control" 
+                       value="{{ request.GET.fecha_desde|default:'' }}"
+                       onchange="this.form.submit()">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-calendar-check"></i> Hasta
+                </label>
+                <input type="date" name="fecha_hasta" class="form-control" 
+                       value="{{ request.GET.fecha_hasta|default:'' }}"
+                       onchange="this.form.submit()">
+            </div>
+            
+            <div class="col-md-1 d-flex align-items-end">
+                <a href="{% url 'admin_panel:audit_logs' %}" class="btn btn-outline-secondary w-100" title="Limpiar filtros">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+        
+        {% if request.GET.search or request.GET.accion or request.GET.usuario or request.GET.fecha_desde or request.GET.fecha_hasta %}
+        <div class="active-filters mt-3">
+            <span class="text-muted me-2">Filtros activos:</span>
+            {% if request.GET.search %}
+            <span class="filter-chip">
+                Búsqueda: "{{ request.GET.search }}"
+                <i class="bi bi-x" onclick="removeFilter('search')"></i>
+            </span>
+            {% endif %}
+            {% if request.GET.accion %}
+            <span class="filter-chip">
+                Acción: {{ request.GET.accion }}
+                <i class="bi bi-x" onclick="removeFilter('accion')"></i>
+            </span>
+            {% endif %}
+            {% if request.GET.usuario %}
+            <span class="filter-chip">
+                Usuario específico
+                <i class="bi bi-x" onclick="removeFilter('usuario')"></i>
+            </span>
+            {% endif %}
+            {% if request.GET.fecha_desde %}
+            <span class="filter-chip">
+                Desde: {{ request.GET.fecha_desde }}
+                <i class="bi bi-x" onclick="removeFilter('fecha_desde')"></i>
+            </span>
+            {% endif %}
+            {% if request.GET.fecha_hasta %}
+            <span class="filter-chip">
+                Hasta: {{ request.GET.fecha_hasta }}
+                <i class="bi bi-x" onclick="removeFilter('fecha_hasta')"></i>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Audit Logs Table -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div>
+            <h5 class="table-card-title mb-0">
+                <i class="bi bi-list-ul"></i> Registros de Auditoría
+            </h5>
+            <p class="text-muted small mb-0">{{ logs.paginator.count }} registros encontrados</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <select class="form-select form-select-sm" style="width: auto;" onchange="changeSortOrder(this.value)">
+                <option value="-fecha">Más recientes</option>
+                <option value="fecha">Más antiguos</option>
+                <option value="accion">Por acción</option>
+                <option value="usuario__nombre">Por usuario</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">ID</th>
+                    <th style="width: 200px;">Usuario</th>
+                    <th style="width: 130px;">Acción</th>
+                    <th>Descripción</th>
+                    <th style="width: 150px;">Fecha</th>
+                    <th style="width: 100px;">Detalles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="text-muted">#{{ log.id }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle avatar-primary me-2">
+                                {{ log.usuario.nombre|first|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold">{{ log.usuario.nombre }}</div>
+                                <small class="text-muted">{{ log.usuario.email }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if log.accion == 'crear' %}
+                        <span class="badge badge-status badge-success">
+                            <i class="bi bi-plus-circle"></i> Crear
+                        </span>
+                        {% elif log.accion == 'editar' %}
+                        <span class="badge badge-status badge-warning">
+                            <i class="bi bi-pencil"></i> Editar
+                        </span>
+                        {% elif log.accion == 'eliminar' %}
+                        <span class="badge badge-status badge-danger">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </span>
+                        {% elif log.accion == 'login' %}
+                        <span class="badge badge-status badge-info">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </span>
+                        {% elif log.accion == 'logout' %}
+                        <span class="badge badge-status badge-secondary">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </span>
+                        {% elif log.accion == 'reembolso' %}
+                        <span class="badge badge-status badge-warning">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reembolso
+                        </span>
+                        {% elif log.accion == 'pago' %}
+                        <span class="badge badge-status badge-success">
+                            <i class="bi bi-credit-card"></i> Pago
+                        </span>
+                        {% else %}
+                        <span class="badge badge-status badge-primary">
+                            <i class="bi bi-gear"></i> {{ log.accion|title }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="text-truncate" style="max-width: 400px;">
+                            {{ log.descripcion }}
+                        </div>
+                    </td>
+                    <td>
+                        <div>{{ log.fecha|date:"d/m/Y" }}</div>
+                        <small class="text-muted">{{ log.fecha|date:"H:i:s" }}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewLogDetails({{ log.id }})" title="Ver detalles completos">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No se encontraron registros con los filtros aplicados</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if logs.has_other_pages %}
+    <div class="table-card-footer">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                Mostrando {{ logs.start_index }} - {{ logs.end_index }} de {{ logs.paginator.count }} registros
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if logs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.accion %}&accion={{ request.GET.accion }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                            <i class="bi bi-chevron-bar-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.accion %}&accion={{ request.GET.accion }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in logs.paginator.page_range %}
+                    {% if logs.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.accion %}&accion={{ request.GET.accion }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.accion %}&accion={{ request.GET.accion }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.accion %}&accion={{ request.GET.accion }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">
+                            <i class="bi bi-chevron-bar-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Log Details Modal -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-text"></i> Detalles del Registro
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit search on Enter
+document.querySelector('input[name="search"]').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        this.form.submit();
+    }
+});
+
+// Remove individual filter
+function removeFilter(filterName) {
+    const url = new URL(window.location);
+    url.searchParams.delete(filterName);
+    window.location.href = url.toString();
+}
+
+// Change sort order
+function changeSortOrder(order) {
+    const url = new URL(window.location);
+    url.searchParams.set('sort', order);
+    window.location.href = url.toString();
+}
+
+// View log details
+function viewLogDetails(logId) {
+    const modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+    modal.show();
+    
+    // Fetch log details via AJAX
+    fetch(`/admin-panel/audit-logs/${logId}/details/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al cargar los detalles');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const log = data.log;
+                document.getElementById('logDetailsContent').innerHTML = `
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">ID</label>
+                            <p class="mb-0">#${log.id}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">FECHA Y HORA</label>
+                            <p class="mb-0"><i class="bi bi-clock text-muted me-1"></i>${log.fecha}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">USUARIO</label>
+                            <p class="mb-0">
+                                <i class="bi bi-person text-muted me-1"></i>${log.usuario.nombre}
+                                <br><small class="text-muted">${log.usuario.email}</small>
+                                <br><span class="badge bg-secondary mt-1">${log.usuario.rol}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">ACCIÓN</label>
+                            <p class="mb-0"><span class="badge bg-primary"><i class="bi bi-activity me-1"></i>${log.accion}</span></p>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-muted small">DESCRIPCIÓN COMPLETA</label>
+                            <div class="alert alert-light mb-0">
+                                <i class="bi bi-info-circle text-primary me-2"></i>${log.descripcion}
+                            </div>
+                        </div>
+                        ${log.ip_address !== 'No disponible' ? `
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small">DIRECCIÓN IP</label>
+                            <p class="mb-0"><i class="bi bi-globe text-muted me-1"></i><code>${log.ip_address}</code></p>
+                        </div>
+                        ` : ''}
+                        ${log.user_agent !== 'No disponible' ? `
+                        <div class="col-12">
+                            <label class="form-label fw-bold text-muted small">NAVEGADOR</label>
+                            <p class="mb-0"><code class="small"><i class="bi bi-browser-chrome text-muted me-1"></i>${log.user_agent}</code></p>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                throw new Error(data.error || 'Error desconocido');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('logDetailsContent').innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> No se pudieron cargar los detalles del registro.
+                    <br><small class="text-muted">${error.message}</small>
+                </div>
+            `;
+        });
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+/* Responsive Design */
+
+/* Tablets (max-width: 992px) */
+@media (max-width: 992px) {
+    .col-md-3, .col-md-4 {
+        width: 50% !important;
+    }
+    
+    .btn-group {
+        flex-direction: column !important;
+    }
+    
+    .btn-group .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* Móviles (max-width: 768px) */
+@media (max-width: 768px) {
+    .col-md-3, .col-md-4 {
+        width: 100% !important;
+    }
+    
+    /* Stats cards */
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    .card-body h3 {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Timeline items */
+    .timeline-item {
+        padding: 1rem !important;
+    }
+    
+    /* Tabla responsive */
+    .table-responsive {
+        font-size: 0.85rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem !important;
+    }
+    
+    /* Ocultar columnas menos importantes */
+    .table td:nth-child(2),
+    .table th:nth-child(2),
+    .table td:nth-child(4),
+    .table th:nth-child(4) {
+        display: none !important;
+    }
+    
+    /* Badges */
+    .badge {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    /* Botones */
+    .btn {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .btn-sm {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* Móviles pequeños (max-width: 576px) */
+@media (max-width: 576px) {
+    .card-body h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Ocultar más columnas */
+    .table td:nth-child(3),
+    .table th:nth-child(3),
+    .table td:nth-child(5),
+    .table th:nth-child(5) {
+        display: none !important;
+    }
+    
+    .btn-sm {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Prevenir overflow horizontal */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container-fluid {
+        overflow-x: hidden !important;
+    }
+    
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

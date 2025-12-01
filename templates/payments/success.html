@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Pago Exitoso{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; padding: 3rem 1rem; text-align: center;">
+    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+        <svg style="width: 48px; height: 48px; color: rgb(34, 197, 94);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+    </div>
+
+    <h1 style="font-size: 2rem; font-weight: 700; color: white; margin-bottom: 0.75rem;">¡Pago Exitoso!</h1>
+    <p style="font-size: 1rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 2rem;">Tu compra se ha procesado correctamente</p>
+
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; padding: 2rem; margin-bottom: 2rem;">
+        <div style="margin-bottom: 1.25rem;">
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">ID de Transacción</span>
+            <div style="font-size: 1rem; font-weight: 600; color: white; margin-top: 0.4rem; font-family: monospace;">{{ payment.transaction_id }}</div>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Monto Pagado</span>
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-top: 0.4rem;">CLP${{ payment.monto|floatformat:0|intcomma }}</div>
+        </div>
+
+        <div style="margin-bottom: 1.25rem;">
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Método de Pago</span>
+            <div style="font-size: 1rem; font-weight: 600; color: white; margin-top: 0.4rem; text-transform: capitalize;">{{ payment.metodo_pago }}</div>
+        </div>
+
+        <div>
+            <span style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.05em;">Boletos Comprados</span>
+            <div style="margin-top: 0.75rem;">
+                {% for ticket in payment.boletos.all %}
+                <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;">
+                    <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">{{ ticket.rifa.titulo }}</div>
+                    <div style="font-size: 0.85rem; color: var(--secondary); font-weight: 600; margin-top: 0.25rem;">Boleto #{{ ticket.numero_boleto }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 1.25rem; margin-bottom: 2rem;">
+        <p style="margin: 0 0 0.5rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">✓ Recibirás una confirmación por correo electrónico</p>
+        <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">✓ Tus boletos están disponibles en tu dashboard</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <a href="{% url 'raffles:participant_dashboard' %}" class="btn btn-primary" style="font-size: 0.95rem; padding: 0.875rem 1.5rem; text-decoration: none;">
+            Ver Mis Boletos
+        </a>
+        <a href="{% url 'raffles:list' %}" class="btn btn-secondary" style="font-size: 0.95rem; padding: 0.875rem 1.5rem; text-decoration: none;">
+            Explorar Más Rifas
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Gestión de Rifas{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">Gestión de Rifas</li>
+{% endblock %}
+
+{% block page_title %}Gestión de Rifas{% endblock %}
+{% block page_subtitle %}Administración y monitoreo de todas las rifas{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+    </button>
+    <a href="{% url 'admin_panel:export_raffles_pdf' %}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Exportar PDF
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-gift fs-3 text-primary"></i>
+                <h3 class="mt-2 mb-0">{{ total_raffles }}</h3>
+                <small class="text-muted">Total Rifas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle fs-3 text-success"></i>
+                <h3 class="mt-2 mb-0">{{ raffles_activas }}</h3>
+                <small class="text-muted">Activas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-hourglass-split fs-3 text-secondary"></i>
+                <h3 class="mt-2 mb-0">{{ raffles_finalizadas }}</h3>
+                <small class="text-muted">Finalizadas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-x-circle fs-3 text-danger"></i>
+                <h3 class="mt-2 mb-0">{{ raffles_canceladas }}</h3>
+                <small class="text-muted">Canceladas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-container">
+    <form method="get" action="" id="filtersForm">
+        <div class="row g-3">
+            <!-- Search -->
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-search me-1"></i>Búsqueda
+                </label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Buscar por título, organizador o ID..." 
+                       value="{{ current_search|default:'' }}">
+            </div>
+            
+            <!-- Estado Filter -->
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-funnel me-1"></i>Estado
+                </label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="activa" {% if request.GET.estado == 'activa' %}selected{% endif %}>Activa</option>
+                    <option value="finalizada" {% if request.GET.estado == 'finalizada' %}selected{% endif %}>Finalizada</option>
+                    <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                    <option value="borrador" {% if request.GET.estado == 'borrador' %}selected{% endif %}>Borrador</option>
+                </select>
+            </div>
+            
+            <!-- Date Range -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-calendar me-1"></i>Desde
+                </label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ request.GET.fecha_desde|default:'' }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-calendar me-1"></i>Hasta
+                </label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ request.GET.fecha_hasta|default:'' }}">
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Aplicar Filtros
+                </button>
+                <a href="{% url 'admin_panel:raffles_management' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Raffles Table -->
+<div class="table-card mt-4">
+    <div class="table-card-header">
+        <h5 class="table-card-title mb-0">
+            <i class="bi bi-list-ul me-2"></i>
+            Rifas ({{ raffles.count }} total)
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Organizador</th>
+                            <th>Precio Boleto</th>
+                            <th>Boletos</th>
+                            <th>Estado</th>
+                            <th>Fecha Sorteo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for raffle in raffles %}
+                        <tr>
+                            <td>{{ raffle.id }}</td>
+                            <td>
+                                <strong>{{ raffle.titulo|truncatechars:40 }}</strong>
+                                <br><small class="text-muted">{{ raffle.premio_principal }}</small>
+                            </td>
+                            <td>
+                                {{ raffle.organizador.nombre }}<br>
+                                <small class="text-muted">{{ raffle.organizador.email }}</small>
+                            </td>
+                            <td><strong>CLP${{ raffle.precio_boleto|floatformat:0|intcomma }}</strong></td>
+                            <td>
+                                {{ raffle.boletos_vendidos }}/{{ raffle.total_boletos }}
+                                <br>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         data-width="{{ raffle.porcentaje_vendido|floatformat:0 }}"></div>
+                                </div>
+                                <small class="text-muted">{{ raffle.porcentaje_vendido|floatformat:0 }}%</small>
+                            </td>
+                            <td>
+                                {% if raffle.estado == 'activa' %}
+                                    <span class="badge bg-success">✓ Activa</span>
+                                {% elif raffle.estado == 'borrador' %}
+                                    <span class="badge bg-secondary">📝 Borrador</span>
+                                {% elif raffle.estado == 'cerrada' %}
+                                    <span class="badge bg-warning">🔒 Cerrada</span>
+                                {% elif raffle.estado == 'finalizada' %}
+                                    <span class="badge bg-info">✔️ Finalizada</span>
+                                {% elif raffle.estado == 'cancelada' %}
+                                    <span class="badge bg-danger">✗ Cancelada</span>
+                                {% endif %}
+                            </td>
+                            <td><small>{{ raffle.fecha_sorteo|date:"d/m/Y H:i" }}</small></td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'raffles:detail' raffle.id %}" class="btn btn-info" title="Ver detalles">
+                                        👁️
+                                    </a>
+                                    <button class="btn btn-warning" title="Editar">
+                                        ✏️
+                                    </button>
+                                    {% if raffle.estado == 'activa' %}
+                                    <button class="btn btn-danger" title="Cancelar">
+                                        🚫
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                No hay rifas registradas
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Rifas</h5>
+                    <h2>{{ total_raffles }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h5>Activas</h5>
+                    <h2>{{ raffles_activas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <h5>Finalizadas</h5>
+                    <h2>{{ raffles_finalizadas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-danger text-white">
+                <div class="card-body">
+                    <h5>Canceladas</h5>
+                    <h2>{{ raffles_canceladas }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    border: 1px solid rgba(0,0,0,0.125);
+}
+
+.progress {
+    margin-top: 3px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar').forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        if (width) {
+            bar.style.width = width + '%';
+        }
+    });
+});
+</script>
+{% endblock %}
