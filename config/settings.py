@@ -98,7 +98,10 @@ else:
             'PASSWORD': env_config('DATABASE_PASSWORD', default=''),
             'HOST': env_config('DATABASE_HOST', default='localhost'),
             'PORT': env_config('DATABASE_PORT', default='3306'),
-            'OPTIONS': {'charset': 'utf8mb4'},
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'ssl': {'ssl-mode': 'required'}
+            },
         }
     }
 
