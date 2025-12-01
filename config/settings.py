@@ -15,6 +15,11 @@ DEBUG = env_config('DEBUG', default=True, cast=bool)
 allowed_hosts_str = env_config('ALLOWED_HOSTS', default='')
 ALLOWED_HOSTS = allowed_hosts_str.split(',') if allowed_hosts_str else ['*']
 
+# CSRF Trusted Origins (para Azure y producción)
+CSRF_TRUSTED_ORIGINS = [
+    'https://rifatrust-dhche4cabncab9d8.brazilsouth-01.azurewebsites.net',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
