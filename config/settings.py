@@ -12,7 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security Settings
 SECRET_KEY = env_config('SECRET_KEY', default='django-insecure-cambiar-en-produccion')
 DEBUG = env_config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = env_config('ALLOWED_HOSTS', default='*').split(',') if env_config('ALLOWED_HOSTS', default='') else ['*']
+allowed_hosts_str = env_config('ALLOWED_HOSTS', default='')
+ALLOWED_HOSTS = allowed_hosts_str.split(',') if allowed_hosts_str else ['*']
 
 # Application definition
 INSTALLED_APPS = [
