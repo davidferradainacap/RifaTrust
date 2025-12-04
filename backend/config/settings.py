@@ -161,16 +161,28 @@ EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')
 if EMAIL_HOST_PASSWORD:
     # SendGrid configurado - enviar emails reales
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
-    EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
-    EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_USE_SSL = env_config('EMAIL_USE_SSL', default=False, cast=bool)
-    EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='apikey')
+    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_USE_SSL = False
+    EMAIL_HOST_USER = 'apikey'
     DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='david.ferrada@inacapmail.cl')
+    
+    # Debug: Log que SendGrid está configurado
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"✓ SendGrid SMTP configurado - EMAIL_BACKEND: {EMAIL_BACKEND}")
+    logger.info(f"✓ EMAIL_HOST: {EMAIL_HOST}")
+    logger.info(f"✓ EMAIL_HOST_USER: {EMAIL_HOST_USER}")
+    logger.info(f"✓ DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 else:
     # Modo desarrollo - emails en consola
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'david.ferrada@inacapmail.cl'
+    
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning("⚠ EMAIL_HOST_PASSWORD no configurado - usando console backend")
 EMAIL_TIMEOUT = env_config('EMAIL_TIMEOUT', default=30, cast=int)
 # SSL certificate verification (disable only in development if needed)
 EMAIL_SSL_CERTFILE = env_config('EMAIL_SSL_CERTFILE', default=None)
