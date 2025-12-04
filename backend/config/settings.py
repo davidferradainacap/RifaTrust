@@ -156,7 +156,10 @@ EMAIL_VERIFICATION_API_KEY = env_config('EMAIL_VERIFICATION_API_KEY', default=No
 # Email Configuration for sending emails
 # Usa SendGrid si EMAIL_HOST_PASSWORD está configurado (API key presente)
 # Sino, usa consola para desarrollo local
-EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_HOST_PASSWORD_RAW = env_config('EMAIL_HOST_PASSWORD', default='')
+
+# Sanitizar API key: remover espacios, comillas, saltos de línea
+EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD_RAW.strip().strip('"').strip("'").replace('\n', '').replace('\r', '') if EMAIL_HOST_PASSWORD_RAW else ''
 
 if EMAIL_HOST_PASSWORD:
     # SendGrid configurado - enviar emails reales
@@ -168,13 +171,27 @@ if EMAIL_HOST_PASSWORD:
     EMAIL_HOST_USER = 'apikey'
     DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='david.ferrada@inacapmail.cl')
     
-    # Debug: Log que SendGrid está configurado
+    # Debug: Log configuración y diagnóstico de API key
     import logging
     logger = logging.getLogger(__name__)
-    logger.info(f"✓ SendGrid SMTP configurado - EMAIL_BACKEND: {EMAIL_BACKEND}")
-    logger.info(f"✓ EMAIL_HOST: {EMAIL_HOST}")
-    logger.info(f"✓ EMAIL_HOST_USER: {EMAIL_HOST_USER}")
-    logger.info(f"✓ DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+    logger.info(f"✓ SendGrid SMTP configurado")
+    logger.info(f"  EMAIL_BACKEND: {EMAIL_BACKEND}")
+    logger.info(f"  EMAIL_HOST: {EMAIL_HOST}:{EMAIL_PORT}")
+    logger.info(f"  EMAIL_HOST_USER: {EMAIL_HOST_USER}")
+    logger.info(f"  DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+    
+    # Diagnóstico de API key (sin revelar valor completo)
+    api_key_start = EMAIL_HOST_PASSWORD[:10] if len(EMAIL_HOST_PASSWORD) >= 10 else EMAIL_HOST_PASSWORD
+    api_key_length = len(EMAIL_HOST_PASSWORD)
+    logger.info(f"  API Key length: {api_key_length} chars")
+    logger.info(f"  API Key starts with: {api_key_start}...")
+    
+    # Validar formato de API key de SendGrid
+    if not EMAIL_HOST_PASSWORD.startswith('SG.'):
+        logger.error(f"  ❌ ERROR: SendGrid API key debe empezar con 'SG.' pero empieza con '{api_key_start}'")
+        logger.error(f"  ❌ Esto causará fallo en autenticación SMTP")
+    else:
+        logger.info(f"  ✓ API Key format looks valid (starts with 'SG.')")
 else:
     # Modo desarrollo - emails en consola
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
