@@ -37,6 +37,30 @@
                     {% if user.rol == 'organizador' or user.rol == 'admin' %}
                         <a href="/raffles/create/">Crear Rifa</a>
                     {% endif %}
+                    
+                    <!-- Buzón de Notificaciones -->
+                    <div class="notifications-wrapper" style="position: relative;">
+                        <button id="notificationsBtn" class="notifications-btn" title="Notificaciones" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 0.5rem 0.75rem; cursor: pointer; position: relative; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            <span id="notificationBadge" class="notification-badge" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700; display: none; align-items: center; justify-content: center;">0</span>
+                        </button>
+                        <div id="notificationsDropdown" class="notifications-dropdown" style="position: absolute; top: calc(100% + 0.5rem); right: 0; background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; width: 360px; max-height: 500px; overflow-y: auto; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); z-index: 1000; display: none;">
+                            <div style="padding: 1rem; border-bottom: 1px solid rgba(99, 102, 241, 0.2); display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="color: white; font-size: 1.1rem; font-weight: 700; margin: 0;">🔔 Notificaciones</h3>
+                                <a href="/notifications/" style="color: #6366f1; font-size: 0.85rem; text-decoration: none; font-weight: 600;">Ver todas</a>
+                            </div>
+                            <div id="notificationsList" class="notifications-list" style="padding: 0.5rem;">
+                                <div class="notifications-loading" style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.6);">
+                                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">⏳</div>
+                                    <p>Cargando...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <a href="/profile/" class="profile-btn" title="Mi Perfil">
                         <span class="profile-avatar">
                             <svg viewBox="0 0 32 32" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -103,19 +127,22 @@
             notificationsBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 isDropdownOpen = !isDropdownOpen;
-                notificationsDropdown.classList.toggle('active', isDropdownOpen);
-
-                if (isDropdownOpen && notificationsList.querySelector('.notifications-loading')) {
-                    loadNotifications();
+                if (isDropdownOpen) {
+                    notificationsDropdown.style.display = 'block';
+                    if (notificationsList.querySelector('.notifications-loading')) {
+                        loadNotifications();
+                    }
+                } else {
+                    notificationsDropdown.style.display = 'none';
                 }
             });
         }
 
         // Cerrar al hacer click fuera
         document.addEventListener('click', function(e) {
-            if (isDropdownOpen && !notificationsDropdown.contains(e.target)) {
+            if (isDropdownOpen && !notificationsDropdown.contains(e.target) && !notificationsBtn.contains(e.target)) {
                 isDropdownOpen = false;
-                notificationsDropdown.classList.remove('active');
+                notificationsDropdown.style.display = 'none';
             }
         });
 
@@ -125,26 +152,43 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.notifications && data.notifications.length > 0) {
+                        // Actualizar badge
+                        const unreadCount = data.notifications.filter(n => !n.leido).length;
+                        if (unreadCount > 0) {
+                            notificationBadge.textContent = unreadCount;
+                            notificationBadge.style.display = 'flex';
+                        } else {
+                            notificationBadge.style.display = 'none';
+                        }
+                        
                         notificationsList.innerHTML = data.notifications.map(notif => `
-                            <div class="notification-item ${notif.leido ? '' : 'unread'}">
-                                <div class="notification-icon">
-                                    ${getNotificationIcon(notif.tipo)}
-                                </div>
-                                <div class="notification-content">
-                                    <p class="notification-message">${notif.mensaje}</p>
-                                    <span class="notification-time">${notif.created_at}</span>
+                            <div class="notification-item ${notif.leido ? '' : 'unread'}" style="padding: 1rem; border-bottom: 1px solid rgba(99, 102, 241, 0.1); cursor: pointer; transition: background 0.2s; ${notif.leido ? '' : 'background: rgba(99, 102, 241, 0.1);'}">
+                                <div style="display: flex; gap: 0.75rem; align-items: start;">
+                                    <div style="font-size: 1.5rem; flex-shrink: 0;">
+                                        ${getNotificationIcon(notif.tipo)}
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="color: white; font-size: 0.9rem; margin: 0 0 0.25rem 0; line-height: 1.4;">${notif.mensaje}</p>
+                                        <span style="color: rgba(255, 255, 255, 0.5); font-size: 0.75rem;">${notif.created_at}</span>
+                                    </div>
                                 </div>
                             </div>
                         `).join('');
                     } else {
-                        notificationsList.innerHTML = '<div class="notifications-empty">No hay notificaciones</div>';
+                        notificationBadge.style.display = 'none';
+                        notificationsList.innerHTML = '<div style="text-align: center; padding: 3rem 1rem; color: rgba(255, 255, 255, 0.5);"><div style="font-size: 3rem; margin-bottom: 0.5rem;">📭</div><p>No hay notificaciones</p></div>';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    notificationsList.innerHTML = '<div class="notifications-empty">Error al cargar notificaciones</div>';
+                    notificationsList.innerHTML = '<div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.5);">Error al cargar notificaciones</div>';
                 });
         }
+        
+        // Cargar notificaciones inicial
+        loadNotifications();
+        // Actualizar cada 30 segundos
+        setInterval(loadNotifications, 30000);
 
         // Icono según tipo de notificación
         function getNotificationIcon(tipo) {
