@@ -88,6 +88,25 @@
                         </a>
                     </div>
                     {% endif %}
+                    
+                    <!-- Botón de Compra -->
+                    {% if raffle.estado == 'activa' and user.is_authenticated and user.rol != 'organizador' %}
+                    <div style="margin-top: 1.5rem;">
+                        <a href="{% url 'raffles:buy_ticket' raffle.id %}" class="raffle-glass-btn" style="display: block; padding: 1.5rem; background: linear-gradient(135deg, #48bb78, #38a169); color: white; text-decoration: none; border-radius: 16px; font-size: 1.3rem; font-weight: 900; text-align: center; box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4); transition: all 0.3s; border: 3px solid #48bb78;">
+                            🎟️ COMPRAR BOLETOS
+                        </a>
+                    </div>
+                    {% elif raffle.estado == 'activa' and not user.is_authenticated %}
+                    <div style="margin-top: 1.5rem;">
+                        <a href="{% url 'users:login' %}?next={{ request.path }}" class="raffle-glass-btn" style="display: block; padding: 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 16px; font-size: 1.3rem; font-weight: 900; text-align: center; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); transition: all 0.3s;">
+                            🔐 INICIA SESIÓN PARA COMPRAR
+                        </a>
+                    </div>
+                    {% elif raffle.estado == 'activa' and user.rol == 'organizador' %}
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255, 159, 64, 0.2); border-radius: 12px; border-left: 4px solid #ff9f40; color: #fff;">
+                        <p style="margin: 0; font-size: 0.95rem; font-weight: 600;">ℹ️ Los organizadores no pueden comprar boletos</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
