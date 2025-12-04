@@ -1,0 +1,1624 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Dashboard Administrativo{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+{% endblock %}
+
+{% block page_title %}Dashboard Administrativo{% endblock %}
+{% block page_subtitle %}Resumen general de la plataforma RifaTrust{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Compact Dashboard Styling */
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.25s ease;
+        height: 100%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+        border-color: #d1d5db;
+    }
+
+    .stat-card-compact {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+
+    .stat-card-icon-sm {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-card-icon-sm i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .stat-card-value-sm {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card-label-sm {
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.75rem;
+        margin-bottom: 0.375rem;
+    }
+
+    .stat-card-trend-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    .stat-card-trend-sm.up {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .quick-action-compact {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.875rem;
+        text-align: center;
+        transition: all 0.25s ease;
+        position: relative;
+        text-decoration: none;
+        display: block;
+    }
+
+    .quick-action-compact:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        border-color: #d1d5db;
+    }
+
+    .quick-action-compact i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .quick-action-compact h6 {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .quick-action-compact p {
+        font-size: 0.7rem;
+        margin: 0;
+        color: #6b7280;
+    }
+
+    .compact-table-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .compact-table-header {
+        padding: 0.875rem 1rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .compact-table-header h6 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .compact-table table {
+        font-size: 0.813rem;
+    }
+
+    .compact-table table th {
+        padding: 0.625rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .compact-table table td {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .avatar-xs {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.813rem;
+        font-weight: 600;
+    }
+
+    .chart-card-compact {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .chart-card-header {
+        margin-bottom: 0.875rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chart-card-header h6 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    /* Compact Activity Feed */
+    .compact-activity-feed {
+        padding: 0.75rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .compact-activity-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.625rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .compact-activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .compact-activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.875rem;
+    }
+
+    .compact-activity-content {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .bg-primary-subtle {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .bg-success-subtle {
+        background-color: rgba(16, 185, 129, 0.1);
+    }
+
+    .bg-danger-subtle {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    .bg-warning-subtle {
+        background-color: rgba(245, 158, 11, 0.1);
+    }
+
+    .bg-info-subtle {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .text-success {
+        color: #059669 !important;
+    }
+
+    .text-primary {
+        color: #2563eb !important;
+    }
+
+    .text-info {
+        color: #0891b2 !important;
+    }
+
+    /* Alert items responsive */
+    .alert-item-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Performance items */
+    .performance-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .performance-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .progress-responsive {
+        height: 6px;
+    }
+
+    /* Responsive Design - Mobile First */
+    @media (max-width: 768px) {
+        /* Reducir fuentes globales en móvil */
+        body {
+            font-size: 0.813rem;
+        }
+
+        /* Centrar todas las cards en móvil */
+        .stat-card, .compact-table-card, .chart-card-compact, .quick-action-compact {
+            text-align: center;
+            padding: 0.75rem;
+        }
+
+        .stat-card-compact {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.375rem;
+        }
+
+        .stat-card-icon-sm {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+        }
+
+        .stat-card-value-sm {
+            font-size: 1.5rem;
+        }
+
+        .stat-card-label-sm {
+            font-size: 0.75rem;
+        }
+
+        .stat-card-trend-sm {
+            font-size: 0.625rem;
+        }
+
+        /* Quick actions en móvil */
+        .quick-action-compact {
+            text-align: center;
+            padding: 0.625rem;
+        }
+
+        .quick-action-compact i {
+            font-size: 2rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .quick-action-compact h6 {
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .quick-action-compact p {
+            font-size: 0.625rem;
+        }
+
+        /* Headers en móvil */
+        .compact-table-header {
+            flex-direction: column;
+            gap: 0.375rem;
+            text-align: center;
+            padding: 0.625rem 0.75rem;
+        }
+
+        .compact-table-header h6 {
+            font-size: 0.75rem;
+        }
+
+        /* Tablas responsive */
+        .compact-table table {
+            font-size: 0.688rem;
+        }
+
+        .compact-table th {
+            font-size: 0.625rem;
+            padding: 0.375rem 0.25rem;
+        }
+
+        .compact-table td {
+            padding: 0.375rem 0.25rem;
+            text-align: center;
+        }
+
+        /* Nombres de usuario más pequeños */
+        .compact-table .fw-semibold {
+            font-size: 0.688rem;
+        }
+
+        .compact-table .small,
+        .compact-table .text-muted {
+            font-size: 0.625rem !important;
+        }
+
+        /* Charts en móvil */
+        .chart-card-compact {
+            padding: 0.625rem;
+        }
+
+        .chart-card-header h6 {
+            font-size: 0.75rem;
+        }
+
+        .btn-group-sm .btn {
+            font-size: 0.625rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Activity feed en móvil */
+        .compact-activity-feed {
+            padding: 0.5rem;
+        }
+
+        .compact-activity-item {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0;
+        }
+
+        .compact-activity-icon {
+            margin: 0 auto;
+            width: 28px;
+            height: 28px;
+            font-size: 0.75rem;
+        }
+
+        .compact-activity-content {
+            text-align: center;
+        }
+
+        .compact-activity-content > div:first-child {
+            font-size: 0.688rem !important;
+        }
+
+        .compact-activity-content > div:last-child {
+            font-size: 0.625rem !important;
+        }
+
+        /* Alertas en móvil - stack vertical */
+        .alert-item-mobile {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .alert-item-mobile .d-flex {
+            justify-content: center !important;
+        }
+
+        .alert-item-mobile span {
+            font-size: 0.688rem !important;
+        }
+
+        .alert-item-mobile i {
+            font-size: 1.125rem;
+        }
+
+        /* Rendimiento - centrar todo en móvil */
+        .performance-item {
+            flex-direction: column !important;
+            text-align: center;
+            gap: 0.375rem;
+        }
+
+        .performance-label {
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+        }
+
+        .progress-responsive {
+            height: 8px !important;
+            width: 100%;
+            max-width: 180px;
+            margin: 0 auto;
+        }
+
+        .performance-item .badge {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+        }
+
+        /* Reducir gaps en móvil */
+        .row.g-3 {
+            gap: 0.5rem !important;
+        }
+
+        .row.g-2 {
+            gap: 0.375rem !important;
+        }
+
+        /* Avatar en móvil */
+        .avatar-xs {
+            width: 32px;
+            height: 32px;
+            font-size: 0.75rem;
+            margin: 0 auto;
+        }
+
+        /* Badges en móvil */
+        .badge {
+            font-size: 0.625rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Botones más compactos */
+        .btn-sm {
+            font-size: 0.625rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* Empty states más pequeños */
+        .text-center i.fs-3 {
+            font-size: 1.5rem !important;
+        }
+
+        .text-center small {
+            font-size: 0.688rem !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        /* Fuentes aún más pequeñas en móviles muy pequeños */
+        body {
+            font-size: 0.75rem;
+        }
+
+        /* KPIs compactos */
+        .stat-card {
+            padding: 0.625rem;
+        }
+
+        .stat-card-icon-sm {
+            width: 42px;
+            height: 42px;
+            font-size: 1.25rem;
+        }
+
+        .stat-card-value-sm {
+            font-size: 1.25rem;
+        }
+
+        .stat-card-label-sm {
+            font-size: 0.688rem;
+        }
+
+        .stat-card-trend-sm {
+            font-size: 0.563rem;
+        }
+
+        /* Headers más pequeños */
+        .compact-table-header h6 {
+            font-size: 0.688rem;
+        }
+
+        /* Tablas muy compactas */
+        .compact-table table {
+            font-size: 0.625rem;
+        }
+
+        .compact-table th {
+            font-size: 0.563rem;
+            padding: 0.25rem 0.125rem;
+        }
+
+        .compact-table td {
+            padding: 0.25rem 0.125rem;
+        }
+
+        /* Activity más compacto */
+        .compact-activity-content > div:first-child {
+            font-size: 0.625rem !important;
+        }
+
+        .compact-activity-content > div:last-child {
+            font-size: 0.563rem !important;
+        }
+
+        /* Espaciado vertical reducido */
+        .mb-3 {
+            margin-bottom: 0.75rem !important;
+        }
+
+        .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        .col-xl-3, .col-lg-6, .col-md-6, .col-lg-4, .col-lg-8 {
+            padding-left: 0.375rem !important;
+            padding-right: 0.375rem !important;
+        }
+
+        /* Badges muy pequeños */
+        .badge {
+            font-size: 0.563rem;
+            padding: 0.2rem 0.4rem;
+        }
+
+        /* Botones muy pequeños */
+        .btn-sm {
+            font-size: 0.563rem;
+            padding: 0.2rem 0.4rem;
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+        /* Tablets - 2 columnas para KPIs */
+        .stat-card-value-sm {
+            font-size: 1.5rem;
+        }
+
+        .stat-card-icon-sm {
+            width: 48px;
+            height: 48px;
+        }
+
+        /* Charts más compactos en tablets */
+        canvas {
+            max-height: 200px;
+        }
+    }
+</style>
+
+<!-- Compact KPIs Grid - 2 rows of 4 -->
+<div class="row g-3 mb-3">
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ total_users|default:0 }}</div>
+                    <div class="stat-card-label-sm">Total Usuarios</div>
+                    <div class="stat-card-trend-sm up">
+                        <i class="bi bi-arrow-up"></i>+5%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="bi bi-gift-fill"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ total_raffles|default:0 }}</div>
+                    <div class="stat-card-label-sm">Total Rifas</div>
+                    <div class="stat-card-trend-sm up">
+                        <i class="bi bi-check-circle-fill"></i>{{ active_raffles|default:0 }} activas
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="bi bi-credit-card-fill"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ total_payments|default:0 }}</div>
+                    <div class="stat-card-label-sm">Total Pagos</div>
+                    <div class="stat-card-trend-sm up">
+                        <i class="bi bi-check-circle-fill"></i>95%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">${{ total_revenue|floatformat:0|default:0 }}</div>
+                    <div class="stat-card-label-sm">Ingresos Totales</div>
+                    <div class="stat-card-trend-sm up">
+                        <i class="bi bi-arrow-up"></i>+12%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda fila de stats -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ active_users|default:0 }}</div>
+                    <div class="stat-card-label-sm">Usuarios Activos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #ec4899, #db2777);">
+                    <i class="bi bi-ticket-perforated"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ tickets_sold|default:0 }}</div>
+                    <div class="stat-card-label-sm">Boletos Vendidos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #f97316, #ea580c);">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ total_winners|default:0 }}</div>
+                    <div class="stat-card-label-sm">Ganadores</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stat-card">
+            <div class="stat-card-compact">
+                <div class="stat-card-icon-sm" style="background: linear-gradient(135deg, #14b8a6, #0d9488);">
+                    <i class="bi bi-star"></i>
+                </div>
+                <div class="stat-card-content">
+                    <div class="stat-card-value-sm">{{ total_sponsors|default:0 }}</div>
+                    <div class="stat-card-label-sm">Sponsors</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas Compactas -->
+{% if rifas_pendientes_aprobacion > 0 or rifas_pausadas > 0 or sponsors_pendientes > 0 %}
+<div class="row g-2 mb-3">
+    {% if rifas_pendientes_aprobacion > 0 %}
+    <div class="col-lg-4 col-md-6">
+        <div class="alert alert-primary mb-0 py-2 px-3 border" style="border-radius: 8px;">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-bell-fill me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>{{ rifas_pendientes_aprobacion }}</strong> rifa{{ rifas_pendientes_aprobacion|pluralize }} pendiente{{ rifas_pendientes_aprobacion|pluralize }}
+                </div>
+                <a href="{% url 'admin_panel:rifas_pendientes' %}" class="btn btn-sm btn-primary">Ver</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if rifas_pausadas > 0 %}
+    <div class="col-lg-4 col-md-6">
+        <div class="alert alert-warning mb-0 py-2 px-3 border" style="border-radius: 8px;">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-pause-circle me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>{{ rifas_pausadas }}</strong> rifa{{ rifas_pausadas|pluralize }} pausada{{ rifas_pausadas|pluralize }}
+                </div>
+                <a href="{% url 'admin_panel:rifas_pausadas' %}" class="btn btn-sm btn-warning">Ver</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if sponsors_pendientes > 0 %}
+    <div class="col-lg-4 col-md-6">
+        <div class="alert alert-info mb-0 py-2 px-3 border" style="border-radius: 8px;">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-building me-2"></i>
+                <div class="flex-grow-1">
+                    <strong>{{ sponsors_pendientes }}</strong> sponsor{{ sponsors_pendientes|pluralize }} pendiente{{ sponsors_pendientes|pluralize }}
+                </div>
+                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#sponsorsModal">Ver</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Accesos Rápidos Compactos -->
+<div class="row g-2 mb-3">
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <a href="{% url 'admin_panel:rifas_pendientes' %}" class="quick-action-compact">
+            {% if rifas_pendientes_aprobacion > 0 %}
+            <span class="badge bg-danger position-absolute top-0 end-0 m-2">{{ rifas_pendientes_aprobacion }}</span>
+            {% endif %}
+            <i class="bi bi-clipboard-check text-primary"></i>
+            <h6 class="text-dark">Aprobar Rifas</h6>
+            <p>Revisar solicitudes</p>
+        </a>
+    </div>
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <a href="{% url 'admin_panel:rifas_pausadas' %}" class="quick-action-compact">
+            {% if rifas_pausadas > 0 %}
+            <span class="badge bg-warning position-absolute top-0 end-0 m-2">{{ rifas_pausadas }}</span>
+            {% endif %}
+            <i class="bi bi-pause-circle text-warning"></i>
+            <h6 class="text-dark">Rifas Pausadas</h6>
+            <p>Resolver expiradas</p>
+        </a>
+    </div>
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <a href="{% url 'admin_panel:users_management' %}" class="quick-action-compact">
+            <i class="bi bi-people text-success"></i>
+            <h6 class="text-dark">Gestionar Usuarios</h6>
+            <p>Administrar cuentas</p>
+        </a>
+    </div>
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <a href="{% url 'admin_panel:raffles_management' %}" class="quick-action-compact">
+            <i class="bi bi-gift text-info"></i>
+            <h6 class="text-dark">Gestionar Rifas</h6>
+            <p>Ver todas las rifas</p>
+        </a>
+    </div>
+</div>
+
+<!-- Charts & Tables Row - Compacto -->
+<div class="row g-3 mb-3">
+    <!-- Gráfico de Estadísticas -->
+    <div class="col-lg-8">
+        <div class="chart-card-compact">
+            <div class="chart-card-header">
+                <h6><i class="bi bi-graph-up me-2"></i>Estadísticas de Usuarios</h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active">Semana</button>
+                    <button type="button" class="btn btn-outline-secondary">Mes</button>
+                    <button type="button" class="btn btn-outline-secondary">Año</button>
+                </div>
+            </div>
+            <canvas id="usersChart" height="70"></canvas>
+        </div>
+    </div>
+
+    <!-- Gráfico de Distribución -->
+    <div class="col-lg-4">
+        <div class="chart-card-compact">
+            <div class="chart-card-header">
+                <h6><i class="bi bi-pie-chart me-2"></i>Distribución</h6>
+            </div>
+            <canvas id="userRolesChart" height="150"></canvas>
+            <div class="mt-2 pt-2 border-top">
+                <div class="row text-center small">
+                    <div class="col-6 border-end">
+                        <div class="text-muted">Participantes</div>
+                        <div class="fw-bold">{{ participantes_count|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-muted">Organizadores</div>
+                        <div class="fw-bold">{{ organizadores_count|default:0 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tablas Compactas -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="compact-table-card">
+            <div class="compact-table-header">
+                <h6><i class="bi bi-people me-2"></i>Usuarios Recientes</h6>
+                <a href="{% url 'admin_panel:users_management' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+            </div>
+            <div class="table-responsive compact-table">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-xs bg-primary text-white me-2">
+                                        {{ user.nombre|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">{{ user.nombre }}</div>
+                                        <div class="small text-muted">{{ user.email|truncatechars:25 }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if user.rol == 'admin' %}danger{% elif user.rol == 'organizador' %}success{% elif user.rol == 'sponsor' %}warning{% else %}primary{% endif %}">
+                                    {{ user.get_rol_display }}
+                                </span>
+                            </td>
+                            <td><span class="text-muted small">{{ user.fecha_registro|date:"d/m/Y" }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                                <small>No hay usuarios recientes</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="compact-table-card">
+            <div class="compact-table-header">
+                <h6><i class="bi bi-gift me-2"></i>Rifas Recientes</h6>
+                <a href="{% url 'admin_panel:raffles_management' %}" class="btn btn-sm btn-outline-success">Ver todas</a>
+            </div>
+            <div class="table-responsive compact-table">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rifa</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for raffle in recent_raffles %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold text-truncate" style="max-width: 180px;">{{ raffle.titulo }}</div>
+                                <div class="small text-muted">{{ raffle.organizador.nombre|truncatechars:20 }}</div>
+                            </td>
+                            <td><span class="fw-semibold">${{ raffle.precio_boleto|floatformat:0 }}</span></td>
+                            <td>
+                                {% if raffle.estado == 'activa' %}
+                                <span class="badge bg-success">Activa</span>
+                                {% elif raffle.estado == 'finalizada' %}
+                                <span class="badge bg-secondary">Finalizada</span>
+                                {% elif raffle.estado == 'cancelada' %}
+                                <span class="badge bg-danger">Cancelada</span>
+                                {% else %}
+                                <span class="badge bg-warning">Pendiente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No hay rifas recientes
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad, Alertas y Rendimiento - Layout Compacto -->
+<div class="row g-3 mb-3">
+    <!-- Actividad Reciente - 50% -->
+    <div class="col-lg-6">
+        <div class="compact-table-card">
+            <div class="compact-table-header">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Actividad Reciente</h6>
+                <a href="{% url 'admin_panel:audit_logs' %}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                    Ver historial<i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="compact-activity-feed">
+                {% for log in recent_logs %}
+                <div class="compact-activity-item">
+                    <div class="compact-activity-icon bg-primary-subtle">
+                        <i class="bi bi-{% if log.accion == 'crear' %}plus{% elif log.accion == 'editar' %}pencil{% elif log.accion == 'eliminar' %}trash{% else %}circle{% endif %} text-primary"></i>
+                    </div>
+                    <div class="compact-activity-content">
+                        <div style="font-size: 0.813rem; font-weight: 500;">{{ log.descripcion|truncatechars:60 }}</div>
+                        <div style="font-size: 0.7rem; color: #6b7280;">
+                            <i class="bi bi-person"></i> {{ log.usuario.nombre|truncatechars:20 }}
+                            <span class="mx-1">•</span>
+                            <i class="bi bi-clock"></i> {{ log.fecha|timesince }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                    <small>No hay actividad reciente</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas del Sistema y Rendimiento - 50% -->
+    <div class="col-lg-6">
+        <!-- Alertas del Sistema -->
+        <div class="compact-table-card mb-3">
+            <div class="compact-table-header">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Alertas del Sistema</h6>
+            </div>
+            <div style="padding: 0.75rem;">
+                <div class="alert-item-mobile py-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
+                        <i class="bi bi-person-exclamation text-warning fs-5"></i>
+                        <span style="font-size: 0.813rem;">Usuarios pendientes</span>
+                    </div>
+                    <span class="badge bg-warning mt-2 mt-md-0">{{ pending_validations|default:0 }}</span>
+                </div>
+                <div class="alert-item-mobile py-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
+                        <i class="bi bi-clock-history text-info fs-5"></i>
+                        <span style="font-size: 0.813rem;">Rifas por finalizar</span>
+                    </div>
+                    <span class="badge bg-info mt-2 mt-md-0">{{ expiring_raffles|default:0 }}</span>
+                </div>
+                <div class="alert-item-mobile py-2">
+                    <div class="d-flex align-items-center gap-2 justify-content-center justify-content-md-start">
+                        <i class="bi bi-x-circle text-danger fs-5"></i>
+                        <span style="font-size: 0.813rem;">Pagos fallidos</span>
+                    </div>
+                    <span class="badge bg-danger mt-2 mt-md-0">{{ failed_payments|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendimiento -->
+        <div class="compact-table-card">
+            <div class="compact-table-header">
+                <h6 class="mb-0"><i class="bi bi-speedometer me-2"></i>Rendimiento</h6>
+            </div>
+            <div style="padding: 0.75rem;">
+                <div class="mb-2">
+                    <div class="performance-item mb-1">
+                        <span class="performance-label">Tasa de Conversión</span>
+                        <span class="badge bg-success-subtle text-success">{{ conversion_rate|default:0 }}%</span>
+                    </div>
+                    <div class="progress progress-responsive">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ conversion_rate|default:0 }}%;"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="performance-item mb-1">
+                        <span class="performance-label">Ocupación de Rifas</span>
+                        <span class="badge bg-primary-subtle text-primary">{{ occupancy_rate|default:0 }}%</span>
+                    </div>
+                    <div class="progress progress-responsive">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ occupancy_rate|default:0 }}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="performance-item mb-1">
+                        <span class="performance-label">Satisfacción de Usuarios</span>
+                        <span class="badge bg-info-subtle text-info">{{ satisfaction_rate|default:85 }}%</span>
+                    </div>
+                    <div class="progress progress-responsive">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ satisfaction_rate|default:85 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional CSS for avatar and activity -->
+<style>
+.avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.activity-feed {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex-grow- 1;
+}
+
+.bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Users Growth Chart
+const usersCtx = document.getElementById('usersChart');
+if (usersCtx) {
+    new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: {{ users_chart_labels|safe }},
+            datasets: [{
+                label: 'Nuevos Usuarios',
+                data: {{ users_chart_data|safe }},
+                borderColor: 'rgb(13, 110, 253)',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+}
+
+// User Roles Distribution Chart
+const rolesCtx = document.getElementById('userRolesChart');
+if (rolesCtx) {
+    new Chart(rolesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Participantes', 'Organizadores', 'Sponsors', 'Admins'],
+            datasets: [{
+                data: [
+                    {{ participantes_count|default:0 }},
+                    {{ organizadores_count|default:0 }},
+                    {{ sponsors_count|default:0 }},
+                    {{ admins_count|default:0 }}
+                ],
+                backgroundColor: [
+                    'rgb(13, 110, 253)',
+                    'rgb(25, 135, 84)',
+                    'rgb(255, 193, 7)',
+                    'rgb(220, 53, 69)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+</script>
+
+<!-- Modal de Sponsors Pendientes -->
+<div class="modal fade" id="sponsorsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #a855f7, #9333ea); color: white;">
+                <h5 class="modal-title">🏢 Sponsors Pendientes de Validación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sponsorsContent">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cargar sponsors pendientes cuando se abre el modal
+document.getElementById('sponsorsModal')?.addEventListener('show.bs.modal', function() {
+    loadPendingSponsors();
+});
+
+function loadPendingSponsors() {
+    const content = document.getElementById('sponsorsContent');
+    content.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
+
+    // Mostrar directamente la tabla con los datos del contexto
+    showSponsorsTable();
+}
+
+function showSponsorsTable() {
+    const sponsors = {{ sponsors_pendientes_list|safe|default:"[]" }};
+
+    let html = '';
+
+    if (sponsors && sponsors.length > 0) {
+        html = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        sponsors.forEach(sponsor => {
+            html += `
+                <tr>
+                    <td><strong>${sponsor.nombre || 'N/A'}</strong></td>
+                    <td>${sponsor.email}</td>
+                    <td>${sponsor.telefono || 'N/A'}</td>
+                    <td>${sponsor.fecha_registro}</td>
+                    <td>
+                        <button class="btn btn-success btn-sm" onclick="approveSponsor(${sponsor.id}, '${sponsor.nombre}')">
+                            <i class="bi bi-check-circle"></i> Aprobar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectSponsor(${sponsor.id}, '${sponsor.nombre}')">
+                            <i class="bi bi-x-circle"></i> Rechazar
+                        </button>
+                    </td>
+                </tr>`;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>`;
+    } else {
+        html = `
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle fs-1"></i>
+                <h5 class="mt-3">No hay sponsors pendientes</h5>
+                <p class="mb-0">Todas las solicitudes de sponsors han sido procesadas.</p>
+            </div>`;
+    }
+
+    document.getElementById('sponsorsContent').innerHTML = html;
+}
+
+function approveSponsor(sponsorId, sponsorName) {
+    if (!confirm(`¿Aprobar la cuenta de sponsor de "${sponsorName}"?`)) return;
+
+    fetch(`/admin-panel/sponsors/approve/${sponsorId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la solicitud');
+        console.error(error);
+    });
+}
+
+function rejectSponsor(sponsorId, sponsorName) {
+    const motivo = prompt(`¿Por qué rechazar a "${sponsorName}"?`);
+    if (!motivo) return;
+
+    fetch(`/admin-panel/sponsors/reject/${sponsorId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `motivo=${encodeURIComponent(motivo)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error al procesar la solicitud');
+        console.error(error);
+    });
+}
+</script>
+
+<style>
+/* Responsive Design para Dashboard Admin */
+
+/* Tablets y pantallas medianas (max-width: 1200px) */
+@media (max-width: 1200px) {
+    .stat-card-value {
+        font-size: 2rem !important;
+    }
+
+    .stat-card-label {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* Tablets (max-width: 992px) */
+@media (max-width: 992px) {
+    .row.g-4 {
+        gap: 1rem !important;
+    }
+
+    .col-xl-3 {
+        width: 50% !important;
+    }
+
+    .stat-card {
+        padding: 1.25rem !important;
+    }
+
+    .stat-card-value {
+        font-size: 1.75rem !important;
+    }
+
+    .chart-container {
+        height: 300px !important;
+    }
+}
+
+/* Móviles (max-width: 768px) */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .page-header {
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem !important;
+    }
+
+    .page-header p {
+        font-size: 0.85rem !important;
+    }
+
+    .col-xl-3, .col-md-6 {
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Adaptar alertas de acción (Revisar Solicitudes, Ver Rifas Pausadas, Ver Sponsors) */
+    .alert .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .alert .d-flex > div[style*="font-size: 3rem"] {
+        margin-right: 0 !important;
+        margin-bottom: 1rem !important;
+        align-self: center !important;
+    }
+
+    .alert .d-flex .flex-grow-1 {
+        margin-bottom: 1rem !important;
+        text-align: center !important;
+    }
+
+    .alert .btn {
+        width: 100% !important;
+        white-space: normal !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Adaptar accesos rápidos */
+    .col-lg-3 {
+        width: 100% !important;
+    }
+
+    .quick-action-card {
+        padding: 1rem !important;
+    }
+
+    .stat-card {
+        padding: 1.5rem !important;
+    }
+
+    .stat-card-icon {
+        width: 50px !important;
+        height: 50px !important;
+        font-size: 1.5rem !important;
+    }
+
+    .stat-card-value {
+        font-size: 2rem !important;
+    }
+
+    .stat-card-label {
+        font-size: 0.9rem !important;
+    }
+
+    .btn-group {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .btn-group .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .card {
+        margin-bottom: 1rem !important;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem !important;
+    }
+
+    .table th, .table td {
+        padding: 0.5rem !important;
+    }
+
+    .chart-container {
+        height: 250px !important;
+    }
+
+    /* Ocultar columnas menos importantes en tablas */
+    .table td:nth-child(3),
+    .table th:nth-child(3) {
+        display: none !important;
+    }
+}
+
+/* Móviles pequeños (max-width: 576px) */
+@media (max-width: 576px) {
+    .page-header {
+        padding: 0.75rem !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.25rem !important;
+    }
+
+    .breadcrumb {
+        font-size: 0.75rem !important;
+        padding: 0.5rem !important;
+    }
+
+    .stat-card {
+        padding: 1rem !important;
+    }
+
+    /* Reducir tamaño de emojis en alertas */
+    .alert .d-flex > div[style*="font-size: 3rem"] {
+        font-size: 2.5rem !important;
+    }
+
+    /* Reducir padding en alertas */
+    .alert {
+        padding: 1rem !important;
+    }
+
+    .alert h5 {
+        font-size: 0.95rem !important;
+    }
+
+    .alert p {
+        font-size: 0.85rem !important;
+    }
+
+    .stat-card-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 1.25rem !important;
+    }
+
+    .stat-card-value {
+        font-size: 1.5rem !important;
+    }
+
+    .stat-card-label {
+        font-size: 0.8rem !important;
+    }
+
+    .stat-card-trend {
+        font-size: 0.75rem !important;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .card-title {
+        font-size: 1rem !important;
+    }
+
+    .chart-container {
+        height: 200px !important;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem !important;
+    }
+
+    .modal-content {
+        border-radius: 0.5rem !important;
+    }
+
+    /* Ocultar más columnas en tablas */
+    .table td:nth-child(2),
+    .table th:nth-child(2),
+    .table td:nth-child(4),
+    .table th:nth-child(4) {
+        display: none !important;
+    }
+
+    /* Hacer badges más pequeños */
+    .badge {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+}
+
+/* Landscape móviles */
+@media (max-width: 768px) and (orientation: landscape) {
+    .stat-card {
+        padding: 1rem !important;
+    }
+
+    .chart-container {
+        height: 200px !important;
+    }
+}
+
+/* Ajustes para overflow horizontal */
+@media (max-width: 768px) {
+    body {
+        overflow-x: hidden !important;
+    }
+
+    .container-fluid {
+        overflow-x: hidden !important;
+    }
+
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    [class*="col-"] {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}

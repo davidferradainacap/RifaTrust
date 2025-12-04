@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirma tu Email - RifaTrust</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">🎉 RifaTrust</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">¡Hola {{ user.nombre }}!</h2>
+
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Gracias por registrarte en <strong>RifaTrust</strong>. Para completar tu registro y activar tu cuenta, necesitamos verificar tu dirección de correo electrónico.
+                            </p>
+
+                            <p style="margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Haz clic en el botón de abajo para confirmar tu email:
+                            </p>
+
+                            <!-- Button -->
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="border-radius: 6px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                        <a href="{{ confirmation_url }}" target="_blank" style="display: inline-block; padding: 16px 40px; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 6px;">
+                                            ✅ Confirmar mi Email
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 30px 0 20px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                                Si el botón no funciona, copia y pega este enlace en tu navegador:
+                            </p>
+
+                            <p style="margin: 0 0 30px 0; padding: 12px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; word-break: break-all; font-size: 14px; color: #4b5563;">
+                                <a href="{{ confirmation_url }}" style="color: #667eea; text-decoration: none;">{{ confirmation_url }}</a>
+                            </p>
+
+                            <!-- Info Box -->
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px; margin: 20px 0;">
+                                <tr>
+                                    <td style="padding: 16px;">
+                                        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+                                            <strong>⏰ Importante:</strong> Este enlace expirará en <strong>{{ expires_in }}</strong>. Si no confirmas tu email dentro de este tiempo, deberás solicitar un nuevo enlace de confirmación.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
+                                Si no creaste una cuenta en RifaTrust, puedes ignorar este mensaje de forma segura.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
+                                Saludos,<br>
+                                <strong>El equipo de {{ site_name }}</strong>
+                            </p>
+
+                            <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 12px;">
+                                © 2025 RifaTrust. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

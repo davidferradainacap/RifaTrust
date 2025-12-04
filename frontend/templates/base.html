@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="RifaTrust - Sistema de Rifas Seguro y Transparente">
+    <title>{% block title %}Sistema de Rifas{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟️</text></svg>">
+
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/raffle_glass.css">
+    <link rel="stylesheet" href="/static/css/loading.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar glass-navbar">
+        <div class="container nav-flex">
+            <a href="/" class="logo">
+                <span class="logo-icon">🎟️</span>
+                <span class="logo-text">RifaTrust</span>
+            </a>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Menú">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+            <div class="nav-links" id="navLinks">
+                <a href="/">Inicio</a>
+                <a href="/raffles/">Rifas</a>
+                {% if user.is_authenticated %}
+                    <a href="/dashboard/">Dashboard</a>
+                    {% if user.rol == 'organizador' or user.rol == 'admin' %}
+                        <a href="/raffles/create/">Crear Rifa</a>
+                    {% endif %}
+                    <a href="/profile/" class="profile-btn" title="Mi Perfil">
+                        <span class="profile-avatar">
+                            <svg viewBox="0 0 32 32" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="16" cy="16" r="15" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+                                <circle cx="16" cy="13" r="5" fill="#6366f1"/>
+                                <path d="M7 26c2-4 7-4 9-4s7 0 9 4" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="profile-text">Perfil</span>
+                    </a>
+                    <a href="/logout/" class="btn-secondary btn-sm">Cerrar Sesión</a>
+                {% else %}
+                    <a href="/login/" class="btn-secondary btn-sm">Iniciar Sesión</a>
+                    <a href="/register/" class="btn-primary btn-sm">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Mensajes -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border-top: 1px solid rgba(99, 102, 241, 0.2); padding: 2.5rem 0; margin-top: 4rem;">
+        <div class="container text-center">
+            <p style="color: white; font-weight: 600; font-size: 1rem;">&copy; 2025 Sistema de Rifas. Todos los derechos reservados.</p>
+            <p style="margin-top: 0.75rem; color: rgba(255, 255, 255, 0.6); font-size: 0.95rem;">
+                🔒 Seguro • ✅ Transparente • ⚡ Confiable
+            </p>
+        </div>
+    </footer>
+
+    <!-- Sistema de Loading Global (cargar primero) -->
+    <script src="/static/js/loading.js"></script>
+
+    <!-- Main JS (incluye menú hamburguesa) -->
+    <script src="/static/js/main.js"></script>
+
+    {% if user.is_authenticated %}
+    <script>
+        // Gestión de notificaciones
+        const notificationsBtn = document.getElementById('notificationsBtn');
+        const notificationsDropdown = document.getElementById('notificationsDropdown');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const notificationsList = document.getElementById('notificationsList');
+
+        let isDropdownOpen = false;
+
+        // Toggle dropdown
+        if (notificationsBtn) {
+            notificationsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                isDropdownOpen = !isDropdownOpen;
+                notificationsDropdown.classList.toggle('active', isDropdownOpen);
+
+                if (isDropdownOpen && notificationsList.querySelector('.notifications-loading')) {
+                    loadNotifications();
+                }
+            });
+        }
+
+        // Cerrar al hacer click fuera
+        document.addEventListener('click', function(e) {
+            if (isDropdownOpen && !notificationsDropdown.contains(e.target)) {
+                isDropdownOpen = false;
+                notificationsDropdown.classList.remove('active');
+            }
+        });
+
+        // Cargar notificaciones
+        function loadNotifications() {
+            fetch('/notifications/api/list/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.notifications && data.notifications.length > 0) {
+                        notificationsList.innerHTML = data.notifications.map(notif => `
+                            <div class="notification-item ${notif.leido ? '' : 'unread'}">
+                                <div class="notification-icon">
+                                    ${getNotificationIcon(notif.tipo)}
+                                </div>
+                                <div class="notification-content">
+                                    <p class="notification-message">${notif.mensaje}</p>
+                                    <span class="notification-time">${notif.created_at}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        notificationsList.innerHTML = '<div class="notifications-empty">No hay notificaciones</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    notificationsList.innerHTML = '<div class="notifications-empty">Error al cargar notificaciones</div>';
+                });
+        }
+
+        // Icono según tipo de notificación
+        function getNotificationIcon(tipo) {
+            const icons = {
+                'info': '📢',
+                'pago': '💰',
+                'rifa': '🎟️',
+                'ganador': '🏆',
+                'aprobacion': '✅',
+                'rechazo': '❌'
+            };
+            return icons[tipo] || '📢';
+        }
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

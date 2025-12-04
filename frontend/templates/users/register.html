@@ -1,0 +1,833 @@
+{% extends "base.html" %}
+
+{% block title %}Registrarse - RifaTrust{% endblock %}
+
+{% block content %}
+<div class="container-narrow" style="max-width: 500px; margin: 3rem auto;">
+    <div class="card">
+        <div class="card-body" style="padding: 2.5rem;">
+            <div class="text-center mb-4">
+                <h1 style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                    Crear Cuenta
+                </h1>
+                <p style="color: rgba(255, 255, 255, 0.7);">
+                    Únete a nuestro sistema de rifas
+                </p>
+            </div>
+
+            <form method="post" id="registerForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre Completo</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                        <div class="form-error">{{ form.nombre.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.email.id_for_label }}">Correo Electrónico</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="form-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                    <span id="emailValidation" class="form-help"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.fecha_nacimiento.id_for_label }}">Fecha de Nacimiento</label>
+                    {{ form.fecha_nacimiento }}
+                    {% if form.fecha_nacimiento.errors %}
+                        <div class="form-error">{{ form.fecha_nacimiento.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help" style="color: rgb(239, 68, 68);">
+                        <small>Debes ser mayor de 18 años para registrarte</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.telefono.id_for_label }}">Teléfono (Opcional)</label>
+                    {{ form.telefono }}
+                    {% if form.telefono.errors %}
+                        <div class="form-error">{{ form.telefono.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.rol.id_for_label }}">Tipo de Cuenta</label>
+                    {{ form.rol }}
+                    <div class="form-help">
+                        <small>
+                            <strong>Participante:</strong> Compra boletos para rifas<br>
+                            <strong>Organizador:</strong> Crea y gestiona rifas<br>
+                            <strong>Sponsor:</strong> Cuenta especial (requiere validación del administrador)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.password1.id_for_label }}">Contraseña</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="form-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                    <div class="form-help" id="passwordStrength"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.password2.id_for_label }}">Confirmar Contraseña</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="form-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                    <span id="passwordMatch" class="form-help"></span>
+                </div>
+
+                <!-- Términos y Condiciones -->
+                <div class="form-group">
+                    <div class="form-check" style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                        {{ form.aceptar_terminos }}
+                        <label class="form-check-label" for="{{ form.aceptar_terminos.id_for_label }}" style="cursor: pointer; color: rgba(255, 255, 255, 0.9); font-size: 0.95rem; line-height: 1.5;">
+                            He leído y acepto los
+                            <a href="#" id="openTerms" style="color: var(--primary-light); font-weight: 600; text-decoration: underline;" onclick="openTermsModal(event)">
+                                Términos y Condiciones
+                            </a>
+                        </label>
+                    </div>
+                    {% if form.aceptar_terminos.errors %}
+                        <div class="form-error" style="margin-top: 0.5rem;">{{ form.aceptar_terminos.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    Crear Cuenta
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <p style="color: rgba(255, 255, 255, 0.7);">
+                    ¿Ya tienes cuenta? <a href="/login/" style="color: var(--primary-light); font-weight: 600;">Iniciar Sesión</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Términos y Condiciones -->
+<div id="termsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-container" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--primary-light); margin: 0;">
+                📋 Términos y Condiciones de Uso
+            </h2>
+            <button type="button" class="modal-close" onclick="closeTermsModal()" style="background: none; border: none; font-size: 2rem; color: rgba(255, 255, 255, 0.7); cursor: pointer; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                &times;
+            </button>
+        </div>
+
+        <div class="modal-body" style="padding: 2rem;">
+            <p style="color: rgba(255, 255, 255, 0.8); margin-bottom: 2rem; font-size: 0.95rem;">
+                <strong>Última actualización:</strong> Diciembre 2025<br>
+                <strong>Versión:</strong> 2.0
+            </p>
+
+            <!-- 1. ACEPTACIÓN DE TÉRMINOS -->
+            <div class="terms-section">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    1. Aceptación de los Términos
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Al crear una cuenta y utilizar los servicios de <strong>RifaTrust</strong>, usted acepta quedar legalmente vinculado por estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no podrá acceder ni utilizar nuestros servicios.
+                </p>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Nos reservamos el derecho de modificar estos términos en cualquier momento. Las modificaciones entrarán en vigor inmediatamente después de su publicación. Es su responsabilidad revisar periódicamente estos términos.
+                </p>
+            </div>
+
+            <!-- 2. DESCRIPCIÓN DEL SERVICIO -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    2. Descripción del Servicio
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    RifaTrust es una plataforma digital que facilita la creación, gestión y participación en rifas en línea. Nuestros servicios incluyen:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Creación y gestión de rifas por organizadores verificados</li>
+                    <li>Compra de boletos digitales mediante plataformas de pago seguras</li>
+                    <li>Sistema de sorteo aleatorio y verificable</li>
+                    <li>Gestión de patrocinios y premios adicionales</li>
+                    <li>Sistema de notificaciones y comunicación con participantes</li>
+                </ul>
+            </div>
+
+            <!-- 3. REQUISITOS DE USUARIO -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    3. Requisitos de Usuario
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Para utilizar nuestros servicios, usted debe:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Ser mayor de 18 años</strong> o contar con el consentimiento de un tutor legal</li>
+                    <li>Proporcionar información precisa, actual y completa durante el registro</li>
+                    <li>Mantener la seguridad y confidencialidad de su contraseña</li>
+                    <li>Notificar inmediatamente cualquier uso no autorizado de su cuenta</li>
+                    <li>No utilizar la plataforma para actividades ilegales o fraudulentas</li>
+                </ul>
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    <p style="color: #ef4444; font-weight: 600; margin: 0;">
+                        ⚠️ IMPORTANTE: Usted es el único responsable de todas las actividades realizadas bajo su cuenta.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 4. COMPRA DE BOLETOS -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    4. Compra de Boletos y Pagos
+                </h3>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    4.1 Proceso de Compra
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Los boletos se reservan temporalmente por <strong>15 minutos</strong> para completar el pago</li>
+                    <li>Si no se completa el pago en ese período, los boletos vuelven a estar disponibles</li>
+                    <li>El pago se procesa a través de <strong>Stripe</strong>, una plataforma segura de terceros</li>
+                    <li>Una vez confirmado el pago, recibirá un boleto digital con número único</li>
+                    <li>Los números de boleto son generados aleatoriamente y no pueden modificarse</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    4.2 Precios y Comisiones
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Los precios se muestran en la moneda local y son definitivos</li>
+                    <li>RifaTrust cobra una comisión por procesamiento de pagos</li>
+                    <li>Los precios pueden incluir impuestos aplicables según su jurisdicción</li>
+                    <li>No se aplican cargos ocultos adicionales</li>
+                </ul>
+            </div>
+
+            <!-- 5. POLÍTICA DE REEMBOLSOS -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    5. 💰 Política de Reembolsos
+                </h3>
+
+                <div style="background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #22c55e; font-size: 1.15rem; margin-top: 0; margin-bottom: 1rem;">
+                        ✅ Casos en los que SE OTORGA Reembolso Completo
+                    </h4>
+                    <ul style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-left: 1.5rem; margin-bottom: 0;">
+                        <li><strong>Extensión de plazo de la rifa:</strong> Si el organizador extiende la fecha de finalización de la rifa después de la fecha originalmente establecida, usted tiene derecho a solicitar el reembolso completo de sus boletos dentro de las <strong>48 horas</strong> posteriores al cambio.</li>
+                        <li><strong>Cancelación de rifa:</strong> Si la rifa es cancelada por el organizador o por decisión administrativa, se reembolsará automáticamente el 100% del monto pagado.</li>
+                        <li><strong>Cambios sustanciales en premios:</strong> Si se modifican significativamente los premios ofrecidos reduciendo su valor en más del 30%.</li>
+                        <li><strong>Error técnico:</strong> Si hubo un error en el sistema que afectó su compra.</li>
+                        <li><strong>Fraude comprobado:</strong> Si se demuestra actividad fraudulenta por parte del organizador.</li>
+                    </ul>
+                </div>
+
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #ef4444; font-size: 1.15rem; margin-top: 0; margin-bottom: 1rem;">
+                        ❌ Casos en los que NO SE OTORGA Reembolso
+                    </h4>
+                    <ul style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-left: 1.5rem; margin-bottom: 0;">
+                        <li>Simplemente cambiar de opinión después de completar la compra</li>
+                        <li>No resultar ganador en el sorteo</li>
+                        <li>Desacuerdo con el resultado del sorteo (los sorteos son verificables y finales)</li>
+                        <li>No poder asistir a la entrega del premio</li>
+                        <li>Después de que se haya realizado el sorteo</li>
+                        <li>Más de 48 horas después de un cambio en las fechas de la rifa</li>
+                    </ul>
+                </div>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    5.3 Proceso de Solicitud de Reembolso
+                </h4>
+                <ol style="color: rgba(255, 255, 255, 0.85); line-height: 1.8; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Acceda a su perfil y seleccione la opción "Mis Compras"</li>
+                    <li>Identifique la compra y haga clic en "Solicitar Reembolso"</li>
+                    <li>Proporcione la razón detallada de la solicitud</li>
+                    <li>El equipo revisará su solicitud en un plazo de <strong>3 a 5 días hábiles</strong></li>
+                    <li>Si se aprueba, el reembolso se procesará a su método de pago original en 7-14 días hábiles</li>
+                </ol>
+
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-top: 1rem;">
+                    <strong>Nota:</strong> Las comisiones de procesamiento de pago pueden no ser reembolsables según las políticas de Stripe.
+                </p>
+            </div>
+
+            <!-- 6. ALMACENAMIENTO Y CUSTODIA DE PREMIOS -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    6. 📦 Almacenamiento y Custodia de Premios Físicos
+                </h3>
+
+                <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #3b82f6; font-size: 1.15rem; margin-top: 0; margin-bottom: 1rem;">
+                        🏢 Almacenamiento Seguro en Instalaciones de RifaTrust
+                    </h4>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-bottom: 1rem;">
+                        Todos los premios físicos que sean almacenables (electrónicos, electrodomésticos, vehículos, joyas, etc.) serán custodiados en nuestras instalaciones bajo las siguientes condiciones:
+                    </p>
+                    <ul style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-left: 1.5rem; margin-bottom: 0;">
+                        <li><strong>Almacenamiento obligatorio:</strong> El organizador debe entregar el premio físico a RifaTrust antes de que la rifa sea publicada y activada</li>
+                        <li><strong>Verificación del premio:</strong> Nuestro equipo verifica el estado, autenticidad y coincidencia del premio con la descripción publicada</li>
+                        <li><strong>Custodia segura:</strong> Los premios se almacenan en instalaciones con seguridad 24/7, control de acceso y seguro contra daños</li>
+                        <li><strong>Documentación fotográfica:</strong> Se toma evidencia fotográfica y videográfica del premio al momento de recibirlo</li>
+                        <li><strong>Certificado de custodia:</strong> Se emite un documento que certifica que el premio está en nuestras instalaciones</li>
+                    </ul>
+                </div>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    6.1 Requisitos para Almacenamiento
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>El premio debe ser entregado en perfecto estado y funcionamiento</li>
+                    <li>Debe incluir todos los accesorios, documentación y embalaje original mencionados en la descripción</li>
+                    <li>Para vehículos: documentación legal, llaves originales y revisión técnica al día</li>
+                    <li>Para electrónicos: caja original, manuales, garantía y accesorios completos</li>
+                    <li>Para joyas: certificado de autenticidad y avalúo actualizado</li>
+                    <li>El organizador debe firmar un acta de entrega con inventario detallado</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    6.2 Premios NO Almacenables
+                </h4>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 0.75rem;">
+                    Los siguientes tipos de premios NO requieren almacenamiento en nuestras instalaciones:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Premios en dinero:</strong> Se transfieren directamente al ganador</li>
+                    <li><strong>Viajes y experiencias:</strong> Se entregan vouchers o certificados digitales</li>
+                    <li><strong>Servicios:</strong> Contratos o certificados de servicio</li>
+                    <li><strong>Inmuebles:</strong> Transferencia legal documentada</li>
+                    <li><strong>Códigos digitales:</strong> Vales electrónicos, gift cards digitales, códigos de juegos, etc.</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    6.3 Premios de Valor Menor (Tarjetas y Vales Físicos)
+                </h4>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 0.75rem;">
+                    Las tarjetas físicas pequeñas como gift cards, tarjetas de regalo o vales físicos <strong>SÍ son almacenables</strong> en nuestras instalaciones:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Gift cards físicas:</strong> Amazon, iTunes, Google Play, PlayStation, Xbox, etc.</li>
+                    <li><strong>Tarjetas de regalo:</strong> De tiendas departamentales, restaurantes, cines</li>
+                    <li><strong>Vales físicos:</strong> Cupones de descuento, certificados de compra</li>
+                    <li><strong>Tarjetas prepagadas:</strong> Visa, Mastercard de regalo (con saldo precargado)</li>
+                </ul>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Estos ítems se almacenan en casilleros de seguridad especiales hasta su entrega al ganador.
+                </p>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    6.4 Seguridad y Responsabilidad
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>RifaTrust contrata seguros para todos los premios almacenados por su valor declarado</li>
+                    <li>Las instalaciones cuentan con sistemas de vigilancia, alarmas y control de clima</li>
+                    <li>Acceso restringido solo a personal autorizado</li>
+                    <li>Inspecciones periódicas del estado de los premios</li>
+                    <li>Para tarjetas y vales físicos: casilleros de seguridad especiales con doble verificación</li>
+                    <li>En caso de daño o pérdida por causas de fuerza mayor, se aplicará el seguro contratado</li>
+                    <li>El organizador mantiene la propiedad legal del premio hasta que sea entregado al ganador</li>
+                </ul>
+
+                <div style="background: rgba(234, 179, 8, 0.1); border-left: 4px solid #eab308; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    <p style="color: #eab308; font-weight: 600; margin: 0;">
+                        ⚠️ IMPORTANTE: Si el organizador no entrega el premio físico a nuestras instalaciones antes de publicar la rifa, la rifa NO será aprobada ni activada hasta que se cumpla este requisito.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 7. SORTEOS Y SELECCIÓN DE GANADORES -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    7. 🎲 Sistema de Sorteos y Selección de Ganadores
+                </h3>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Los sorteos se realizan mediante un sistema aleatorio verificable con hash SHA-256</li>
+                    <li>Cada sorteo genera un <strong>acta digital</strong> con timestamp y hash de verificación</li>
+                    <li>Los resultados son finales e inapelables una vez publicados</li>
+                    <li>El ganador será notificado por email y a través de la plataforma</li>
+                    <li>El ganador debe confirmar su identidad y aceptar el premio dentro de <strong>30 días</strong></li>
+                    <li>Si el ganador no reclama el premio en el plazo establecido, se seleccionará un nuevo ganador</li>
+                    <li>RifaTrust no es responsable de premios no reclamados</li>
+                </ul>
+            </div>
+
+            <!-- 8. RETIRO Y ENTREGA DE PREMIOS -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    8. 🏆 Retiro y Entrega de Premios Físicos
+                </h3>
+
+                <div style="background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #22c55e; font-size: 1.15rem; margin-top: 0; margin-bottom: 1rem;">
+                        📍 Retiro en Instalaciones de RifaTrust
+                    </h4>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-bottom: 1rem;">
+                        <strong>TODOS los premios físicos almacenados deben ser retirados personalmente por el ganador en nuestras instalaciones.</strong> No realizamos envíos a domicilio de premios físicos de alto valor.
+                    </p>
+                </div>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.1 Proceso de Retiro
+                </h4>
+                <ol style="color: rgba(255, 255, 255, 0.85); line-height: 1.8; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Notificación:</strong> El ganador recibe notificación por email y en la plataforma</li>
+                    <li><strong>Confirmación:</strong> Debe confirmar que acepta el premio y coordinará fecha de retiro</li>
+                    <li><strong>Verificación de identidad:</strong> Presentar documento de identidad original (cédula, pasaporte o licencia)</li>
+                    <li><strong>Coordinación de fecha:</strong> Coordinar día y hora de retiro dentro del horario de atención (Lunes a Viernes, 9:00 AM - 6:00 PM)</li>
+                    <li><strong>Retiro presencial:</strong> El ganador debe presentarse personalmente en nuestras instalaciones</li>
+                    <li><strong>Firma de acta:</strong> Firmar documento de entrega y conformidad del premio</li>
+                    <li><strong>Inspección del premio:</strong> El ganador puede inspeccionar el premio antes de firmar</li>
+                    <li><strong>Entrega final:</strong> Se entrega el premio con todos sus accesorios y documentación</li>
+                </ol>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.2 Documentación Requerida para Retiro
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Documento de identidad oficial vigente</strong> (original y copia)</li>
+                    <li><strong>Comprobante del boleto ganador</strong> (digital o impreso)</li>
+                    <li><strong>Correo de confirmación</strong> enviado por RifaTrust</li>
+                    <li>Para premios de alto valor (>$5,000 USD): Comprobante de domicilio actualizado</li>
+                    <li>Para vehículos: Licencia de conducir vigente</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.3 Retiro por Terceros
+                </h4>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 0.75rem;">
+                    Si el ganador no puede retirar el premio personalmente, puede autorizar a un tercero mediante:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Carta poder notariada</strong> con firma certificada del ganador</li>
+                    <li><strong>Copia del documento de identidad del ganador</strong></li>
+                    <li><strong>Documento de identidad original de la persona autorizada</strong></li>
+                    <li><strong>Notificación previa</strong> a RifaTrust con mínimo 48 horas de anticipación</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.4 Plazo de Retiro y Almacenamiento
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>El ganador tiene <strong>30 días calendario</strong> para retirar el premio desde la fecha del sorteo</li>
+                    <li>Después de 30 días sin retiro, se realizará un <strong>nuevo sorteo</strong> entre los demás participantes</li>
+                    <li>No se cobran cargos de almacenamiento durante los primeros 30 días</li>
+                    <li>Si el ganador solicita extensión del plazo (máximo 15 días adicionales), debe justificar por escrito</li>
+                    <li>La extensión está sujeta a aprobación de RifaTrust</li>
+                </ul>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.5 Transporte del Premio
+                </h4>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li><strong>Responsabilidad del ganador:</strong> El transporte del premio desde nuestras instalaciones es responsabilidad del ganador</li>
+                    <li>Para premios grandes (ej. vehículos), el ganador debe coordinar grúa o transporte especializado</li>
+                    <li>RifaTrust puede recomendar empresas de transporte, pero no asume costos ni responsabilidad</li>
+                    <li>El premio debe ser retirado en perfecto estado con toda su documentación</li>
+                    <li>Una vez firmada el acta de entrega, RifaTrust queda liberado de toda responsabilidad</li>
+                </ul>
+
+                <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+                    <p style="color: #ef4444; font-weight: 600; margin: 0; line-height: 1.6;">
+                        ⚠️ ADVERTENCIA: Si el ganador no retira el premio en el plazo establecido (30 días + extensión si aplica), perderá automáticamente su derecho al premio y se procederá a realizar un nuevo sorteo. No habrá reembolso ni compensación.
+                    </p>
+                </div>
+
+                <h4 style="color: var(--secondary-light); font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.75rem;">
+                    8.6 Ubicación de Retiro
+                </h4>
+                <div style="background: rgba(147, 51, 234, 0.1); padding: 1.25rem; border-radius: 0.75rem; border: 1px solid rgba(147, 51, 234, 0.3); margin-top: 1rem;">
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.7; margin: 0;">
+                        <strong style="color: var(--primary-light);">📍 Instalaciones de RifaTrust</strong><br>
+                        Dirección: [Dirección completa de las instalaciones]<br>
+                        Horario: Lunes a Viernes, 9:00 AM - 6:00 PM<br>
+                        Teléfono: [Teléfono de contacto]<br>
+                        Email: retiros@rifatrust.com
+                    </p>
+                </div>
+            </div>
+
+            <!-- 9. RESPONSABILIDADES DEL ORGANIZADOR -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    9. Responsabilidades de los Organizadores
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Los usuarios con rol de <strong>Organizador</strong> deben:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Proporcionar información veraz sobre los premios ofrecidos</li>
+                    <li>Cumplir con todas las leyes y regulaciones aplicables</li>
+                    <li>Entregar los premios según lo prometido</li>
+                    <li>No modificar fechas o premios sin justificación válida</li>
+                    <li>Responder oportunamente a consultas de participantes</li>
+                    <li>Notificar inmediatamente cualquier problema con la rifa</li>
+                </ul>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    RifaTrust se reserva el derecho de suspender o cancelar rifas que violen estos términos.
+                </p>
+            </div>
+
+            <!-- 10. PROPIEDAD INTELECTUAL -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    10. Propiedad Intelectual
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Todo el contenido de la plataforma, incluyendo diseño, código, logos, textos y gráficos, es propiedad exclusiva de RifaTrust y está protegido por leyes de propiedad intelectual.
+                </p>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    Los usuarios conservan los derechos sobre las imágenes y descripciones que suben, pero otorgan a RifaTrust una licencia para mostrarlas en la plataforma.
+                </p>
+            </div>
+
+            <!-- 11. PRIVACIDAD Y PROTECCIÓN DE DATOS -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    11. Privacidad y Protección de Datos
+                </h3>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Sus datos personales están protegidos con <strong>encriptación AES-256</strong></li>
+                    <li>Utilizamos sus datos solo para operar la plataforma y mejorar nuestros servicios</li>
+                    <li>No vendemos ni compartimos su información con terceros sin su consentimiento</li>
+                    <li>Puede solicitar acceso, corrección o eliminación de sus datos en cualquier momento</li>
+                    <li>Cumplimos con regulaciones internacionales de protección de datos</li>
+                </ul>
+            </div>
+
+            <!-- 12. LIMITACIÓN DE RESPONSABILIDAD -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    12. Limitación de Responsabilidad
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    RifaTrust actúa como intermediario entre organizadores y participantes. No somos responsables de:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Incumplimiento de organizadores en la entrega de premios</li>
+                    <li>Disputas entre usuarios</li>
+                    <li>Pérdidas o daños indirectos derivados del uso de la plataforma</li>
+                    <li>Interrupciones del servicio por mantenimiento o causas de fuerza mayor</li>
+                    <li>Decisiones de organizadores sobre sus rifas</li>
+                </ul>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    Nuestra responsabilidad máxima se limita al monto pagado por el usuario en el evento específico.
+                </p>
+            </div>
+
+            <!-- 13. SUSPENSIÓN Y TERMINACIÓN -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    13. Suspensión y Terminación de Cuentas
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Nos reservamos el derecho de suspender o terminar su cuenta si:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>Viola estos términos y condiciones</li>
+                    <li>Proporciona información falsa o engañosa</li>
+                    <li>Realiza actividades fraudulentas</li>
+                    <li>Abusa del sistema o de otros usuarios</li>
+                    <li>Utiliza la plataforma para actividades ilegales</li>
+                </ul>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    Puede cerrar su cuenta en cualquier momento desde la configuración de su perfil.
+                </p>
+            </div>
+
+            <!-- 14. MODIFICACIONES DEL SERVICIO -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    14. Modificaciones del Servicio
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    RifaTrust se reserva el derecho de modificar, suspender o descontinuar cualquier aspecto del servicio en cualquier momento, con o sin previo aviso. No seremos responsables ante usted o terceros por cualquier modificación, suspensión o interrupción del servicio.
+                </p>
+            </div>
+
+            <!-- 15. LEY APLICABLE -->
+            <div class="terms-section" style="margin-top: 2rem;">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem; border-bottom: 2px solid rgba(147, 51, 234, 0.3); padding-bottom: 0.5rem;">
+                    15. Ley Aplicable y Jurisdicción
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 1rem;">
+                    Estos términos se rigen por las leyes del país donde RifaTrust tiene su sede. Cualquier disputa será resuelta en los tribunales competentes de dicha jurisdicción.
+                </p>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7;">
+                    Si alguna disposición de estos términos es declarada inválida, las demás disposiciones seguirán en pleno vigor.
+                </p>
+            </div>
+
+            <!-- 16. CONTACTO -->
+            <div class="terms-section" style="margin-top: 2rem; background: rgba(147, 51, 234, 0.1); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid rgba(147, 51, 234, 0.3);">
+                <h3 style="color: var(--primary-light); font-size: 1.3rem; margin-bottom: 1rem;">
+                    16. 📧 Contacto y Soporte
+                </h3>
+                <p style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-bottom: 0.5rem;">
+                    Para preguntas sobre estos términos o para reportar problemas:
+                </p>
+                <ul style="color: rgba(255, 255, 255, 0.85); line-height: 1.7; margin-left: 1.5rem; margin-bottom: 0;">
+                    <li><strong>Email:</strong> soporte@rifatrust.com</li>
+                    <li><strong>Panel de Usuario:</strong> Sección "Ayuda y Soporte"</li>
+                    <li><strong>Tiempo de respuesta:</strong> 24-48 horas hábiles</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(147, 51, 234, 0.3); text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; line-height: 1.6;">
+                    Al hacer clic en "Crear Cuenta", usted confirma que ha leído, entendido y acepta estos Términos y Condiciones.<br>
+                    <strong style="color: var(--primary-light);">Última actualización: Diciembre 2025 | Versión 2.0</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 1.5rem; background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: flex-end; gap: 1rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeTermsModal()">
+                Cerrar
+            </button>
+            <button type="button" class="btn btn-primary" onclick="acceptTermsAndClose()">
+                ✓ Aceptar y Continuar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos del Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+    background: linear-gradient(135deg, rgba(30, 30, 50, 0.98) 0%, rgba(20, 20, 40, 0.98) 100%);
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    width: 100%;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    padding: 2rem;
+    border-bottom: 2px solid rgba(147, 51, 234, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close:hover {
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--primary-light);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-light);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-container {
+        max-width: 95vw !important;
+        max-height: 90vh !important;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.35rem !important;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .terms-section h3 {
+        font-size: 1.15rem !important;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validación en tiempo real del email
+document.getElementById('id_email').addEventListener('blur', function() {
+    const email = this.value;
+    const validation = document.getElementById('emailValidation');
+
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(email)) {
+            validation.textContent = '✓ Email válido';
+            validation.style.color = 'var(--success)';
+        } else {
+            validation.textContent = '✗ Email inválido';
+            validation.style.color = 'var(--error)';
+        }
+    }
+});
+
+// Validación de fortaleza de contraseña
+document.getElementById('id_password1').addEventListener('input', function() {
+    const password = this.value;
+    const strength = document.getElementById('passwordStrength');
+
+    if (password.length === 0) {
+        strength.textContent = '';
+        return;
+    }
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+    if (score <= 1) {
+        strength.textContent = 'Débil';
+        strength.style.color = 'var(--error)';
+    } else if (score <= 2) {
+        strength.textContent = 'Media';
+        strength.style.color = 'var(--warning)';
+    } else {
+        strength.textContent = 'Fuerte';
+        strength.style.color = 'var(--success)';
+    }
+});
+
+// Validación de coincidencia de contraseñas
+document.getElementById('id_password2').addEventListener('input', function() {
+    const password1 = document.getElementById('id_password1').value;
+    const password2 = this.value;
+    const match = document.getElementById('passwordMatch');
+
+    if (password2.length === 0) {
+        match.textContent = '';
+        return;
+    }
+
+    if (password1 === password2) {
+        match.textContent = '✓ Las contraseñas coinciden';
+        match.style.color = 'var(--success)';
+    } else {
+        match.textContent = '✗ Las contraseñas no coinciden';
+        match.style.color = 'var(--error)';
+    }
+});
+
+// === FUNCIONES DEL MODAL DE TÉRMINOS Y CONDICIONES ===
+
+/**
+ * Abre el modal de términos y condiciones
+ * @param {Event} event - Evento del click
+ */
+function openTermsModal(event) {
+    event.preventDefault();
+    const modal = document.getElementById('termsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+    }
+}
+
+/**
+ * Cierra el modal de términos y condiciones
+ */
+function closeTermsModal() {
+    const modal = document.getElementById('termsModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaurar scroll
+    }
+}
+
+/**
+ * Acepta los términos, marca el checkbox y cierra el modal
+ */
+function acceptTermsAndClose() {
+    const checkbox = document.getElementById('id_aceptar_terminos');
+    if (checkbox) {
+        checkbox.checked = true;
+    }
+    closeTermsModal();
+}
+
+// Cerrar modal al hacer click fuera de él
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('termsModal');
+    if (modal && event.target === modal) {
+        closeTermsModal();
+    }
+});
+
+// Cerrar modal con tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeTermsModal();
+    }
+});
+</script>
+{% endblock %}

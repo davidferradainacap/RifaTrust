@@ -2,6 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
 
 # Configurar PyMySQL como reemplazo de MySQLdb
 try:
@@ -13,6 +14,10 @@ except ImportError:
 
 def main():
     """Run administrative tasks."""
+    # Añadir backend/ al PYTHONPATH para importar apps y config
+    backend_path = Path(__file__).resolve().parent / 'backend'
+    sys.path.insert(0, str(backend_path))
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
         from django.core.management import execute_from_command_line

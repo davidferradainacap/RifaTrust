@@ -1,0 +1,595 @@
+/* ==================== RESPONSIVE DESIGN SYSTEM ==================== */
+/* Professional responsive styles for RifaTrust Admin Panel */
+
+/* ==================== BASE IMPROVEMENTS ==================== */
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--navbar-height);
+    padding: 2rem;
+    min-height: calc(100vh - var(--navbar-height));
+    transition: margin-left 0.3s ease;
+}
+
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ==================== NAVBAR ENHANCEMENTS ==================== */
+.admin-navbar .container-fluid {
+    padding: 0 1rem;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+    white-space: nowrap;
+}
+
+.brand-text {
+    margin-left: 0.5rem;
+}
+
+.navbar-right-menu {
+    gap: 0.25rem;
+}
+
+.navbar-right-menu .btn,
+.navbar-right-menu .nav-link {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.navbar-right-menu .btn:hover,
+.navbar-right-menu .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-right-menu i {
+    font-size: 1.2rem;
+}
+
+.notification-badge {
+    font-size: 0.65rem;
+    min-width: 18px;
+    height: 18px;
+    padding: 0.15rem 0.35rem;
+}
+
+/* ==================== PAGE HEADER ==================== */
+.page-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+/* ==================== STAT CARDS ==================== */
+.row.g-4 {
+    row-gap: 1.5rem !important;
+    column-gap: 1.5rem !important;
+}
+
+/* ==================== LARGE DESKTOP (1400px+) ==================== */
+@media (min-width: 1400px) {
+    .main-content {
+        padding: 2.5rem 3rem;
+    }
+
+    .page-header {
+        padding: 2.5rem;
+    }
+}
+
+/* ==================== DESKTOP (1200px - 1399px) ==================== */
+@media (max-width: 1399.98px) {
+    .main-content {
+        padding: 2rem;
+    }
+}
+
+/* ==================== LAPTOP (992px - 1199px) ==================== */
+@media (max-width: 1199.98px) {
+    .main-content {
+        padding: 1.75rem 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+    }
+}
+
+/* ==================== TABLET & BELOW (max-width: 991px) ==================== */
+@media (max-width: 991.98px) {
+
+    /* Sidebar mobile behavior */
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1040;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Main content full width */
+    .main-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 1.5rem 1rem;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* Page header */
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    /* Navbar adjustments */
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    /* Cards spacing */
+    .row.g-4 {
+        row-gap: 1rem !important;
+        column-gap: 1rem !important;
+    }
+}
+
+/* ==================== TABLET (768px - 991px) ==================== */
+@media (max-width: 767.98px) {
+
+    /* Navbar - Asegurar que esté por encima de todo en móvil */
+    .admin-navbar {
+        height: 56px;
+        z-index: 1032 !important;
+        position: fixed !important;
+    }
+
+    .admin-navbar .container-fluid {
+        padding: 0.5rem 0.75rem;
+        position: relative;
+        z-index: 1032;
+    }
+
+    .sidebar-toggle-btn {
+        width: 40px;
+        height: 40px;
+        margin-right: 0.5rem;
+        z-index: 1035 !important;
+        position: relative;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.4rem;
+        pointer-events: none;
+    }
+
+    .navbar-brand {
+        font-size: 1rem;
+        z-index: 1033;
+        position: relative;
+    }
+
+    .navbar-right-menu {
+        z-index: 1035 !important;
+        position: relative !important;
+    }
+
+    .navbar-right-menu .nav-item {
+        z-index: 1035 !important;
+        position: relative;
+    }
+
+    .navbar-right-menu .btn,
+    .navbar-right-menu .nav-link {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        z-index: 1036 !important;
+        position: relative;
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+    }
+
+    .navbar-right-menu .btn:active,
+    .navbar-right-menu .nav-link:active {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .navbar-right-menu i {
+        font-size: 1.1rem;
+        pointer-events: none !important;
+    }
+
+    .notification-badge {
+        font-size: 0.6rem;
+        min-width: 16px;
+        height: 16px;
+        pointer-events: none;
+    }
+
+    /* Dropdowns del navbar */
+    .navbar-right-menu .dropdown {
+        position: relative;
+    }
+
+    .navbar-right-menu .dropdown-toggle {
+        pointer-events: auto !important;
+    }
+
+    .navbar-right-menu .dropdown-toggle::after {
+        display: none;
+    }
+
+    .navbar-right-menu .dropdown-menu {
+        position: absolute !important;
+        z-index: 9999 !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        transform: none !important;
+        margin-top: 0.5rem !important;
+        min-width: 280px !important;
+        max-width: 90vw !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        background: white !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        display: none !important;
+    }
+
+    .navbar-right-menu .dropdown-menu.show {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Asegurar que los nav-item dropdown sean relative */
+    .navbar-right-menu .nav-item.dropdown {
+        position: relative !important;
+    }
+
+    /* Notificaciones dropdown */
+    .navbar-right-menu .notification-dropdown {
+        min-width: 320px !important;
+        max-width: 90vw !important;
+    }
+
+    .navbar-right-menu .notification-list {
+        max-height: 300px !important;
+        overflow-y: auto !important;
+    }
+
+    /* User dropdown */
+    .navbar-right-menu .user-dropdown {
+        min-width: 250px !important;
+        max-width: 90vw !important;
+    }
+
+    .navbar-right-menu .user-dropdown .dropdown-header {
+        padding: 1rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border-radius: 12px 12px 0 0 !important;
+        margin: -0.5rem -0.5rem 0 -0.5rem !important;
+    }
+
+    .user-dropdown .dropdown-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .user-dropdown .dropdown-item i {
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Asegurar que el sidebar esté por debajo del navbar en móvil */
+    .sidebar {
+        z-index: 1016 !important;
+    }
+
+    .sidebar-backdrop {
+        z-index: 1015 !important;
+    }
+
+    /* Main content */
+    .main-content {
+        padding: 1rem 0.75rem;
+    }
+
+    /* Page header */
+    .page-header {
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.875rem;
+    }
+}
+
+/* ==================== MOBILE (576px - 767px) ==================== */
+@media (max-width: 575.98px) {
+
+    /* Navbar */
+    .sidebar-toggle-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.3rem;
+    }
+
+    .navbar-brand i {
+        display: none !important;
+    }
+
+    .brand-text {
+        margin-left: 0;
+        font-size: 0.95rem;
+    }
+
+    .navbar-right-menu .btn,
+    .navbar-right-menu .nav-link {
+        width: 34px;
+        height: 34px;
+    }
+
+    .navbar-right-menu i {
+        font-size: 1rem;
+    }
+
+    /* Main content */
+    .main-content {
+        padding: 0.875rem 0.5rem;
+    }
+
+    /* Page header */
+    .page-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.125rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+    }
+
+    /* Cards */
+    .row.g-4 {
+        row-gap: 0.75rem !important;
+        column-gap: 0.75rem !important;
+    }
+}
+
+/* ==================== IPHONE 11 & SIMILAR (414px) ==================== */
+@media (max-width: 414px) {
+    .admin-navbar .container-fluid {
+        padding: 0.5rem;
+    }
+
+    .sidebar-toggle-btn {
+        width: 36px;
+        height: 36px;
+        margin-right: 0.375rem;
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.25rem;
+    }
+
+    .brand-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* ==================== IPHONE SE & SMALL (375px) ==================== */
+@media (max-width: 375px) {
+    .admin-navbar {
+        height: 54px;
+    }
+
+    .sidebar-toggle-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.2rem;
+    }
+
+    .navbar-brand {
+        font-size: 0.875rem;
+    }
+
+    .brand-text {
+        font-size: 0.875rem;
+    }
+
+    .navbar-right-menu .btn,
+    .navbar-right-menu .nav-link {
+        width: 32px;
+        height: 32px;
+    }
+
+    .navbar-right-menu i {
+        font-size: 0.95rem;
+    }
+
+    .notification-badge {
+        font-size: 0.55rem;
+        min-width: 14px;
+        height: 14px;
+    }
+
+    .page-header {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .page-title {
+        font-size: 1rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.75rem;
+    }
+
+    .main-content {
+        padding: 0.75rem 0.375rem;
+    }
+}
+
+/* ==================== VERY SMALL DEVICES (320px) ==================== */
+@media (max-width: 320px) {
+    .admin-navbar {
+        height: 52px;
+    }
+
+    .sidebar-toggle-btn {
+        width: 32px;
+        height: 32px;
+        margin-right: 0.25rem;
+    }
+
+    .sidebar-toggle-btn i {
+        font-size: 1.1rem;
+    }
+
+    .navbar-brand {
+        font-size: 0.8rem;
+    }
+
+    .navbar-right-menu .btn,
+    .navbar-right-menu .nav-link {
+        width: 30px;
+        height: 30px;
+    }
+
+    .main-content {
+        padding: 0.625rem 0.25rem;
+    }
+
+    .page-header {
+        padding: 0.625rem;
+    }
+
+    .page-title {
+        font-size: 0.95rem;
+    }
+}
+
+/* ==================== LANDSCAPE ORIENTATION ==================== */
+@media (max-height: 500px) and (orientation: landscape) {
+    .main-content {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .page-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+
+    .sidebar,
+    .admin-navbar,
+    .sidebar-backdrop,
+    .page-actions {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+    }
+
+    .page-header {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ==================== HIGH DPI DISPLAYS ==================== */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    .stat-card {
+        border-width: 0.5px;
+    }
+
+    .page-header {
+        border-width: 0.5px;
+    }
+}

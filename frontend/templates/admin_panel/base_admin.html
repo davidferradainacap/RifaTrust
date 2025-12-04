@@ -1,0 +1,405 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Referrer Policy para evitar problemas con CDN tracking -->
+    <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <title>{% block title %}Panel Administrativo{% endblock %} | RifaTrust</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟️</text></svg>">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" crossorigin="anonymous">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="{% static 'css/admin_styles.css' %}?v=2.0.8">
+    <link rel="stylesheet" href="{% static 'css/admin_responsive.css' %}?v=2.0.8">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top admin-navbar">
+        <div class="container-fluid">
+            <!-- Toggle Sidebar Button -->
+            <button class="btn text-white sidebar-toggle-btn" id="sidebarToggle" aria-label="Toggle Sidebar">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <!-- Brand -->
+            <a class="navbar-brand fw-bold mb-0" href="{% url 'admin_panel:dashboard' %}">
+                <i class="bi bi-shield-check d-none d-sm-inline"></i>
+                <span class="brand-text">RifaTrust</span>
+            </a>
+
+            <!-- Search Bar (Desktop) -->
+            <form class="d-none d-lg-flex flex-grow-1 mx-3" role="search" id="globalSearch">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input class="form-control border-start-0" type="search"
+                           placeholder="Buscar usuarios, rifas, pagos..."
+                           aria-label="Búsqueda global"
+                           id="globalSearchInput">
+                </div>
+            </form>
+
+            <!-- Right Menu -->
+            <ul class="navbar-nav ms-auto d-flex flex-row align-items-center navbar-right-menu">
+                <!-- Ir al inicio -->
+                <li class="nav-item">
+                    <a class="btn btn-light fw-bold mx-2" href="/" title="Ir al inicio">
+                        <i class="bi bi-house-door"></i>
+                    </a>
+                </li>
+                <!-- Search Icon (Mobile) -->
+                <li class="nav-item d-lg-none">
+                    <button class="btn text-white p-2" id="mobileSearchToggle" type="button">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </li>
+
+                <!-- Theme Toggle (Desktop only) -->
+                <li class="nav-item d-none d-lg-flex">
+                    <button class="btn text-white p-2" id="themeToggle" title="Cambiar tema">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                </li>
+
+                <!-- Logout -->
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm ms-2" href="{% url 'logout' %}">
+                        <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Mobile Search Bar -->
+    <div class="mobile-search-bar d-lg-none" id="mobileSearchBar" style="display: none;">
+        <div class="container-fluid py-2">
+            <form role="search">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input class="form-control" type="search"
+                           placeholder="Buscar usuarios, rifas, pagos..."
+                           aria-label="Búsqueda móvil"
+                           id="mobileSearchInput">
+                    <button class="btn btn-outline-secondary" type="button" id="closeMobileSearch">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar Backdrop (Mobile) -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <!-- Main Menu -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Principal</div>
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                       href="{% url 'admin_panel:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Management Menu -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Gestión</div>
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'users_management' %}active{% endif %}"
+                       href="{% url 'admin_panel:users_management' %}">
+                        <i class="bi bi-people"></i>
+                        <span class="nav-text">Usuarios</span>
+                        <span class="badge bg-primary">{{ total_users|default:0 }}</span>
+                    </a>
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'raffles_management' %}active{% endif %}"
+                       href="{% url 'admin_panel:raffles_management' %}">
+                        <i class="bi bi-gift"></i>
+                        <span class="nav-text">Rifas</span>
+                        <span class="badge bg-success">{{ active_raffles|default:0 }}</span>
+                    </a>
+
+                    <a class="nav-link {% if request.resolver_match.url_name == 'payments_management' %}active{% endif %}"
+                       href="{% url 'admin_panel:payments_management' %}">
+                        <i class="bi bi-credit-card"></i>
+                        <span class="nav-text">Pagos</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Analytics Menu -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Reportes</div>
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'audit_logs' %}active{% endif %}"
+                       href="{% url 'admin_panel:audit_logs' %}">
+                        <i class="bi bi-file-text"></i>
+                        <span class="nav-text">Auditoría</span>
+                    </a>
+
+                    <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="bi bi-download"></i>
+                        <span class="nav-text">Exportar Datos</span>
+                    </a>
+                </nav>
+            </div>
+
+            {% if user.rol == 'superuser' %}
+            <!-- Superuser Menu -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Superusuario</div>
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'superuser_dashboard' %}active{% endif %}"
+                       href="{% url 'admin_panel:superuser_dashboard' %}">
+                        <i class="bi bi-shield-lock"></i>
+                        <span class="nav-text">Panel Super</span>
+                    </a>
+                </nav>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="sidebar-section sidebar-actions">
+                <div class="sidebar-section-title">Acciones Rápidas</div>
+                <div class="action-buttons">
+                    <button type="button" class="action-btn action-btn-primary" data-bs-toggle="modal" data-bs-target="#quickUserModal">
+                        <i class="bi bi-person-plus"></i>
+                        <span class="action-text">Nuevo Usuario</span>
+                    </button>
+                    <button type="button" class="action-btn action-btn-success" data-action="create-raffle" data-url="{% url 'raffles:create' %}">
+                        <i class="bi bi-plus-circle"></i>
+                        <span class="action-text">Nueva Rifa</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Configuración</div>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="#" id="sidebarThemeToggle">
+                        <i class="bi bi-moon-stars"></i>
+                        <span class="nav-text">Cambiar Tema</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="small text-muted px-3 py-3 border-top border-secondary border-opacity-25">
+                    <div class="mb-2">
+                        <i class="bi bi-clock me-1"></i>
+                        <span id="currentTime"></span>
+                    </div>
+                    <div>
+                        <i class="bi bi-info-circle me-1"></i>
+                        Versión 2.0.0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}"><i class="bi bi-house"></i></a></li>
+                {% block breadcrumb %}{% endblock %}
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p class="page-subtitle text-muted">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                <div class="col-auto">
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        {% if messages %}
+        <div class="alerts-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}x-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalLabel">
+                        <i class="bi bi-download me-2"></i>Exportar Datos
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="{% url 'admin_panel:export_users_excel' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-file-earmark-excel text-success me-2"></i>
+                            Usuarios (Excel)
+                        </a>
+                        <a href="{% url 'admin_panel:export_raffles_pdf' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+                            Rifas (PDF)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick User Modal -->
+    <div class="modal fade" id="quickUserModal" tabindex="-1" aria-labelledby="quickUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickUserModalLabel">
+                        <i class="bi bi-person-plus me-2"></i>Crear Usuario Rápido
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="quickUserForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="quickUserName" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="quickUserName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quickUserEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="quickUserEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quickUserRol" class="form-label">Rol</label>
+                            <select class="form-select" id="quickUserRol" required>
+                                <option value="participante">Participante</option>
+                                <option value="organizador">Organizador</option>
+                                <option value="sponsor">Sponsor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{% static 'js/admin.js' %}?v=2.0.8">
+
+    <!-- Dropdown handlers para móvil -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejadores para dropdowns en móvil (similar a la lupa)
+        const notificationsBtn = document.getElementById('notificationsDropdown');
+        const userBtn = document.getElementById('userDropdown');
+
+        if (notificationsBtn) {
+            const notificationsMenu = notificationsBtn.nextElementSibling;
+            notificationsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Cerrar el otro dropdown si está abierto
+                if (userBtn && userBtn.nextElementSibling) {
+                    userBtn.nextElementSibling.classList.remove('show');
+                }
+
+                // Toggle este dropdown
+                if (notificationsMenu) {
+                    notificationsMenu.classList.toggle('show');
+                }
+            });
+        }
+
+        if (userBtn) {
+            const userMenu = userBtn.nextElementSibling;
+            userBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Cerrar el otro dropdown si está abierto
+                if (notificationsBtn && notificationsBtn.nextElementSibling) {
+                    notificationsBtn.nextElementSibling.classList.remove('show');
+                }
+
+                // Toggle este dropdown
+                if (userMenu) {
+                    userMenu.classList.toggle('show');
+                }
+            });
+        }
+
+        // Cerrar dropdowns al hacer click fuera
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+    });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

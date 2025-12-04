@@ -1,0 +1,233 @@
+{% extends 'admin_panel/base_admin.html' %}
+{% load static %}
+
+{% block title %}Test Verificación de Email - RifaTrust{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title">
+                <i class="bi bi-envelope-check"></i> Test Verificación de Email
+            </h2>
+            <p class="text-muted">Prueba la API de verificación de emails (AbstractAPI)</p>
+        </div>
+    </div>
+
+    <!-- Formulario de Prueba -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-search"></i> Verificar Email</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{% url 'admin_panel:test_email_verification' %}" id="emailTestForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email a Verificar</label>
+                            <input
+                                type="email"
+                                class="form-control"
+                                id="email"
+                                name="email"
+                                placeholder="ejemplo@gmail.com"
+                                value="{{ email|default:'' }}"
+                                required
+                            >
+                            <small class="text-muted">Ingresa cualquier email para verificar su validez</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Verificar
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            {% if email %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header {% if result.is_valid %}bg-success{% else %}bg-danger{% endif %} text-white">
+                    <h5 class="mb-0">
+                        {% if result.is_valid %}
+                            <i class="bi bi-check-circle"></i> Email Válido
+                        {% else %}
+                            <i class="bi bi-x-circle"></i> Email Inválido
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Email Analizado: <code>{{ email }}</code></h6>
+
+                    <!-- Tabla de Resultados -->
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40%">Verificación</th>
+                                <th width="20%">Resultado</th>
+                                <th width="40%">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>✅ Formato Válido</strong></td>
+                                <td>
+                                    {% if result.is_valid %}
+                                        <span class="badge bg-success">Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>El email tiene formato correcto y el dominio existe</td>
+                            </tr>
+                            <tr>
+                                <td><strong>📬 SMTP Válido</strong></td>
+                                <td>
+                                    {% if result.is_smtp_valid %}
+                                        <span class="badge bg-success">Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>El servidor de email responde correctamente</td>
+                            </tr>
+                            <tr>
+                                <td><strong>🗑️ Email Desechable</strong></td>
+                                <td>
+                                    {% if result.is_disposable %}
+                                        <span class="badge bg-danger">Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-success">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>Detecta servicios de email temporal (tempmail, guerrilla, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>🆓 Proveedor Gratuito</strong></td>
+                                <td>
+                                    {% if result.is_free_email %}
+                                        <span class="badge bg-info">Sí</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>Email de proveedor gratuito (Gmail, Yahoo, Outlook)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>⭐ Puntuación de Calidad</strong></td>
+                                <td>
+                                    <span class="badge
+                                        {% if result.quality_score >= 0.8 %}bg-success
+                                        {% elif result.quality_score >= 0.5 %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ result.quality_score|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td>Score de 0.0 a 1.0 basado en múltiples factores</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Reporte en Texto -->
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="bi bi-info-circle"></i> Reporte Detallado:</h6>
+                        <pre class="mb-0" style="white-space: pre-wrap;">{{ report }}</pre>
+                    </div>
+
+                    <!-- Errores -->
+                    {% if result.error %}
+                    <div class="alert alert-warning">
+                        <strong><i class="bi bi-exclamation-triangle"></i> Advertencia:</strong>
+                        {{ result.error }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Recomendación -->
+                    <div class="alert {% if result.is_valid and not result.is_disposable %}alert-success{% else %}alert-danger{% endif %}">
+                        <h6><i class="bi bi-lightbulb"></i> Recomendación:</h6>
+                        {% if result.is_valid and not result.is_disposable %}
+                            <p class="mb-0">✅ Este email es <strong>válido y seguro</strong> para registro.</p>
+                        {% elif result.is_disposable %}
+                            <p class="mb-0">❌ Este email es <strong>desechable/temporal</strong> y debe ser rechazado.</p>
+                        {% else %}
+                            <p class="mb-0">❌ Este email es <strong>inválido</strong> y debe ser rechazado.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- JSON Raw -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="bi bi-code-square"></i> Respuesta JSON</h6>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-light p-3 rounded">{{ result|pprint }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ejemplos de Prueba -->
+            <div class="card shadow-sm mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Emails de Prueba</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Emails que DEBEN ser aceptados:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><code>tunombre@gmail.com</code> ✅</li>
+                        <li><code>tunombre@outlook.com</code> ✅</li>
+                        <li><code>tunombre@yahoo.com</code> ✅</li>
+                    </ul>
+
+                    <p class="mb-2 mt-3"><strong>Emails que DEBEN ser rechazados:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><code>test@tempmail.com</code> ❌ (Desechable)</li>
+                        <li><code>fake@guerrillamail.com</code> ❌ (Desechable)</li>
+                        <li><code>invalid@nonexistentdomain999.com</code> ❌ (No existe)</li>
+                    </ul>
+
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <small>
+                            <strong>Nota:</strong> Si la API no está configurada, se usará validación básica offline.
+                            Para activar la API, agrega <code>EMAIL_VERIFICATION_API_KEY</code> a tu archivo <code>.env</code>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+pre {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+code {
+    background: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    color: #e11d48;
+}
+</style>
+{% endblock %}
