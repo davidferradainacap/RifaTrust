@@ -171,13 +171,16 @@ class Command(BaseCommand):
                 
                 numero = numeros.pop()
                 
+                # Generar código QR único
+                import uuid
+                codigo_qr = f"TKT-{raffle.id}-{numero}-{uuid.uuid4().hex[:8]}"
+                
                 Ticket.objects.create(
                     rifa=raffle,
                     usuario=comprador,
                     numero_boleto=numero,
-                    monto_pagado=precio_boleto,
-                    estado_pago='completado',
-                    metodo_pago=random.choice(['webpay', 'mercadopago'])
+                    estado='pagado',
+                    codigo_qr=codigo_qr
                 )
                 vendidos += 1
         
