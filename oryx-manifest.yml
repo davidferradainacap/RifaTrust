@@ -3,4 +3,4 @@ build:
     version: "3.11"
 
 run:
-  startupCommand: "gunicorn --config gunicorn.conf.py --chdir /home/site/wwwroot config.wsgi:application"
+  startupCommand: "gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 2 --chdir /home/site/wwwroot --pythonpath /home/site/wwwroot/backend config.wsgi:application"
