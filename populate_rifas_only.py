@@ -243,7 +243,7 @@ def main():
                 )
                 boletos_vendidos += 1
         
-        raffle.boletos_vendido = boletos_vendidos
+        raffle.boletos_vendidos = boletos_vendidos
         raffle.save(update_fields=['boletos_vendidos'])
         
         print(f"  ✓ {titulo[:50]}... - {boletos_vendidos}/{total_boletos} boletos")
