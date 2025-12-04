@@ -1,3 +1,6 @@
 build:
   python:
     version: "3.11"
+
+run:
+  startupCommand: "gunicorn --config gunicorn.conf.py --chdir /home/site/wwwroot config.wsgi:application"

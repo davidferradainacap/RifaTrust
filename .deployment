@@ -2,3 +2,4 @@
 SCM_DO_BUILD_DURING_DEPLOYMENT = true
 SCM_REPOSITORY_PATH = .
 PROJECT = .
+POST_BUILD_COMMAND = bash .azure/post-build.sh

@@ -1,1 +1,1 @@
-gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 2 --access-logfile - --error-logfile - --log-level debug startup:app
+gunicorn --config gunicorn.conf.py --chdir /home/site/wwwroot config.wsgi:application
