@@ -154,21 +154,23 @@ ENCRYPTION_KEY = env_config('ENCRYPTION_KEY', default=SECRET_KEY)
 EMAIL_VERIFICATION_API_KEY = env_config('EMAIL_VERIFICATION_API_KEY', default=None)
 
 # Email Configuration for sending emails
-# Email Configuration - Automático según entorno
-# DEBUG=True (local): Modo consola - emails en terminal
-# DEBUG=False (Azure): SendGrid - emails reales
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='apps.core.email_backend.SendGridEmailBackend')
-
-EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
-EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_USE_SSL = env_config('EMAIL_USE_SSL', default=False, cast=bool)
-EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='apikey')
+# Usa SendGrid si EMAIL_HOST_PASSWORD está configurado (API key presente)
+# Sino, usa consola para desarrollo local
 EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='david.ferrada@inacapmail.cl')
+
+if EMAIL_HOST_PASSWORD:
+    # SendGrid configurado - enviar emails reales
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
+    EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
+    EMAIL_USE_SSL = env_config('EMAIL_USE_SSL', default=False, cast=bool)
+    EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='apikey')
+    DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='david.ferrada@inacapmail.cl')
+else:
+    # Modo desarrollo - emails en consola
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'david.ferrada@inacapmail.cl'
 EMAIL_TIMEOUT = env_config('EMAIL_TIMEOUT', default=30, cast=int)
 # SSL certificate verification (disable only in development if needed)
 EMAIL_SSL_CERTFILE = env_config('EMAIL_SSL_CERTFILE', default=None)
