@@ -141,83 +141,105 @@ class Command(BaseCommand):
 
     def crear_participantes(self, cantidad):
         """Crea usuarios participantes"""
-        self.stdout.write(f"\n🎭 Creando {cantidad} participantes...")
+        self.stdout.write(f"\n🎭 Obteniendo/Creando {cantidad} participantes...")
         participantes = []
 
         for i in range(cantidad):
-            nombre = random.choice(self.nombres)
-            apellido = f"{random.choice(self.apellidos)} {random.choice(self.apellidos)}"
             email = f"participante{i+1}@rifatrust.cl"
-            telefono = f"+569{random.randint(50000000, 99999999)}"
-
+            
+            # Intentar obtener usuario existente primero
             try:
-                user = User.objects.create_user(
-                    email=email,
-                    nombre=f"{nombre} {apellido}",
-                    password='Participante123!',
-                    telefono=telefono,
-                    rol='participante',
-                    cuenta_validada=True
-                )
+                user = User.objects.get(email=email)
                 participantes.append(user)
-            except Exception as e:
-                self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {email}: {str(e)}"))
+            except User.DoesNotExist:
+                # Si no existe, crearlo
+                nombre = random.choice(self.nombres)
+                apellido = f"{random.choice(self.apellidos)} {random.choice(self.apellidos)}"
+                telefono = f"+569{random.randint(50000000, 99999999)}"
 
-        self.stdout.write(self.style.SUCCESS(f"✅ {len(participantes)} participantes creados"))
+                try:
+                    user = User.objects.create_user(
+                        email=email,
+                        nombre=f"{nombre} {apellido}",
+                        password='Participante123!',
+                        telefono=telefono,
+                        rol='participante',
+                        cuenta_validada=True
+                    )
+                    participantes.append(user)
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {email}: {str(e)}"))
+
+        self.stdout.write(self.style.SUCCESS(f"✅ {len(participantes)} participantes disponibles"))
         return participantes
 
     def crear_organizadores(self, cantidad):
         """Crea usuarios organizadores"""
-        self.stdout.write(f"\n🎯 Creando {cantidad} organizadores...")
+        self.stdout.write(f"\n🎯 Obteniendo/Creando {cantidad} organizadores...")
         organizadores = []
 
         for i in range(cantidad):
-            nombre = random.choice(self.nombres)
-            apellido = f"{random.choice(self.apellidos)} {random.choice(self.apellidos)}"
             email = f"organizador{i+1}@rifatrust.cl"
-            telefono = f"+569{random.randint(50000000, 99999999)}"
-
+            
+            # Intentar obtener usuario existente primero
             try:
-                user = User.objects.create_user(
-                    email=email,
-                    nombre=f"{nombre} {apellido}",
-                    password='Organizador123!',
-                    telefono=telefono,
-                    rol='organizador',
-                    cuenta_validada=True
-                )
+                user = User.objects.get(email=email)
                 organizadores.append(user)
-            except Exception as e:
-                self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {email}: {str(e)}"))
+            except User.DoesNotExist:
+                # Si no existe, crearlo
+                nombre = random.choice(self.nombres)
+                apellido = f"{random.choice(self.apellidos)} {random.choice(self.apellidos)}"
+                telefono = f"+569{random.randint(50000000, 99999999)}"
 
-        self.stdout.write(self.style.SUCCESS(f"✅ {len(organizadores)} organizadores creados"))
+                try:
+                    user = User.objects.create_user(
+                        email=email,
+                        nombre=f"{nombre} {apellido}",
+                        password='Organizador123!',
+                        telefono=telefono,
+                        rol='organizador',
+                        cuenta_validada=True
+                    )
+                    organizadores.append(user)
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {email}: {str(e)}"))
+
+        self.stdout.write(self.style.SUCCESS(f"✅ {len(organizadores)} organizadores disponibles"))
         return organizadores
 
     def crear_sponsors(self, cantidad):
         """Crea usuarios sponsors"""
-        self.stdout.write(f"\n🏢 Creando {cantidad} sponsors...")
+        self.stdout.write(f"\n🏢 Obteniendo/Creando {cantidad} sponsors...")
         sponsors = []
         empresas = random.sample(self.empresas_famosas, cantidad)
 
         for i, empresa in enumerate(empresas):
             email = f"sponsor{i+1}@rifatrust.cl"
-            telefono = f"+569{random.randint(50000000, 99999999)}"
-
+            
+            # Intentar obtener usuario existente primero
             try:
-                user = User.objects.create_user(
-                    email=email,
-                    nombre=empresa,
-                    password='Sponsor123!',
-                    telefono=telefono,
-                    rol='sponsor',
-                    cuenta_validada=True
-                )
+                user = User.objects.get(email=email)
                 sponsors.append(user)
-                self.stdout.write(f"  ✓ {empresa}")
-            except Exception as e:
-                self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {empresa}: {str(e)}"))
+                self.stdout.write(f"  ✓ {empresa} (existente)")
+            except User.DoesNotExist:
+                # Si no existe, crearlo
+                telefono = f"+569{random.randint(50000000, 99999999)}"
 
-        self.stdout.write(self.style.SUCCESS(f"✅ {len(sponsors)} sponsors creados"))
+                try:
+                    user = User.objects.create_user(
+                        email=email,
+                        nombre=empresa,
+                        password='Sponsor123!',
+                        telefono=telefono,
+                        rol='sponsor',
+                        cuenta_validada=True
+                    )
+                    sponsors.append(user)
+                    self.stdout.write(f"  ✓ {empresa} (nuevo)")
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"  ⚠ Error creando {empresa}: {str(e)}"))
+
+        self.stdout.write(self.style.SUCCESS(f"✅ {len(sponsors)} sponsors disponibles"))
         return sponsors
 
     @transaction.atomic
