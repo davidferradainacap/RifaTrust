@@ -210,20 +210,31 @@ El equipo de RifaTrust
                 logger.warning(f"No se pudo renderizar template HTML: {str(template_error)}")
 
             # Enviar email
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@rifatrust.com')
+            logger.info(f"Intentando enviar email desde {from_email} a {user.email}")
+            logger.info(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+            
+            if settings.EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
+                logger.info(f"SMTP Config - Host: {settings.EMAIL_HOST}, Port: {settings.EMAIL_PORT}, TLS: {settings.EMAIL_USE_TLS}")
+            
             send_mail(
                 subject='Recuperación de contraseña - RifaTrust',
                 message=plain_message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@rifatrust.com'),
+                from_email=from_email,
                 recipient_list=[user.email],
                 html_message=html_message,
                 fail_silently=False,
             )
 
-            logger.info(f"Email de recuperación enviado exitosamente a {user.email}")
+            logger.info(f"✅ Email de recuperación enviado exitosamente a {user.email}")
             return True
 
         except Exception as e:
-            logger.error(f"Error al enviar email de recuperación a {user.email}: {str(e)}")
+            import traceback
+            logger.error(f"❌ Error al enviar email de recuperación a {user.email}")
+            logger.error(f"Error type: {type(e).__name__}")
+            logger.error(f"Error message: {str(e)}")
+            logger.error(f"Traceback:\n{traceback.format_exc()}")
             return False
 
     @staticmethod
