@@ -154,48 +154,38 @@ ENCRYPTION_KEY = env_config('ENCRYPTION_KEY', default=SECRET_KEY)
 EMAIL_VERIFICATION_API_KEY = env_config('EMAIL_VERIFICATION_API_KEY', default=None)
 
 # Email Configuration for sending emails
-# Usa SendGrid si EMAIL_HOST_PASSWORD está configurado (API key presente)
+# Configuración de Email - Brevo (Sendinblue)
+# Si EMAIL_HOST_PASSWORD está configurado, usa Brevo para enviar emails reales
 # Sino, usa consola para desarrollo local
 EMAIL_HOST_PASSWORD_RAW = env_config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_HOST_USER_RAW = env_config('EMAIL_HOST_USER', default='')
 
-# Sanitizar API key: remover espacios, comillas, saltos de línea
+# Sanitizar credenciales: remover espacios, comillas, saltos de línea
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD_RAW.strip().strip('"').strip("'").replace('\n', '').replace('\r', '') if EMAIL_HOST_PASSWORD_RAW else ''
+EMAIL_HOST_USER = EMAIL_HOST_USER_RAW.strip().strip('"').strip("'").replace('\n', '').replace('\r', '') if EMAIL_HOST_USER_RAW else ''
 
-if EMAIL_HOST_PASSWORD:
-    # SendGrid configurado - enviar emails reales
+if EMAIL_HOST_PASSWORD and EMAIL_HOST_USER:
+    # Brevo SMTP configurado - enviar emails reales
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_HOST = 'smtp-relay.brevo.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_USE_SSL = False
-    EMAIL_HOST_USER = 'apikey'
-    DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='david.ferrada@inacapmail.cl')
+    DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='daldeaferrada@gmail.com')
     
-    # Debug: Log configuración y diagnóstico de API key
+    # Debug: Log configuración SMTP
     import logging
     logger = logging.getLogger(__name__)
-    logger.info(f"✓ SendGrid SMTP configurado")
+    logger.info(f"✓ Brevo SMTP configurado")
     logger.info(f"  EMAIL_BACKEND: {EMAIL_BACKEND}")
     logger.info(f"  EMAIL_HOST: {EMAIL_HOST}:{EMAIL_PORT}")
     logger.info(f"  EMAIL_HOST_USER: {EMAIL_HOST_USER}")
     logger.info(f"  DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-    
-    # Diagnóstico de API key (sin revelar valor completo)
-    api_key_start = EMAIL_HOST_PASSWORD[:10] if len(EMAIL_HOST_PASSWORD) >= 10 else EMAIL_HOST_PASSWORD
-    api_key_length = len(EMAIL_HOST_PASSWORD)
-    logger.info(f"  API Key length: {api_key_length} chars")
-    logger.info(f"  API Key starts with: {api_key_start}...")
-    
-    # Validar formato de API key de SendGrid
-    if not EMAIL_HOST_PASSWORD.startswith('SG.'):
-        logger.error(f"  ❌ ERROR: SendGrid API key debe empezar con 'SG.' pero empieza con '{api_key_start}'")
-        logger.error(f"  ❌ Esto causará fallo en autenticación SMTP")
-    else:
-        logger.info(f"  ✓ API Key format looks valid (starts with 'SG.')")
+    logger.info(f"  SMTP Key length: {len(EMAIL_HOST_PASSWORD)} chars")
 else:
     # Modo desarrollo - emails en consola
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'david.ferrada@inacapmail.cl'
+    DEFAULT_FROM_EMAIL = 'daldeaferrada@gmail.com'
     
     import logging
     logger = logging.getLogger(__name__)
