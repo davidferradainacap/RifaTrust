@@ -291,15 +291,8 @@ class Command(BaseCommand):
                 max_boletos_por_usuario=random.choice([5, 10, 20])
             )
 
-            # Crear solicitudes de sponsors
-            for sponsor in random.sample(sponsors, min(2, len(sponsors))):
-                SponsorshipRequest.objects.create(
-                    rifa=raffle,
-                    sponsor=sponsor,
-                    monto_aporte=Decimal(str(random.choice([50000, 100000, 200000]))),
-                    mensaje=f"Estamos interesados en patrocinar '{raffle.titulo}'",
-                    estado=random.choice(['aprobada', 'pendiente'])
-                )
+            # Nota: SponsorshipRequest requiere imágenes y campos complejos
+            # Por ahora se omite para simplificar la población de datos
 
             # Crear compras de boletos
             porcentaje_venta = random.uniform(0.4, 0.85)
