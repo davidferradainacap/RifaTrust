@@ -252,6 +252,10 @@ class Command(BaseCommand):
     def crear_rifa_individual(self, organizadores, sponsors, participantes, fecha, hora, minuto, numero, tipo):
         """Crea una rifa individual con todos sus datos"""
         try:
+            if not participantes:
+                self.stdout.write(self.style.ERROR(f"  ❌ No hay participantes disponibles para comprar boletos"))
+                return
+            
             organizador = random.choice(organizadores)
             premio = random.choice(self.premios)
 
@@ -305,25 +309,39 @@ class Command(BaseCommand):
                 if boletos_vendidos >= boletos_a_vender:
                     break
 
-                cantidad = random.randint(1, min(5, boletos_a_vender - boletos_vendidos))
+                # Determinar cuántos boletos compra este usuario
+                max_a_comprar = min(5, boletos_a_vender - boletos_vendidos, len(numeros_disponibles))
+                if max_a_comprar <= 0:
+                    break
+                    
+                cantidad = random.randint(1, max_a_comprar)
 
                 for _ in range(cantidad):
-                    if not numeros_disponibles:
+                    if not numeros_disponibles or boletos_vendidos >= boletos_a_vender:
                         break
+                    
                     numero = numeros_disponibles.pop(0)
 
-                    Ticket.objects.create(
-                        rifa=raffle,
-                        usuario=comprador,
-                        numero_boleto=numero,
-                        monto_pagado=precio_boleto,
-                        estado_pago='completado',
-                        metodo_pago=random.choice(['webpay', 'mercadopago'])
-                    )
-                    boletos_vendidos += 1
+                    try:
+                        Ticket.objects.create(
+                            rifa=raffle,
+                            usuario=comprador,
+                            numero_boleto=numero,
+                            monto_pagado=precio_boleto,
+                            estado_pago='completado',
+                            metodo_pago=random.choice(['webpay', 'mercadopago'])
+                        )
+                        boletos_vendidos += 1
+                    except Exception as ticket_error:
+                        self.stdout.write(self.style.WARNING(f"    ⚠ Error creando boleto {numero}: {str(ticket_error)}"))
 
+            # Actualizar contador de boletos vendidos
             raffle.boletos_vendidos = boletos_vendidos
-            raffle.save()
+            raffle.save(update_fields=['boletos_vendidos'])
+            
+            self.stdout.write(f"    ✓ Rifa '{titulo[:40]}...' - {boletos_vendidos}/{total_boletos} boletos vendidos")
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  ❌ Error creando rifa: {str(e)}"))
+            import traceback
+            self.stdout.write(self.style.ERROR(f"  ❌ Error creando rifa #{numero}: {str(e)}"))
+            self.stdout.write(self.style.ERROR(f"     Detalles: {traceback.format_exc()}"))
