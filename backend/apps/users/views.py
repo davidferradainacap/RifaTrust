@@ -236,7 +236,8 @@ def login_view(request):
             # 1. Usuario existe
             # 2. Password es correcto (compara hash Argon2)
             # 3. Usuario está activo (is_active=True)
-            user = authenticate(username=email, password=password)
+            # IMPORTANTE: Pasar request para django-axes
+            user = authenticate(request=request, username=email, password=password)
 
             if user is not None:
                 # === PASO 5: VERIFICAR VALIDACIÓN DE CUENTA SEGÚN ROL ===
