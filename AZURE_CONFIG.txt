@@ -1,0 +1,15 @@
+# Azure App Service Configuration
+# These settings should be set in the Azure Portal → Configuration → Application Settings
+
+# Required Settings:
+# - WEBSITE_PYTHON_VERSION=3.11
+# - SCM_DO_BUILD_DURING_DEPLOYMENT=true
+# - ENABLE_ORYX_BUILD=true
+# - POST_BUILD_SCRIPT_PATH=deploy.sh
+
+# Django Settings:
+# - DJANGO_SETTINGS_MODULE=config.settings
+# - PYTHONPATH=/home/site/wwwroot/backend
+
+# Startup Command (set in Azure Portal → Configuration → General Settings):
+# python -m gunicorn startup:app --bind=0.0.0.0:8000 --timeout 600 --workers 4 --access-logfile - --error-logfile -
