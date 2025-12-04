@@ -31,7 +31,7 @@ class Command(BaseCommand):
         if options['clear']:
             self.stdout.write("\n🗑️  Limpiando base de datos...")
             Ticket.objects.all().delete()
-            SponsorRequest.objects.all().delete()
+            SponsorshipRequest.objects.all().delete()
             Raffle.objects.all().delete()
             User.objects.filter(rol__in=['participante', 'organizador', 'sponsor']).delete()
             self.stdout.write(self.style.SUCCESS("✅ Base de datos limpiada"))
