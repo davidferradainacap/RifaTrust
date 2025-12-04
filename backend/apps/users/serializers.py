@@ -137,7 +137,9 @@ class LoginSerializer(serializers.Serializer):
         email = attrs.get('email')
         password = attrs.get('password')
         
-        user = authenticate(email=email, password=password)
+        # Get request from context for django-axes
+        request = self.context.get('request')
+        user = authenticate(request=request, username=email, password=password)
         
         if user is None:
             raise serializers.ValidationError('Credenciales inválidas.')
