@@ -1,0 +1,61 @@
+# Azure deployment ignore
+# Exclude files that shouldn't be deployed to Azure
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local database
+db.sqlite3
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in production)
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# Development files
+.env
+.env.local
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Temporary files
+temp_*.bat
+*.tmp
+*.bak
+
+# Media (if large, upload separately)
+# media/
+
+# Azure files (already in repo)
+.azure/
