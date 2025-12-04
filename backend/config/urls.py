@@ -16,7 +16,7 @@ def redirect_to_admin(request):
 urlpatterns = [
     # Health check para Azure
     path('health/', health_check, name='health_check'),
-    
+
     path('admin/', redirect_to_admin),
     path('django-admin/', admin.site.urls),  # Django admin original
 

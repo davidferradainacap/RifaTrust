@@ -8,6 +8,14 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
 import os
+import sys
+from pathlib import Path
+
+# Add backend directory to Python path
+# This ensures imports work correctly in Azure
+BASE_DIR = Path(__file__).resolve().parent.parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 # Configurar PyMySQL como reemplazo de MySQLdb
 try:

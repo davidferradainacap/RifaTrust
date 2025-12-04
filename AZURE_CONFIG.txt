@@ -13,7 +13,7 @@ Configuration → Application settings → Add these:
 Name: PYTHONPATH
 Value: /home/site/wwwroot/backend
 
-Name: DJANGO_SETTINGS_MODULE  
+Name: DJANGO_SETTINGS_MODULE
 Value: config.settings
 
 Name: POST_BUILD_SCRIPT_PATH
