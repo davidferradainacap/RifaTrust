@@ -1,15 +1,63 @@
-# Azure App Service Configuration
-# These settings should be set in the Azure Portal → Configuration → Application Settings
+==============================================
+AZURE APP SERVICE CONFIGURATION INSTRUCTIONS
+==============================================
 
-# Required Settings:
-# - WEBSITE_PYTHON_VERSION=3.11
-# - SCM_DO_BUILD_DURING_DEPLOYMENT=true
-# - ENABLE_ORYX_BUILD=true
-# - POST_BUILD_SCRIPT_PATH=deploy.sh
+📍 Go to: https://portal.azure.com
+Search for: rifatrust-dhche4cabncab9d8
 
-# Django Settings:
-# - DJANGO_SETTINGS_MODULE=config.settings
-# - PYTHONPATH=/home/site/wwwroot/backend
+==============================================
+1. APPLICATION SETTINGS
+==============================================
+Configuration → Application settings → Add these:
 
-# Startup Command (set in Azure Portal → Configuration → General Settings):
-# python -m gunicorn startup:app --bind=0.0.0.0:8000 --timeout 600 --workers 4 --access-logfile - --error-logfile -
+Name: PYTHONPATH
+Value: /home/site/wwwroot/backend
+
+Name: DJANGO_SETTINGS_MODULE  
+Value: config.settings
+
+Name: POST_BUILD_SCRIPT_PATH
+Value: deploy.sh
+
+Name: WEBSITE_RUN_FROM_PACKAGE
+Value: 0
+
+IMPORTANT: Click "Save" after adding all settings!
+
+==============================================
+2. STARTUP COMMAND
+==============================================
+Configuration → General settings → Startup Command:
+
+gunicorn --bind=0.0.0.0:8000 --timeout 600 --workers 2 --access-logfile - --error-logfile - --log-level debug startup:app
+
+IMPORTANT: Click "Save" after setting the command!
+
+==============================================
+3. RESTART APP SERVICE
+==============================================
+Overview → Click "Restart" button
+
+==============================================
+4. MONITOR DEPLOYMENT
+==============================================
+Deployment Center → View deployment logs
+Log stream → View real-time logs
+
+Expected to see:
+✅ Installing Python 3.11
+✅ Installing requirements
+✅ Running deploy.sh
+✅ Collecting static files
+✅ Migrations completed
+✅ Gunicorn starting
+
+==============================================
+5. TEST THE SITE
+==============================================
+https://rifatrust-dhche4cabncab9d8.brazilsouth-01.azurewebsites.net/
+
+If you see errors, check:
+- Log stream for detailed error messages
+- Deployment logs for build errors
+- All application settings are saved

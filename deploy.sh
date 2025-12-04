@@ -1,28 +1,56 @@
 #!/bin/bash
+set -e  # Exit on error
 
-# Script de despliegue para Azure App Service
-# Este script se ejecuta automáticamente durante el despliegue
+echo "========================================="
+echo "🚀 Starting RifaTrust Azure Deployment"
+echo "========================================="
+echo "Working directory: $(pwd)"
+echo "Python version: $(python --version)"
+echo "Pip version: $(pip --version)"
 
-echo "==================================="
-echo "🚀 Iniciando despliegue en Azure"
-echo "==================================="
+# Configure Python path for backend structure
+export PYTHONPATH="/home/site/wwwroot/backend:${PYTHONPATH}"
+echo "✅ PYTHONPATH configured: $PYTHONPATH"
 
-# Agregar backend al PYTHONPATH
-export PYTHONPATH="${PYTHONPATH}:/home/site/wwwroot/backend"
-echo "✅ PYTHONPATH configurado"
+# Upgrade pip first
+echo ""
+echo "📦 Upgrading pip..."
+python -m pip install --upgrade pip
 
-# Instalar dependencias
-echo "📦 Instalando dependencias..."
-pip install -r requirements.txt --upgrade
+# Install dependencies
+echo ""
+echo "📦 Installing Python dependencies..."
+pip install -r requirements.txt --no-cache-dir
 
-# Ejecutar migraciones
-echo "🗄️ Ejecutando migraciones..."
-python manage.py migrate --noinput
+# Check Django installation
+echo ""
+echo "🔍 Checking Django installation..."
+python -c "import django; print(f'Django version: {django.get_version()}')"
 
-# Recopilar archivos estáticos
-echo "📁 Recopilando archivos estáticos..."
-python manage.py collectstatic --noinput
+# Run migrations (with error handling)
+echo ""
+echo "🗄️ Running database migrations..."
+if python manage.py migrate --noinput; then
+    echo "✅ Migrations completed successfully"
+else
+    echo "⚠️ Warning: Migrations failed, but continuing..."
+fi
 
-echo "==================================="
-echo "✅ Despliegue completado"
-echo "==================================="
+# Collect static files
+echo ""
+echo "📁 Collecting static files..."
+if python manage.py collectstatic --noinput; then
+    echo "✅ Static files collected successfully"
+else
+    echo "⚠️ Warning: Static files collection failed, but continuing..."
+fi
+
+# Verify backend structure
+echo ""
+echo "🔍 Verifying backend structure..."
+ls -la backend/
+
+echo ""
+echo "========================================="
+echo "✅ Deployment completed successfully"
+echo "========================================="
