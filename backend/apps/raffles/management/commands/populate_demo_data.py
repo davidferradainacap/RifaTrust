@@ -10,7 +10,7 @@ from decimal import Decimal
 import random
 
 from apps.users.models import User
-from apps.raffles.models import Raffle, Ticket, SponsorshipRequest
+from apps.raffles.models import Raffle, Ticket
 
 
 class Command(BaseCommand):
@@ -31,7 +31,6 @@ class Command(BaseCommand):
         if options['clear']:
             self.stdout.write("\n🗑️  Limpiando base de datos...")
             Ticket.objects.all().delete()
-            SponsorshipRequest.objects.all().delete()
             Raffle.objects.all().delete()
             User.objects.filter(rol__in=['participante', 'organizador', 'sponsor']).delete()
             self.stdout.write(self.style.SUCCESS("✅ Base de datos limpiada"))
@@ -137,7 +136,6 @@ class Command(BaseCommand):
         self.stdout.write(f"🏢 Sponsors: {len(sponsors)}")
         self.stdout.write(f"🎲 Rifas: {Raffle.objects.count()}")
         self.stdout.write(f"🎫 Boletos vendidos: {Ticket.objects.count()}")
-        self.stdout.write(f"💼 Solicitudes: {SponsorshipRequest.objects.count()}")
         self.stdout.write("\n" + self.style.SUCCESS("✅ Población completada!"))
         self.stdout.write("=" * 60)
 
