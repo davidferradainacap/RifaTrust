@@ -1,0 +1,29 @@
+AZURE APP SERVICE STARTUP COMMAND
+==================================
+
+Use this EXACT command in Azure Portal > Configuration > General settings > Startup Command:
+
+gunicorn --config gunicorn.conf.py config.wsgi:application
+
+IMPORTANT NOTES:
+- The gunicorn.conf.py file handles all path configuration
+- The file adds /home/site/wwwroot/backend to sys.path automatically
+- This is much simpler than specifying all options in the command line
+- Make sure to SAVE the configuration and RESTART the app
+
+VERIFICATION STEPS:
+1. Go to Azure Portal
+2. Navigate to your App Service
+3. Configuration > General settings > Startup Command
+4. Replace with the command above
+5. Click "Save" at the top
+6. Go to Overview
+7. Click "Restart"
+8. Wait 2-3 minutes
+9. Check Log stream for "Starting gunicorn" and "Listening at"
+10. Visit your website URL
+
+If you still see errors, check that these Application Settings are configured:
+- DJANGO_SETTINGS_MODULE = config.settings
+- WEBSITE_RUN_FROM_PACKAGE = 0
+- SCM_DO_BUILD_DURING_DEPLOYMENT = true
