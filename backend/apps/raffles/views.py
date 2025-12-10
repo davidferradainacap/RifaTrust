@@ -254,87 +254,117 @@ def raffles_list_view(request):
     return render(request, 'raffles/list.html', context)
 
 def raffle_detail_view(request, pk):
-    from django.utils import timezone
-    raffle = get_object_or_404(Raffle, pk=pk)
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    try:
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        logger.info(f"Accediendo a detalle de rifa ID: {pk}")
+        raffle = get_object_or_404(Raffle, pk=pk)
+        logger.info(f"Rifa encontrada: {raffle.titulo}")
 
-    # Tickets sold - ORDENAR por ID para mantener consistencia con la ruleta
-    sold_tickets_qs = Ticket.objects.filter(rifa=raffle, estado='pagado').select_related('usuario').order_by('id')
-    sold_tickets = sold_tickets_qs.count()
-    available_tickets = raffle.total_boletos - sold_tickets
-    progress_percentage = int((sold_tickets / raffle.total_boletos) * 100) if raffle.total_boletos > 0 else 0
+        # Tickets sold - ORDENAR por ID para mantener consistencia con la ruleta
+        sold_tickets_qs = Ticket.objects.filter(rifa=raffle, estado='pagado').select_related('usuario').order_by('id')
+        sold_tickets = sold_tickets_qs.count()
+        available_tickets = raffle.total_boletos - sold_tickets
+        progress_percentage = int((sold_tickets / raffle.total_boletos) * 100) if raffle.total_boletos > 0 else 0
+        logger.info(f"Tickets vendidos: {sold_tickets}/{raffle.total_boletos}")
 
-    # Check if user is organizer (verificar autenticación primero)
-    is_organizer = False
-    if request.user.is_authenticated:
-        is_organizer = request.user == raffle.organizador
+        # Check if user is organizer (verificar autenticación primero)
+        is_organizer = False
+        if request.user.is_authenticated:
+            is_organizer = request.user == raffle.organizador
+            logger.info(f"Usuario autenticado: {request.user.email}, Es organizador: {is_organizer}")
+        else:
+            logger.info("Usuario no autenticado")
 
-    # Check if draw time has passed
-    from datetime import timedelta
-    now = timezone.now()
-    is_past_draw_time = now > raffle.fecha_sorteo
+        # Check if draw time has passed
+        now = timezone.now()
+        is_past_draw_time = now > raffle.fecha_sorteo
 
-    # Verificar si ya llegó la hora del sorteo y aún no hay ganador
-    has_winner = Winner.objects.filter(rifa=raffle).exists()
+        # Verificar si ya llegó la hora del sorteo y aún no hay ganador
+        has_winner = Winner.objects.filter(rifa=raffle).exists()
 
-    # Si hay ganador pero la rifa sigue activa, actualizarla a finalizada
-    if has_winner and raffle.estado == 'activa':
-        raffle.estado = 'finalizada'
-        raffle.save()
+        # Si hay ganador pero la rifa sigue activa, actualizarla a finalizada
+        if has_winner and raffle.estado == 'activa':
+            raffle.estado = 'finalizada'
+            raffle.save()
 
-    # VENTANA DE ANIMACIÓN: Solo 3 minutos para mostrar la ruleta animada
-    # El organizador puede ejecutar el sorteo en cualquier momento después de la hora
-    tiempo_limite_sorteo = raffle.fecha_sorteo + timedelta(minutes=3)
-    is_live_draw = raffle.fecha_sorteo <= now <= tiempo_limite_sorteo and not has_winner
+        # VENTANA DE ANIMACIÓN: Solo 3 minutos para mostrar la ruleta animada
+        tiempo_limite_sorteo = raffle.fecha_sorteo + timedelta(minutes=3)
+        is_live_draw = raffle.fecha_sorteo <= now <= tiempo_limite_sorteo and not has_winner
 
-    # La ruleta ANIMADA solo se muestra durante los primeros 3 minutos
-    # Después se muestra el botón de sorteo sin animación
-    show_roulette = is_live_draw and raffle.estado == 'activa' and sold_tickets > 0
-    show_draw_button = now >= raffle.fecha_sorteo and not has_winner and raffle.estado == 'activa' and sold_tickets > 0
+        # La ruleta ANIMADA solo se muestra durante los primeros 3 minutos
+        show_roulette = is_live_draw and raffle.estado == 'activa' and sold_tickets > 0
+        show_draw_button = now >= raffle.fecha_sorteo and not has_winner and raffle.estado == 'activa' and sold_tickets > 0
 
-    # Prepare tickets data for roulette
-    tickets_data = []
-    if sold_tickets_qs.exists():
-        tickets_data = [
-            {
-                'id': ticket.id,
-                'numero_boleto': ticket.numero_boleto,
-                'nombre': ticket.usuario.nombre,
-                'email': ticket.usuario.email
-            }
-            for ticket in sold_tickets_qs
-        ]
+        # Prepare tickets data for roulette
+        tickets_data = []
+        try:
+            if sold_tickets_qs.exists():
+                tickets_data = [
+                    {
+                        'id': ticket.id,
+                        'numero_boleto': ticket.numero_boleto,
+                        'nombre': ticket.usuario.nombre,
+                        'email': ticket.usuario.email
+                    }
+                    for ticket in sold_tickets_qs
+                ]
+                logger.info(f"Datos de {len(tickets_data)} tickets preparados")
+        except Exception as e:
+            logger.error(f"Error preparando datos de tickets: {str(e)}", exc_info=True)
+            tickets_data = []
 
-    # Convert fecha_sorteo to timestamp (milliseconds since epoch) for JavaScript
-    # Usar timestamp() que respeta timezone
-    fecha_sorteo_timestamp = int(raffle.fecha_sorteo.timestamp() * 1000)
-    tickets_json = json.dumps(tickets_data) if tickets_data else '[]'
+        # Convert fecha_sorteo to timestamp (milliseconds since epoch) for JavaScript
+        try:
+            fecha_sorteo_timestamp = int(raffle.fecha_sorteo.timestamp() * 1000)
+        except Exception as e:
+            logger.error(f"Error convirtiendo fecha_sorteo: {str(e)}", exc_info=True)
+            fecha_sorteo_timestamp = 0
+            
+        tickets_json = json.dumps(tickets_data) if tickets_data else '[]'
 
-    # Obtener sponsors aceptados para mostrar sus premios adicionales
-    from .models import SponsorshipRequest
-    sponsors_aceptados = SponsorshipRequest.objects.filter(
-        rifa=raffle,
-        estado='aceptada'
-    ).select_related('sponsor')
+        # Obtener sponsors aceptados para mostrar sus premios adicionales
+        try:
+            from .models import SponsorshipRequest
+            sponsors_aceptados = SponsorshipRequest.objects.filter(
+                rifa=raffle,
+                estado='aceptada'
+            ).select_related('sponsor')
+            logger.info(f"Sponsors aceptados: {sponsors_aceptados.count()}")
+        except Exception as e:
+            logger.error(f"Error obteniendo sponsors: {str(e)}", exc_info=True)
+            sponsors_aceptados = []
 
-    context = {
-        'raffle': raffle,
-        'sold_tickets': sold_tickets,
-        'available_tickets': available_tickets,
-        'progress_percentage': progress_percentage,
-        'sold_tickets_list': tickets_data,
-        'tickets_json': tickets_json,
-        'show_roulette': show_roulette,
-        'show_draw_button': show_draw_button,
-        'is_organizer': is_organizer,
-        'is_past_draw_time': is_past_draw_time,
-        'is_live_draw': is_live_draw,
-        'has_winner': has_winner,
-        'fecha_sorteo_timestamp': fecha_sorteo_timestamp,
-        'tickets': sold_tickets_qs,
-        'sponsors_aceptados': sponsors_aceptados,
-    }
+        context = {
+            'raffle': raffle,
+            'sold_tickets': sold_tickets,
+            'available_tickets': available_tickets,
+            'progress_percentage': progress_percentage,
+            'sold_tickets_list': tickets_data,
+            'tickets_json': tickets_json,
+            'show_roulette': show_roulette,
+            'show_draw_button': show_draw_button,
+            'is_organizer': is_organizer,
+            'is_past_draw_time': is_past_draw_time,
+            'is_live_draw': is_live_draw,
+            'has_winner': has_winner,
+            'fecha_sorteo_timestamp': fecha_sorteo_timestamp,
+            'tickets': sold_tickets_qs,
+            'sponsors_aceptados': sponsors_aceptados,
+        }
 
-    return render(request, 'raffles/detail.html', context)
+        logger.info("Renderizando template detail.html")
+        return render(request, 'raffles/detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"ERROR CRÍTICO en raffle_detail_view (pk={pk}): {str(e)}", exc_info=True)
+        from django.contrib import messages
+        messages.error(request, 'Error al cargar los detalles de la rifa.')
+        return redirect('raffles:raffle_list')
 
 @login_required
 def participant_dashboard_view(request):
