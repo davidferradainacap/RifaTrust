@@ -37,6 +37,9 @@ handler403 = 'config.error_handlers.permission_denied_view'
 handler404 = 'config.error_handlers.page_not_found_view'
 handler500 = 'config.error_handlers.server_error_view'
 
+# Servir archivos media en desarrollo Y producción
+# En Azure App Service, los archivos media se sirven desde el sistema de archivos local
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

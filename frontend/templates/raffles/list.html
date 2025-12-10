@@ -45,9 +45,9 @@
     <div class="raffle-card">
         <div class="raffle-image">
             {% if raffle.imagen %}
-                <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}">
+                <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect fill=%22%23667eea%22 width=%22400%22 height=%22200%22/%3E%3Ctext fill=%22white%22 font-family=%22Arial%22 font-size=%2224%22 text-anchor=%22middle%22 x=%22200%22 y=%22110%22%3E🎟️ Rifa%3C/text%3E%3C/svg%3E'">
             {% else %}
-                <img src="https://via.placeholder.com/400x200?text=Rifa" alt="{{ raffle.titulo }}">
+                <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect fill=%22%23667eea%22 width=%22400%22 height=%22200%22/%3E%3Ctext fill=%22white%22 font-family=%22Arial%22 font-size=%2224%22 text-anchor=%22middle%22 x=%22200%22 y=%22110%22%3E🎟️ Rifa%3C/text%3E%3C/svg%3E" alt="{{ raffle.titulo }}">
             {% endif %}
             {% if raffle.estado == 'activa' %}
                 <span class="badge badge-success" style="position: absolute; top: 1rem; right: 1rem;">🎯 Activa</span>

@@ -65,15 +65,13 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
         {% for raffle in raffles %}
         <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 14px; overflow: hidden; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='rgba(99, 102, 241, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(99, 102, 241, 0.15)'">
-            {% if raffle.imagen %}
             <div style="width: 100%; height: 200px; overflow: hidden;">
-                <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% if raffle.imagen %}
+                    <img src="{{ raffle.imagen.url }}" alt="{{ raffle.titulo }}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;\'>🎁</div>'">
+                {% else %}
+                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">🎁</div>
+                {% endif %}
             </div>
-            {% else %}
-            <div style="width: 100%; height: 200px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); display: flex; align-items: center; justify-content: center; font-size: 3.5rem;">
-                🎁
-            </div>
-            {% endif %}
 
             <div style="padding: 1.5rem;">
                 <h3 style="font-size: 1.25rem; font-weight: 600; color: white; margin-bottom: 0.5rem; line-height: 1.3;">{{ raffle.titulo }}</h3>
