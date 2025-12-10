@@ -32,19 +32,14 @@ from .models import Payment
 from apps.core.safe_errors import handle_exception_safely, get_error_message
 
 # === IMPORTACIONES EXTERNAS ===
-import stripe
-# - SDK de Stripe para procesamiento de pagos
-# - Documentación: https://stripe.com/docs/api
-
 import uuid
 # - Generador de identificadores únicos universales (UUID4)
 # - Usado para transaction_id únicos
 
-# === CONFIGURACIÓN DE STRIPE ===
-stripe.api_key = settings.STRIPE_SECRET_KEY
-# - Clave secreta de Stripe desde settings.py
-# - NUNCA exponer en frontend o commits de Git
-# - Formato: sk_test_... (test) o sk_live_... (producción)
+# NOTA: Stripe ha sido deshabilitado para usar modo de simulación completa
+# Para habilitar pagos reales en el futuro, descomentar las siguientes líneas:
+# import stripe
+# stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # ============================================================================
 # VISTA: process_payment_view
@@ -125,109 +120,49 @@ def process_payment_view(request, ticket_ids):
         # set() reemplaza todas las relaciones existentes
         payment.boletos.set(tickets)
 
-        # === PASO 9: PROCESAR PAGO CON STRIPE ===
-        if metodo_pago == 'stripe':
-            try:
-                # === PASO 9.1: CREAR PAYMENT INTENT EN STRIPE ===
-                # Payment Intent: objeto de Stripe que rastrea el pago
-                intent = stripe.PaymentIntent.create(
-                    # Stripe requiere montos en centavos (menor denominación)
-                    # $150.00 = 15000 centavos
-                    amount=int(total_amount * 100),
+        # === PASO 9: PROCESAR PAGO (SIMULACIÓN) ===
+        # NOTA: Esta es una simulación de pago para propósitos de demostración
+        # En producción, aquí se integraría con un procesador de pagos real
+        # como Stripe, PayPal, Transbank (Chile), Flow, etc.
+        
+        # Simular un payment_intent_id realista
+        simulated_payment_id = f"pi_sim_{uuid.uuid4().hex[:24]}"
+        payment.payment_intent_id = simulated_payment_id
 
-                    # Moneda en formato ISO 4217
-                    # 'mxn' = Peso Mexicano
-                    # 'clp' = Peso Chileno
-                    # 'usd' = Dólar Americano
-                    currency='mxn',
+        # === MARCAR PAGO COMO COMPLETADO (SIMULACIÓN SIEMPRE EXITOSA) ===
+        payment.estado = 'completado'
+        payment.save()
 
-                    # Metadata: información adicional para rastreo
-                    # Visible en el dashboard de Stripe
-                    metadata={
-                        'transaction_id': transaction_id,
-                        'user_id': request.user.id
-                    }
-                )
+        # === ACTUALIZAR ESTADO DE BOLETOS ===
+        # De 'reservado' a 'pagado'
+        tickets.update(estado='pagado')
 
-                # === PASO 9.2: GUARDAR PAYMENT INTENT ID ===
-                # Campo encriptado (EncryptedCharField)
-                # Ejemplo: pi_1A2B3C4D5E6F7G8H
-                payment.payment_intent_id = intent.id
+        # === CREAR NOTIFICACIÓN DE COMPRA EXITOSA ===
+        from apps.users.models import Notification
+        primera_rifa = tickets.first().rifa
 
-                # === PASO 9.3: MARCAR PAGO COMO COMPLETADO ===
-                payment.estado = 'completado'
-                payment.save()
+        Notification.objects.create(
+            usuario=request.user,
+            tipo='compra',
+            titulo='Compra de boletos exitosa',
+            mensaje=f'Has comprado {tickets.count()} boleto(s) para la rifa "{primera_rifa.titulo}". Total: CLP${total_amount:,.0f}',
+            enlace=f'/raffles/{primera_rifa.id}/',
+            rifa_relacionada=primera_rifa
+        )
 
-                # === PASO 9.4: ACTUALIZAR ESTADO DE BOLETOS ===
-                # De 'reservado' a 'pagado'
-                # update() es más eficiente que iterar y guardar uno por uno
-                tickets.update(estado='pagado')
+        # === INCREMENTAR CONTADOR DE BOLETOS VENDIDOS ===
+        primera_rifa.boletos_vendidos += tickets.count()
+        primera_rifa.save()
 
-                # === PASO 9.5: CREAR NOTIFICACIÓN DE COMPRA EXITOSA ===
-                from apps.users.models import Notification
-                primera_rifa = tickets.first().rifa  # Obtener rifa del primer boleto
-
-                Notification.objects.create(
-                    usuario=request.user,
-                    tipo='compra',  # Tipo de notificación
-                    titulo='Compra de boletos exitosa',
-                    mensaje=f'Has comprado {tickets.count()} boleto(s) para la rifa "{primera_rifa.titulo}". Total: ${total_amount}',
-                    enlace=f'/raffles/{primera_rifa.id}/',  # Link al detalle de la rifa
-                    rifa_relacionada=primera_rifa
-                )
-
-                # === PASO 9.6: MENSAJE FLASH Y REDIRECCIÓN ===
-                messages.success(request, '¡Pago procesado exitosamente!')
-                return redirect('payments:payment_success', payment_id=payment.id)
-
-            # === PASO 9.7: MANEJO DE ERRORES DE STRIPE ===
-            except stripe.error.StripeError as e:
-                # Errores comunes:
-                # - CardError: Tarjeta declinada o sin fondos
-                # - InvalidRequestError: Parámetros inválidos
-                # - AuthenticationError: Clave API incorrecta
-                # - APIConnectionError: Sin conexión a Stripe
-                payment.estado = 'fallido'
-                payment.save()
-
-                error_msg = handle_exception_safely(e, 'payment', 'Procesamiento de pago con Stripe')
-                messages.error(request, error_msg)
-                return redirect('payments:payment_failed', payment_id=payment.id)
-
-        # === PASO 10: OTROS MÉTODOS DE PAGO ===
-        else:
-            # PayPal, transferencia, efectivo, etc.
-            # NOTA: En este momento está simulado
-            # TODO: Implementar integración con PayPal SDK
-            # TODO: Implementar verificación de transferencias bancarias
-
-            payment.estado = 'completado'
-            payment.save()
-
-            # Actualizar boletos a pagados
-            tickets.update(estado='pagado')
-
-            # === CREAR NOTIFICACIÓN ===
-            from apps.users.models import Notification
-            primera_rifa = tickets.first().rifa
-            Notification.objects.create(
-                usuario=request.user,
-                tipo='compra',
-                titulo='Compra de boletos exitosa',
-                mensaje=f'Has comprado {tickets.count()} boleto(s) para la rifa "{primera_rifa.titulo}". Total: ${total_amount}',
-                enlace=f'/raffles/{primera_rifa.id}/',
-                rifa_relacionada=primera_rifa
-            )
-
-            messages.success(request, '¡Pago procesado exitosamente!')
-            return redirect('payments:payment_success', payment_id=payment.id)
+        # === MENSAJE FLASH Y REDIRECCIÓN ===
+        messages.success(request, '¡Pago procesado exitosamente! (Simulación)')
+        return redirect('payments:payment_success', payment_id=payment.id)
 
     # === PASO 11: RENDERIZAR FORMULARIO (GET) ===
     # Si el método no es POST, mostrar formulario de pago
     context = {
         'tickets': tickets,  # QuerySet de boletos a pagar
         'total_amount': total_amount,  # Monto total a cobrar
-        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,  # Clave pública para frontend
     }
     return render(request, 'payments/process.html', context)
 

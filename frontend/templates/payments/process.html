@@ -32,17 +32,46 @@
         <form method="post" id="paymentForm">
             {% csrf_token %}
             
+            <!-- Alerta de Simulación -->
+            <div style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;">
+                <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.9);">
+                    <strong style="color: #22c55e;">💳 MODO SIMULACIÓN:</strong> Este es un pago simulado para demostración. 
+                    Ingresa cualquier dato en los campos de tarjeta y el pago será procesado exitosamente.
+                </p>
+            </div>
+
             <div style="margin-bottom: 1.25rem;">
                 <label style="font-size: 0.9rem; font-weight: 600; color: white; margin-bottom: 0.5rem; display: block;">Método de Pago</label>
                 <select name="metodo_pago" class="form-select" required style="font-size: 0.95rem;">
-                    <option value="stripe">Tarjeta de Crédito/Débito (Stripe)</option>
+                    <option value="tarjeta">Tarjeta de Crédito/Débito</option>
                     <option value="paypal">PayPal</option>
                     <option value="transferencia">Transferencia Bancaria</option>
                 </select>
             </div>
 
-            <div id="card-element" style="padding: 1rem; background-color: rgba(255, 255, 255, 0.95); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 10px; margin-bottom: 1.25rem;">
-                <!-- Stripe Card Element se insertará aquí -->
+            <div id="card-fields" style="margin-bottom: 1.25rem;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 0.4rem; display: block;">Número de Tarjeta</label>
+                    <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19" 
+                           style="padding: 0.875rem; font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.95); color: #111827; border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; width: 100%;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 0.4rem; display: block;">Fecha de Expiración</label>
+                        <input type="text" class="form-control" placeholder="MM/AA" maxlength="5"
+                               style="padding: 0.875rem; font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.95); color: #111827; border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 0.4rem; display: block;">CVV</label>
+                        <input type="text" class="form-control" placeholder="123" maxlength="4"
+                               style="padding: 0.875rem; font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.95); color: #111827; border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; width: 100%;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 0.4rem; display: block;">Nombre del Titular</label>
+                    <input type="text" class="form-control" placeholder="NOMBRE APELLIDO"
+                           style="padding: 0.875rem; font-size: 0.95rem; background-color: rgba(255, 255, 255, 0.95); color: #111827; border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; width: 100%;">
+                </div>
             </div>
 
             <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem;">
@@ -67,33 +96,50 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://js.stripe.com/v3/"></script>
 <script>
-const stripe = Stripe('{{ stripe_public_key }}');
-const elements = stripe.elements();
-const cardElement = elements.create('card', {
-    style: {
-        base: {
-            fontSize: '16px',
-            color: '#111827',
-            fontFamily: '"Open Sans", sans-serif',
-            '::placeholder': {
-                color: '#9ca3af'
-            }
-        }
+// Mostrar/ocultar campos de tarjeta según método de pago seleccionado
+const metodoPagoSelect = document.querySelector('select[name="metodo_pago"]');
+const cardFields = document.getElementById('card-fields');
+
+metodoPagoSelect.addEventListener('change', function() {
+    if (this.value === 'tarjeta') {
+        cardFields.style.display = 'block';
+    } else {
+        cardFields.style.display = 'none';
     }
 });
 
-cardElement.mount('#card-element');
+// Formateo automático del número de tarjeta (espacios cada 4 dígitos)
+const cardNumberInput = document.querySelector('input[placeholder="1234 5678 9012 3456"]');
+if (cardNumberInput) {
+    cardNumberInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
+    });
+}
 
+// Formateo de fecha de expiración (MM/AA)
+const expiryInput = document.querySelector('input[placeholder="MM/AA"]');
+if (expiryInput) {
+    expiryInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+        e.target.value = value;
+    });
+}
+
+// Manejo del envío del formulario
 const form = document.getElementById('paymentForm');
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitButton = document.getElementById('submitButton');
     submitButton.disabled = true;
-    submitButton.textContent = 'Procesando...';
+    submitButton.innerHTML = '<span style="display: inline-block; margin-right: 8px;">⏳</span> Procesando pago...';
     
-    // Simular procesamiento (en producción, usar Stripe Payment Intent)
+    // Simular tiempo de procesamiento realista (1.5 segundos)
     setTimeout(() => {
         form.submit();
     }, 1500);
