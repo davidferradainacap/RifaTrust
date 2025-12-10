@@ -315,8 +315,46 @@ class Command(BaseCommand):
                 max_boletos_por_usuario=random.choice([5, 10, 20])
             )
 
-            # Nota: SponsorshipRequest requiere imágenes y campos complejos
-            # Por ahora se omite para simplificar la población de datos
+            # Crear solicitudes de patrocinio (30% de probabilidad por rifa)
+            if sponsors and random.random() < 0.3:
+                try:
+                    from apps.raffles.models import SponsorshipRequest
+                    
+                    # Seleccionar 1-2 sponsors para esta rifa
+                    num_sponsors = random.randint(1, min(2, len(sponsors)))
+                    sponsors_seleccionados = random.sample(sponsors, num_sponsors)
+                    
+                    for sponsor in sponsors_seleccionados:
+                        premios_sponsor = [
+                            {'nombre': 'Kit Premium de Productos', 'desc': 'Set completo de productos exclusivos de nuestra marca', 'valor': Decimal('50000')},
+                            {'nombre': 'Vale de Compra $100.000', 'desc': 'Vale canjeable en cualquiera de nuestras tiendas', 'valor': Decimal('100000')},
+                            {'nombre': 'Set de Merchandising', 'desc': 'Polera, gorra, mochila y botella con logo de la marca', 'valor': Decimal('30000')},
+                            {'nombre': 'Experiencia VIP', 'desc': 'Tour exclusivo por nuestras instalaciones + almuerzo', 'valor': Decimal('150000')},
+                            {'nombre': 'Curso Online Premium', 'desc': 'Acceso completo a nuestra plataforma educativa por 1 año', 'valor': Decimal('200000')},
+                            {'nombre': 'Pack Tecnología', 'desc': 'Audífonos Bluetooth + Power Bank + Cable USB-C', 'valor': Decimal('80000')},
+                        ]
+                        
+                        premio_sponsor = random.choice(premios_sponsor)
+                        
+                        SponsorshipRequest.objects.create(
+                            rifa=raffle,
+                            sponsor=sponsor,
+                            nombre_premio_adicional=premio_sponsor['nombre'],
+                            descripcion_premio=premio_sponsor['desc'],
+                            valor_premio=premio_sponsor['valor'],
+                            nombre_marca=sponsor.nombre,
+                            sitio_web=f'https://www.{sponsor.nombre.lower().replace(" ", "")}.cl',
+                            mensaje_patrocinio=f'Orgullosos de apoyar esta causa. ¡Participa y gana!',
+                            estado='aceptada',
+                            fecha_solicitud=fecha_inicio,
+                            fecha_respuesta=fecha_inicio + timedelta(hours=2)
+                        )
+                        
+                    self.stdout.write(f"      + {num_sponsors} sponsor(s) agregado(s)")
+                except ImportError:
+                    pass
+                except Exception as sponsor_error:
+                    self.stdout.write(self.style.WARNING(f"      ⚠ Error agregando sponsor: {str(sponsor_error)}"))
 
             # Crear compras de boletos
             porcentaje_venta = random.uniform(0.4, 0.85)
