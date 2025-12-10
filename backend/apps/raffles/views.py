@@ -258,20 +258,38 @@ def raffle_detail_view(request, pk):
     import json
     logger = logging.getLogger(__name__)
     
+    # Inicializar variables por defecto para evitar errores
+    sold_tickets = 0
+    available_tickets = 0
+    progress_percentage = 0
+    tickets_data = []
+    tickets_json = '[]'
+    sold_tickets_qs = None
+    sponsors_aceptados = []
+    
     try:
         from django.utils import timezone
         from datetime import timedelta
         
         logger.info(f"Accediendo a detalle de rifa ID: {pk}")
         raffle = get_object_or_404(Raffle, pk=pk)
-        logger.info(f"Rifa encontrada: {raffle.titulo}")
+        logger.info(f"Rifa encontrada: {raffle.titulo}, Estado: {raffle.estado}")
+
+        # Validar campos requeridos
+        if not raffle.total_boletos or raffle.total_boletos <= 0:
+            logger.warning(f"Rifa {pk} tiene total_boletos inválido: {raffle.total_boletos}")
+            raffle.total_boletos = 100  # Valor por defecto
 
         # Tickets sold - ORDENAR por ID para mantener consistencia con la ruleta
-        sold_tickets_qs = Ticket.objects.filter(rifa=raffle, estado='pagado').select_related('usuario').order_by('id')
-        sold_tickets = sold_tickets_qs.count()
-        available_tickets = raffle.total_boletos - sold_tickets
-        progress_percentage = int((sold_tickets / raffle.total_boletos) * 100) if raffle.total_boletos > 0 else 0
-        logger.info(f"Tickets vendidos: {sold_tickets}/{raffle.total_boletos}")
+        try:
+            sold_tickets_qs = Ticket.objects.filter(rifa=raffle, estado='pagado').select_related('usuario').order_by('id')
+            sold_tickets = sold_tickets_qs.count()
+            available_tickets = raffle.total_boletos - sold_tickets
+            progress_percentage = int((sold_tickets / raffle.total_boletos) * 100) if raffle.total_boletos > 0 else 0
+            logger.info(f"Tickets vendidos: {sold_tickets}/{raffle.total_boletos}")
+        except Exception as e:
+            logger.error(f"Error obteniendo tickets: {str(e)}", exc_info=True)
+            sold_tickets_qs = Ticket.objects.none()
 
         # Check if user is organizer (verificar autenticación primero)
         is_organizer = False
@@ -306,29 +324,32 @@ def raffle_detail_view(request, pk):
         show_draw_button = now >= raffle.fecha_sorteo and not has_winner and raffle.estado == 'activa' and sold_tickets > 0
 
         # Prepare tickets data for roulette
-        tickets_data = []
         try:
-            if sold_tickets_qs.exists():
-                tickets_data = [
-                    {
-                        'id': ticket.id,
-                        'numero_boleto': ticket.numero_boleto,
-                        'nombre': ticket.usuario.nombre,
-                        'email': ticket.usuario.email
-                    }
-                    for ticket in sold_tickets_qs
-                ]
+            if sold_tickets_qs and sold_tickets_qs.exists():
+                tickets_data = []
+                for ticket in sold_tickets_qs:
+                    try:
+                        tickets_data.append({
+                            'id': ticket.id,
+                            'numero_boleto': ticket.numero_boleto,
+                            'nombre': ticket.usuario.nombre if ticket.usuario else 'Usuario',
+                            'email': ticket.usuario.email if ticket.usuario else 'N/A'
+                        })
+                    except Exception as ticket_error:
+                        logger.error(f"Error procesando ticket {ticket.id}: {str(ticket_error)}")
+                        continue
                 logger.info(f"Datos de {len(tickets_data)} tickets preparados")
         except Exception as e:
             logger.error(f"Error preparando datos de tickets: {str(e)}", exc_info=True)
             tickets_data = []
 
         # Convert fecha_sorteo to timestamp (milliseconds since epoch) for JavaScript
+        fecha_sorteo_timestamp = 0
         try:
-            fecha_sorteo_timestamp = int(raffle.fecha_sorteo.timestamp() * 1000)
+            if raffle.fecha_sorteo:
+                fecha_sorteo_timestamp = int(raffle.fecha_sorteo.timestamp() * 1000)
         except Exception as e:
             logger.error(f"Error convirtiendo fecha_sorteo: {str(e)}", exc_info=True)
-            fecha_sorteo_timestamp = 0
             
         tickets_json = json.dumps(tickets_data) if tickets_data else '[]'
 
@@ -345,6 +366,10 @@ def raffle_detail_view(request, pk):
             logger.warning(f"SponsorshipRequest model no disponible: {str(e)}")
         except Exception as e:
             logger.error(f"Error obteniendo sponsors: {str(e)}", exc_info=True)
+
+        # Asegurar que sold_tickets_qs no sea None
+        if sold_tickets_qs is None:
+            sold_tickets_qs = Ticket.objects.none()
 
         context = {
             'raffle': raffle,
@@ -364,13 +389,19 @@ def raffle_detail_view(request, pk):
             'sponsors_aceptados': sponsors_aceptados,
         }
 
-        logger.info("Renderizando template detail.html")
+        logger.info(f"Renderizando template detail.html con {len(tickets_data)} tickets")
         return render(request, 'raffles/detail.html', context)
         
+    except Raffle.DoesNotExist:
+        logger.error(f"Rifa no encontrada: ID={pk}")
+        from django.contrib import messages
+        messages.error(request, f'La rifa #{pk} no existe.')
+        return redirect('raffles:raffle_list')
     except Exception as e:
         logger.error(f"ERROR CRÍTICO en raffle_detail_view (pk={pk}): {str(e)}", exc_info=True)
+        logger.error(f"Tipo de error: {type(e).__name__}")
         from django.contrib import messages
-        messages.error(request, 'Error al cargar los detalles de la rifa.')
+        messages.error(request, f'Error al cargar los detalles de la rifa: {str(e)}')
         return redirect('raffles:raffle_list')
 
 @login_required
