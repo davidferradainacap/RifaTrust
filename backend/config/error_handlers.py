@@ -29,6 +29,21 @@ def page_not_found_view(request, exception=None):
 
 def server_error_view(request):
     """Handle 500 Internal Server Error"""
-    # Log error without exposing sensitive details
-    logger.error(f"500 Internal Server Error: {request.path} from IP {request.META.get('REMOTE_ADDR')}")
+    import traceback
+    import sys
+    
+    # Capturar información del error
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    
+    # Log detallado del error
+    logger.error(f"500 Internal Server Error: {request.path}")
+    logger.error(f"User: {request.user if hasattr(request, 'user') else 'Anonymous'}")
+    logger.error(f"IP: {request.META.get('REMOTE_ADDR')}")
+    logger.error(f"Method: {request.method}")
+    
+    if exc_type:
+        logger.error(f"Exception Type: {exc_type.__name__}")
+        logger.error(f"Exception Value: {str(exc_value)}")
+        logger.error(f"Traceback:\n{''.join(traceback.format_tb(exc_traceback))}")
+    
     return render(request, '500.html', status=500)
