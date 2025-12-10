@@ -255,6 +255,7 @@ def raffles_list_view(request):
 
 def raffle_detail_view(request, pk):
     import logging
+    import json
     logger = logging.getLogger(__name__)
     
     try:
@@ -285,7 +286,11 @@ def raffle_detail_view(request, pk):
         is_past_draw_time = now > raffle.fecha_sorteo
 
         # Verificar si ya llegó la hora del sorteo y aún no hay ganador
-        has_winner = Winner.objects.filter(rifa=raffle).exists()
+        has_winner = False
+        try:
+            has_winner = Winner.objects.filter(rifa=raffle).exists()
+        except Exception as e:
+            logger.warning(f"Error verificando ganador: {str(e)}")
 
         # Si hay ganador pero la rifa sigue activa, actualizarla a finalizada
         if has_winner and raffle.estado == 'activa':
@@ -328,16 +333,18 @@ def raffle_detail_view(request, pk):
         tickets_json = json.dumps(tickets_data) if tickets_data else '[]'
 
         # Obtener sponsors aceptados para mostrar sus premios adicionales
+        sponsors_aceptados = []
         try:
             from .models import SponsorshipRequest
-            sponsors_aceptados = SponsorshipRequest.objects.filter(
+            sponsors_aceptados = list(SponsorshipRequest.objects.filter(
                 rifa=raffle,
                 estado='aceptada'
-            ).select_related('sponsor')
-            logger.info(f"Sponsors aceptados: {sponsors_aceptados.count()}")
+            ).select_related('sponsor'))
+            logger.info(f"Sponsors aceptados: {len(sponsors_aceptados)}")
+        except ImportError as e:
+            logger.warning(f"SponsorshipRequest model no disponible: {str(e)}")
         except Exception as e:
             logger.error(f"Error obteniendo sponsors: {str(e)}", exc_info=True)
-            sponsors_aceptados = []
 
         context = {
             'raffle': raffle,
