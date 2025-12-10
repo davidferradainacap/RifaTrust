@@ -263,8 +263,10 @@ def raffle_detail_view(request, pk):
     available_tickets = raffle.total_boletos - sold_tickets
     progress_percentage = int((sold_tickets / raffle.total_boletos) * 100) if raffle.total_boletos > 0 else 0
 
-    # Check if user is organizer
-    is_organizer = request.user.is_authenticated and request.user == raffle.organizador
+    # Check if user is organizer (verificar autenticación primero)
+    is_organizer = False
+    if request.user.is_authenticated:
+        is_organizer = request.user == raffle.organizador
 
     # Check if draw time has passed
     from datetime import timedelta
