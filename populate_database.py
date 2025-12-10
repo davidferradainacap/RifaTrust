@@ -163,14 +163,14 @@ def crear_usuarios_participantes(cantidad=50):
     """Crea usuarios participantes con datos realistas"""
     print(f"\n🎭 Creando {cantidad} usuarios participantes...")
     participantes = []
-    
+
     for i in range(cantidad):
         nombre = random.choice(NOMBRES)
         apellido = f"{random.choice(APELLIDOS)} {random.choice(APELLIDOS)}"
         nombre_completo = f"{nombre} {apellido}"
         email = f"participante{i+1}@rifatrust.cl"
         telefono = random.choice(TELEFONOS_CHILE)
-        
+
         user = User.objects.create_user(
             email=email,
             nombre=nombre_completo,
@@ -183,7 +183,7 @@ def crear_usuarios_participantes(cantidad=50):
         participantes.append(user)
         if (i + 1) % 10 == 0:
             print(f"  ✓ Creados {i + 1}/{cantidad} participantes")
-    
+
     print(f"✅ {cantidad} participantes creados exitosamente")
     return participantes
 
@@ -191,14 +191,14 @@ def crear_usuarios_organizadores(cantidad=25):
     """Crea usuarios organizadores con datos realistas"""
     print(f"\n🎯 Creando {cantidad} usuarios organizadores...")
     organizadores = []
-    
+
     for i in range(cantidad):
         nombre = random.choice(NOMBRES)
         apellido = f"{random.choice(APELLIDOS)} {random.choice(APELLIDOS)}"
         nombre_completo = f"{nombre} {apellido}"
         email = f"organizador{i+1}@rifatrust.cl"
         telefono = random.choice(TELEFONOS_CHILE)
-        
+
         user = User.objects.create_user(
             email=email,
             nombre=nombre_completo,
@@ -211,7 +211,7 @@ def crear_usuarios_organizadores(cantidad=25):
         organizadores.append(user)
         if (i + 1) % 5 == 0:
             print(f"  ✓ Creados {i + 1}/{cantidad} organizadores")
-    
+
     print(f"✅ {cantidad} organizadores creados exitosamente")
     return organizadores
 
@@ -220,11 +220,11 @@ def crear_usuarios_sponsors(cantidad=5):
     print(f"\n🏢 Creando {cantidad} usuarios sponsors (empresas)...")
     sponsors = []
     empresas_seleccionadas = random.sample(EMPRESAS_FAMOSAS, cantidad)
-    
+
     for i, empresa in enumerate(empresas_seleccionadas):
         email = f"sponsor{i+1}@rifatrust.cl"
         telefono = random.choice(TELEFONOS_CHILE)
-        
+
         user = User.objects.create_user(
             email=email,
             nombre=empresa,
@@ -236,18 +236,18 @@ def crear_usuarios_sponsors(cantidad=5):
         )
         sponsors.append(user)
         print(f"  ✓ Creado sponsor: {empresa}")
-    
+
     print(f"✅ {cantidad} sponsors creados exitosamente")
     return sponsors
 
 def crear_rifas(organizadores, sponsors, participantes):
     """Crea rifas con diferentes estados y fechas"""
     print(f"\n🎲 Creando rifas...")
-    
+
     ahora = timezone.now()
     hoy = ahora.date()
     hora_actual = ahora.time()
-    
+
     # 3 rifas que terminan hoy a las 04:55 (hora Chile)
     print("\n  📅 Creando 3 rifas que terminan hoy a las 04:55...")
     rifas_tempranas = []
@@ -258,18 +258,18 @@ def crear_rifas(organizadores, sponsors, participantes):
         descripcion = random.choice(DESCRIPCIONES_RIFAS)
         if '{causa}' in descripcion:
             descripcion = descripcion.format(causa=random.choice(CAUSAS_BENEFICAS))
-        
+
         total_boletos = random.choice([100, 200, 300, 500, 1000])
         precio_boleto = Decimal(str(random.choice([500, 1000, 2000, 5000, 10000])))
-        
+
         # Fecha de sorteo: hoy a las 04:55 Chile
         fecha_sorteo = timezone.make_aware(
             datetime.combine(hoy, datetime.min.time().replace(hour=4, minute=55))
         )
-        
+
         # Fecha de inicio: hace 7 días
         fecha_inicio = ahora - timedelta(days=7)
-        
+
         raffle = Raffle.objects.create(
             organizador=organizador,
             titulo=f"{titulo} #{i+1}",
@@ -288,12 +288,12 @@ def crear_rifas(organizadores, sponsors, participantes):
         )
         rifas_tempranas.append(raffle)
         print(f"    ✓ Rifa: {raffle.titulo} - Sorteo: {fecha_sorteo.strftime('%d/%m %H:%M')}")
-    
+
     # Resto de rifas entre 13:00 y 18:00 hoy
     print("\n  📅 Creando rifas que terminan hoy entre 13:00 y 18:00...")
     rifas_tarde = []
     cantidad_rifas_tarde = random.randint(15, 20)
-    
+
     for i in range(cantidad_rifas_tarde):
         organizador = random.choice(organizadores)
         premio = random.choice(PREMIOS)
@@ -301,28 +301,28 @@ def crear_rifas(organizadores, sponsors, participantes):
         descripcion = random.choice(DESCRIPCIONES_RIFAS)
         if '{causa}' in descripcion:
             descripcion = descripcion.format(causa=random.choice(CAUSAS_BENEFICAS))
-        
+
         total_boletos = random.choice([100, 200, 300, 500, 1000, 1500, 2000])
         precio_boleto = Decimal(str(random.choice([500, 1000, 2000, 3000, 5000, 10000])))
-        
+
         # Hora aleatoria entre 13:00 y 18:00
         hora = random.randint(13, 17)
         minuto = random.choice([0, 15, 30, 45])
-        
+
         fecha_sorteo = timezone.make_aware(
             datetime.combine(hoy, datetime.min.time().replace(hour=hora, minute=minuto))
         )
-        
+
         # Fecha de inicio: entre hace 2 y 10 días
         dias_atras = random.randint(2, 10)
         fecha_inicio = ahora - timedelta(days=dias_atras)
-        
+
         # Estado aleatorio pero mayormente activas
         estado = random.choices(
             ['activa', 'aprobada', 'pendiente_aprobacion'],
             weights=[0.7, 0.2, 0.1]
         )[0]
-        
+
         raffle = Raffle.objects.create(
             organizador=organizador,
             titulo=f"{titulo} #{i+4}",
@@ -340,38 +340,38 @@ def crear_rifas(organizadores, sponsors, participantes):
             max_boletos_por_usuario=random.choice([5, 10, 15, 20])
         )
         rifas_tarde.append(raffle)
-        
+
         if (i + 1) % 5 == 0:
             print(f"    ✓ Creadas {i + 1}/{cantidad_rifas_tarde} rifas")
-    
+
     todas_las_rifas = rifas_tempranas + rifas_tarde
     print(f"\n✅ Total de rifas creadas: {len(todas_las_rifas)}")
-    
+
     # Crear solicitudes de sponsors
     crear_solicitudes_sponsors(todas_las_rifas, sponsors)
-    
+
     # Crear compras de boletos
     crear_compras_boletos(todas_las_rifas, participantes, sponsors)
-    
+
     return todas_las_rifas
 
 def crear_solicitudes_sponsors(rifas, sponsors):
     """Crea solicitudes de sponsors para las rifas"""
     print(f"\n💼 Creando solicitudes de sponsors...")
-    
+
     # Cada sponsor hace entre 3 y 6 solicitudes
     total_solicitudes = 0
     for sponsor in sponsors:
         cantidad = random.randint(3, 6)
         rifas_seleccionadas = random.sample(rifas, min(cantidad, len(rifas)))
-        
+
         for raffle in rifas_seleccionadas:
             monto = Decimal(str(random.choice([50000, 100000, 200000, 500000, 1000000])))
             estado = random.choices(
                 ['pendiente', 'aprobada', 'rechazada'],
                 weights=[0.3, 0.6, 0.1]
             )[0]
-            
+
             SponsorRequest.objects.create(
                 rifa=raffle,
                 sponsor=sponsor,
@@ -381,49 +381,49 @@ def crear_solicitudes_sponsors(rifas, sponsors):
                 estado=estado
             )
             total_solicitudes += 1
-    
+
     print(f"✅ {total_solicitudes} solicitudes de sponsors creadas")
 
 def crear_compras_boletos(rifas, participantes, sponsors):
     """Crea compras de boletos por participantes y sponsors"""
     print(f"\n🎫 Creando compras de boletos...")
-    
+
     total_tickets = 0
-    
+
     for raffle in rifas:
         if raffle.estado not in ['activa', 'aprobada']:
             continue
-        
+
         # Determinar cuántos boletos se venden (entre 30% y 90% del total)
         porcentaje_venta = random.uniform(0.3, 0.9)
         boletos_a_vender = int(raffle.total_boletos * porcentaje_venta)
-        
+
         # Mezclar participantes y algunos sponsors para comprar
         compradores = participantes + random.sample(sponsors, min(3, len(sponsors)))
         random.shuffle(compradores)
-        
+
         numeros_disponibles = list(range(1, raffle.total_boletos + 1))
         random.shuffle(numeros_disponibles)
-        
+
         boletos_vendidos = 0
-        
+
         for comprador in compradores:
             if boletos_vendidos >= boletos_a_vender:
                 break
-            
+
             # Cantidad de boletos que compra este usuario
             max_compra = min(
                 raffle.max_boletos_por_usuario,
                 boletos_a_vender - boletos_vendidos,
                 random.randint(1, 10)
             )
-            
+
             cantidad = random.randint(1, max_compra)
-            
+
             # Seleccionar números
             numeros_comprados = numeros_disponibles[:cantidad]
             numeros_disponibles = numeros_disponibles[cantidad:]
-            
+
             # Crear tickets
             for numero in numeros_comprados:
                 Ticket.objects.create(
@@ -436,11 +436,11 @@ def crear_compras_boletos(rifas, participantes, sponsors):
                 )
                 total_tickets += 1
                 boletos_vendidos += 1
-        
+
         # Actualizar boletos vendidos en la rifa
         raffle.boletos_vendidos = boletos_vendidos
         raffle.save()
-    
+
     print(f"✅ {total_tickets} boletos comprados en total")
 
 def main():
@@ -448,7 +448,7 @@ def main():
     print("=" * 60)
     print("🎰 SCRIPT DE POBLACIÓN DE BASE DE DATOS - RIFATRUST")
     print("=" * 60)
-    
+
     # Limpiar datos existentes (opcional)
     respuesta = input("\n⚠️  ¿Deseas limpiar todos los datos existentes? (s/N): ")
     if respuesta.lower() == 's':
@@ -458,15 +458,15 @@ def main():
         Raffle.objects.all().delete()
         User.objects.filter(rol__in=['participante', 'organizador', 'sponsor']).delete()
         print("✅ Base de datos limpiada")
-    
+
     # Crear usuarios
     participantes = crear_usuarios_participantes(50)
     organizadores = crear_usuarios_organizadores(25)
     sponsors = crear_usuarios_sponsors(5)
-    
+
     # Crear rifas y compras
     rifas = crear_rifas(organizadores, sponsors, participantes)
-    
+
     # Resumen final
     print("\n" + "=" * 60)
     print("📊 RESUMEN FINAL")

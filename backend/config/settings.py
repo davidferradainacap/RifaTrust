@@ -172,7 +172,7 @@ if EMAIL_HOST_PASSWORD and EMAIL_HOST_USER:
     EMAIL_USE_TLS = True
     EMAIL_USE_SSL = False
     DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='daldeaferrada@gmail.com')
-    
+
     # Debug: Log configuración SMTP
     import logging
     logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ else:
     # Modo desarrollo - emails en consola
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'daldeaferrada@gmail.com'
-    
+
     import logging
     logger = logging.getLogger(__name__)
     logger.warning("⚠ EMAIL_HOST_PASSWORD no configurado - usando console backend")

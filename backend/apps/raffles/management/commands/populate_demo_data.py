@@ -146,7 +146,7 @@ class Command(BaseCommand):
 
         for i in range(cantidad):
             email = f"participante{i+1}@rifatrust.cl"
-            
+
             # Intentar obtener usuario existente primero
             try:
                 user = User.objects.get(email=email)
@@ -180,7 +180,7 @@ class Command(BaseCommand):
 
         for i in range(cantidad):
             email = f"organizador{i+1}@rifatrust.cl"
-            
+
             # Intentar obtener usuario existente primero
             try:
                 user = User.objects.get(email=email)
@@ -215,7 +215,7 @@ class Command(BaseCommand):
 
         for i, empresa in enumerate(empresas):
             email = f"sponsor{i+1}@rifatrust.cl"
-            
+
             # Intentar obtener usuario existente primero
             try:
                 user = User.objects.get(email=email)
@@ -277,7 +277,7 @@ class Command(BaseCommand):
             if not participantes:
                 self.stdout.write(self.style.ERROR(f"  ❌ No hay participantes disponibles para comprar boletos"))
                 return
-            
+
             organizador = random.choice(organizadores)
             premio = random.choice(self.premios)
 
@@ -335,23 +335,23 @@ class Command(BaseCommand):
                 max_a_comprar = min(5, boletos_a_vender - boletos_vendidos, len(numeros_disponibles))
                 if max_a_comprar <= 0:
                     break
-                    
+
                 cantidad = random.randint(1, max_a_comprar)
 
                 for _ in range(cantidad):
                     if not numeros_disponibles or boletos_vendidos >= boletos_a_vender:
                         break
-                    
+
                     numero = numeros_disponibles.pop(0)
 
                     try:
+                        import uuid
                         Ticket.objects.create(
                             rifa=raffle,
                             usuario=comprador,
                             numero_boleto=numero,
-                            monto_pagado=precio_boleto,
-                            estado_pago='completado',
-                            metodo_pago=random.choice(['webpay', 'mercadopago'])
+                            estado='pagado',
+                            codigo_qr=str(uuid.uuid4())[:20]  # Código QR único
                         )
                         boletos_vendidos += 1
                     except Exception as ticket_error:
@@ -360,7 +360,7 @@ class Command(BaseCommand):
             # Actualizar contador de boletos vendidos
             raffle.boletos_vendidos = boletos_vendidos
             raffle.save(update_fields=['boletos_vendidos'])
-            
+
             self.stdout.write(f"    ✓ Rifa '{titulo[:40]}...' - {boletos_vendidos}/{total_boletos} boletos vendidos")
 
         except Exception as e:

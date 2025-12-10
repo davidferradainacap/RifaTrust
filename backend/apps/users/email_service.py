@@ -213,10 +213,10 @@ El equipo de RifaTrust
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@rifatrust.com')
             logger.info(f"Intentando enviar email desde {from_email} a {user.email}")
             logger.info(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
-            
+
             if settings.EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
                 logger.info(f"SMTP Config - Host: {settings.EMAIL_HOST}, Port: {settings.EMAIL_PORT}, TLS: {settings.EMAIL_USE_TLS}")
-            
+
             send_mail(
                 subject='Recuperación de contraseña - RifaTrust',
                 message=plain_message,

@@ -818,6 +818,8 @@ def edit_raffle_view(request, pk):
 def buy_ticket_view(request, raffle_id):
     # Importar transaction para manejo de transacciones atómicas
     from django.db import transaction
+    import logging
+    logger = logging.getLogger(__name__)
 
     # === RESTRICCIÓN: ORGANIZADORES NO PUEDEN COMPRAR BOLETOS ===
     # Los organizadores solo pueden crear y gestionar rifas, no participar comprando boletos
@@ -855,11 +857,22 @@ def buy_ticket_view(request, raffle_id):
 
                 # === PASO 6: CREAR BOLETOS ===
                 tickets_creados = []
-                for _ in range(cantidad):
-                    # Número de boleto secuencial
-                    # Ejemplo: si boletos_vendidos=42, próximo es 43
-                    numero_boleto = raffle.boletos_vendidos + 1
-
+                
+                # Obtener números de boletos ya vendidos
+                numeros_ocupados = set(Ticket.objects.filter(rifa=raffle).values_list('numero_boleto', flat=True))
+                
+                # Obtener números disponibles
+                numeros_disponibles = [n for n in range(1, raffle.total_boletos + 1) if n not in numeros_ocupados]
+                
+                # Verificar que hay suficientes números disponibles
+                if len(numeros_disponibles) < cantidad:
+                    messages.error(request, f'Solo hay {len(numeros_disponibles)} boletos disponibles.')
+                    return redirect('raffles:detail', pk=raffle_id)
+                
+                # Tomar los primeros N números disponibles
+                numeros_a_usar = numeros_disponibles[:cantidad]
+                
+                for numero_boleto in numeros_a_usar:
                     # Código QR único para validación
                     # UUID4 genera identificador aleatorio único
                     # Ejemplo: "a3f5e9b2-c4d7-f1a8-e6b9-d2c5f8a1e4b7"
@@ -895,8 +908,8 @@ def buy_ticket_view(request, raffle_id):
         except Exception as e:
             # Si hay error, transaction.atomic() hace rollback automático
             # Los tickets creados se eliminan y el contador no se incrementa
-            error_msg = handle_exception_safely(e, 'ticket', 'Compra de boletos')
-            messages.error(request, error_msg)
+            logger.error(f"Error en compra de boletos: {str(e)}")
+            messages.error(request, f'Error al procesar la compra: {str(e)}. Por favor, intenta nuevamente.')
             return redirect('raffles:detail', pk=raffle_id)
 
     # === PASO 9: MOSTRAR FORMULARIO (GET) ===

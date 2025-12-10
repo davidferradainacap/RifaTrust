@@ -37,7 +37,7 @@
                     {% if user.rol == 'organizador' or user.rol == 'admin' %}
                         <a href="/raffles/create/">Crear Rifa</a>
                     {% endif %}
-                    
+
                     <!-- Buzón de Notificaciones -->
                     <div class="notifications-wrapper" style="position: relative;">
                         <button id="notificationsBtn" class="notifications-btn" title="Notificaciones" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 0.5rem 0.75rem; cursor: pointer; position: relative; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s;">
@@ -60,7 +60,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <a href="/profile/" class="profile-btn" title="Mi Perfil">
                         <span class="profile-avatar">
                             <svg viewBox="0 0 32 32" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -160,7 +160,7 @@
                         } else {
                             notificationBadge.style.display = 'none';
                         }
-                        
+
                         notificationsList.innerHTML = data.notifications.map(notif => `
                             <div class="notification-item ${notif.leido ? '' : 'unread'}" style="padding: 1rem; border-bottom: 1px solid rgba(99, 102, 241, 0.1); cursor: pointer; transition: background 0.2s; ${notif.leido ? '' : 'background: rgba(99, 102, 241, 0.1);'}">
                                 <div style="display: flex; gap: 0.75rem; align-items: start;">
@@ -184,7 +184,7 @@
                     notificationsList.innerHTML = '<div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.5);">Error al cargar notificaciones</div>';
                 });
         }
-        
+
         // Cargar notificaciones inicial
         loadNotifications();
         // Actualizar cada 30 segundos
