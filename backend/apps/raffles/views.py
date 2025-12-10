@@ -1130,6 +1130,20 @@ def select_winner_view(request, pk):
     # Check if winner already exists
     if Winner.objects.filter(rifa=raffle).exists():
         return JsonResponse({'success': False, 'error': 'Esta rifa ya tiene un ganador'})
+    
+    # Check if minimum tickets sold requirement is met (viabilidad económica)
+    minimo_requerido = raffle.boletos_minimos_requeridos
+    if raffle.boletos_vendidos < minimo_requerido:
+        # Cambiar estado a 'cerrada' para revisión administrativa
+        raffle.estado = 'cerrada'
+        raffle.motivo_pausa = f'No se alcanzó el mínimo de {minimo_requerido} boletos vendidos para viabilidad económica. Boletos vendidos: {raffle.boletos_vendidos}'
+        raffle.fecha_pausa = timezone.now()
+        raffle.save()
+        
+        return JsonResponse({
+            'success': False, 
+            'error': f'No se puede realizar el sorteo. Se requiere un mínimo de {minimo_requerido} boletos vendidos para viabilidad económica (2x valor del premio). Actualmente: {raffle.boletos_vendidos}. La rifa ha sido cerrada y requiere revisión administrativa.'
+        })
 
     # Get ticket ID from request
     try:

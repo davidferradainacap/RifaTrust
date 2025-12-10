@@ -53,13 +53,13 @@ class RaffleForm(forms.ModelForm):
         self.fields['descripcion_premio'].required = True
         self.fields['imagen_premio'].required = True
         self.fields['valor_premio'].required = True
-        self.fields['documento_legal'].required = True
         self.fields['estado'].required = True
         self.fields['permite_multiples_boletos'].required = True
         self.fields['max_boletos_por_usuario'].required = True
         
         # Si es una nueva rifa, establecer 'borrador' como valor por defecto
         if not self.instance.pk:
+            self.fields['estado'].initial = 'borrador'
             self.fields['estado'].initial = 'borrador'
     
     def clean_estado(self):

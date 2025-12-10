@@ -211,6 +211,38 @@ class Raffle(models.Model):
             Debe ser >= 2x valor_premio para que la rifa sea viable
         """
         return self.total_boletos * self.precio_boleto
+    
+    @property
+    def boletos_minimos_requeridos(self):
+        """
+        Calcula el número mínimo de boletos que deben venderse para que la rifa sea viable.
+        La viabilidad se basa en que el ingreso debe ser al menos el doble del valor del premio.
+        
+        Returns:
+            int: Cantidad mínima de boletos requeridos (redondeado hacia arriba)
+            
+        Example:
+            Si valor_premio=500000 y precio_boleto=1000 → requiere 1000 boletos
+            (1000 * 1000 = 1,000,000 que es >= 2 * 500,000)
+        """
+        if not self.valor_premio or self.precio_boleto <= 0:
+            return 1
+        
+        # Calcular mínimo: (2 * valor_premio) / precio_boleto
+        from decimal import Decimal
+        import math
+        minimo = (Decimal('2') * self.valor_premio) / self.precio_boleto
+        return math.ceil(float(minimo))
+    
+    @property
+    def cumple_minimo_viabilidad(self):
+        """
+        Verifica si se ha alcanzado el mínimo de boletos vendidos para viabilidad económica.
+        
+        Returns:
+            bool: True si se vendieron suficientes boletos, False en caso contrario
+        """
+        return self.boletos_vendidos >= self.boletos_minimos_requeridos
 
 class Ticket(models.Model):
     """
