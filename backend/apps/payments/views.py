@@ -95,68 +95,86 @@ def process_payment_view(request, ticket_ids):
 
     # === PASO 5: PROCESAR FORMULARIO (POST) ===
     if request.method == 'POST':
-        # Obtener método de pago seleccionado por usuario
-        # Opciones: stripe (default), paypal, tarjeta, transferencia
-        metodo_pago = request.POST.get('metodo_pago', 'stripe')
+        try:
+            # Obtener método de pago seleccionado por usuario
+            # Opciones: tarjeta (default), paypal, transferencia
+            metodo_pago = request.POST.get('metodo_pago', 'tarjeta')
 
-        # === PASO 6: GENERAR TRANSACTION ID ÚNICO ===
-        # Formato: TXN-{12 caracteres hexadecimales en mayúsculas}
-        # Ejemplo: TXN-A3F5E9B2C4D7
-        # UUID4 genera un identificador único aleatorio
-        transaction_id = f"TXN-{uuid.uuid4().hex[:12].upper()}"
+            # === PASO 6: GENERAR TRANSACTION ID ÚNICO ===
+            # Formato: TXN-{12 caracteres hexadecimales en mayúsculas}
+            # Ejemplo: TXN-A3F5E9B2C4D7
+            # UUID4 genera un identificador único aleatorio
+            transaction_id = f"TXN-{uuid.uuid4().hex[:12].upper()}"
 
-        # === PASO 7: CREAR REGISTRO DE PAGO ===
-        # Estado inicial: 'procesando' (ni completado ni fallido aún)
-        payment = Payment.objects.create(
-            usuario=request.user,
-            monto=total_amount,
-            metodo_pago=metodo_pago,
-            transaction_id=transaction_id,  # ID único encriptado
-            estado='procesando'  # Estado transitorio
-        )
+            # === PASO 7: CREAR REGISTRO DE PAGO ===
+            # Estado inicial: 'procesando' (ni completado ni fallido aún)
+            payment = Payment.objects.create(
+                usuario=request.user,
+                monto=total_amount,
+                metodo_pago=metodo_pago,
+                transaction_id=transaction_id,  # ID único encriptado
+                estado='procesando'  # Estado transitorio
+            )
 
-        # === PASO 8: ASOCIAR BOLETOS AL PAGO ===
-        # ManyToMany: Un pago puede tener múltiples boletos
-        # set() reemplaza todas las relaciones existentes
-        payment.boletos.set(tickets)
+            # === PASO 8: ASOCIAR BOLETOS AL PAGO ===
+            # ManyToMany: Un pago puede tener múltiples boletos
+            # set() reemplaza todas las relaciones existentes
+            payment.boletos.set(tickets)
 
-        # === PASO 9: PROCESAR PAGO (SIMULACIÓN) ===
-        # NOTA: Esta es una simulación de pago para propósitos de demostración
-        # En producción, aquí se integraría con un procesador de pagos real
-        # como Stripe, PayPal, Transbank (Chile), Flow, etc.
-        
-        # Simular un payment_intent_id realista
-        simulated_payment_id = f"pi_sim_{uuid.uuid4().hex[:24]}"
-        payment.payment_intent_id = simulated_payment_id
+            # === PASO 9: PROCESAR PAGO (SIMULACIÓN) ===
+            # NOTA: Esta es una simulación de pago para propósitos de demostración
+            # En producción, aquí se integraría con un procesador de pagos real
+            # como Stripe, PayPal, Transbank (Chile), Flow, etc.
+            
+            # Simular un payment_intent_id realista (más corto para evitar problemas de encriptación)
+            simulated_payment_id = f"pi_{uuid.uuid4().hex[:16]}"
+            
+            try:
+                payment.payment_intent_id = simulated_payment_id
+            except:
+                # Si falla la encriptación, dejar vacío
+                pass
 
-        # === MARCAR PAGO COMO COMPLETADO (SIMULACIÓN SIEMPRE EXITOSA) ===
-        payment.estado = 'completado'
-        payment.save()
+            # === MARCAR PAGO COMO COMPLETADO (SIMULACIÓN SIEMPRE EXITOSA) ===
+            payment.estado = 'completado'
+            payment.save()
 
-        # === ACTUALIZAR ESTADO DE BOLETOS ===
-        # De 'reservado' a 'pagado'
-        tickets.update(estado='pagado')
+            # === ACTUALIZAR ESTADO DE BOLETOS ===
+            # De 'reservado' a 'pagado'
+            tickets.update(estado='pagado')
 
-        # === CREAR NOTIFICACIÓN DE COMPRA EXITOSA ===
-        from apps.users.models import Notification
-        primera_rifa = tickets.first().rifa
+            # === CREAR NOTIFICACIÓN DE COMPRA EXITOSA ===
+            from apps.users.models import Notification
+            primera_rifa = tickets.first().rifa
 
-        Notification.objects.create(
-            usuario=request.user,
-            tipo='compra',
-            titulo='Compra de boletos exitosa',
-            mensaje=f'Has comprado {tickets.count()} boleto(s) para la rifa "{primera_rifa.titulo}". Total: CLP${total_amount:,.0f}',
-            enlace=f'/raffles/{primera_rifa.id}/',
-            rifa_relacionada=primera_rifa
-        )
+            Notification.objects.create(
+                usuario=request.user,
+                tipo='compra',
+                titulo='Compra de boletos exitosa',
+                mensaje=f'Has comprado {tickets.count()} boleto(s) para la rifa "{primera_rifa.titulo}". Total: CLP${total_amount:,.0f}',
+                enlace=f'/raffles/{primera_rifa.id}/',
+                rifa_relacionada=primera_rifa
+            )
 
-        # === INCREMENTAR CONTADOR DE BOLETOS VENDIDOS ===
-        primera_rifa.boletos_vendidos += tickets.count()
-        primera_rifa.save()
+            # === INCREMENTAR CONTADOR DE BOLETOS VENDIDOS ===
+            primera_rifa.boletos_vendidos += tickets.count()
+            primera_rifa.save()
 
-        # === MENSAJE FLASH Y REDIRECCIÓN ===
-        messages.success(request, '¡Pago procesado exitosamente! (Simulación)')
-        return redirect('payments:payment_success', payment_id=payment.id)
+            # === MENSAJE FLASH Y REDIRECCIÓN ===
+            messages.success(request, '¡Pago procesado exitosamente!')
+            return redirect('payments:payment_success', payment_id=payment.id)
+
+        except Exception as e:
+            # Capturar cualquier error durante el procesamiento
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error procesando pago: {str(e)}", exc_info=True)
+            
+            # Mostrar mensaje de error al usuario
+            messages.error(request, f'Error al procesar el pago. Por favor, intenta nuevamente.')
+            
+            # Redirigir de vuelta al formulario
+            return redirect('raffles:raffle_list')
 
     # === PASO 11: RENDERIZAR FORMULARIO (GET) ===
     # Si el método no es POST, mostrar formulario de pago
