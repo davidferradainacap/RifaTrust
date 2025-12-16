@@ -155,3 +155,73 @@ def serve_media(request, path):
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
     
     return response
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def debug_media(request):
+    """
+    Endpoint de diagnóstico para verificar el sistema de archivos media.
+    Solo accesible con parámetro secreto.
+    """
+    import os
+    from django.conf import settings
+    
+    secret = request.GET.get('secret', '')
+    if secret != 'rifatrust2025':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Determinar rutas
+    is_azure = bool(os.environ.get('WEBSITE_HOSTNAME'))
+    
+    if is_azure:
+        media_root = '/home/media'
+    else:
+        media_root = str(settings.MEDIA_ROOT)
+    
+    result = {
+        'is_azure': is_azure,
+        'media_root': media_root,
+        'media_url': settings.MEDIA_URL,
+        'media_root_exists': os.path.exists(media_root),
+        'website_hostname': os.environ.get('WEBSITE_HOSTNAME', 'not set'),
+    }
+    
+    # Listar contenido de media_root
+    if os.path.exists(media_root):
+        try:
+            result['media_root_contents'] = os.listdir(media_root)
+            
+            # Listar avatars si existe
+            avatars_path = os.path.join(media_root, 'avatars')
+            if os.path.exists(avatars_path):
+                result['avatars_exists'] = True
+                result['avatars_contents'] = os.listdir(avatars_path)
+            else:
+                result['avatars_exists'] = False
+                
+            # Listar raffles si existe
+            raffles_path = os.path.join(media_root, 'raffles')
+            if os.path.exists(raffles_path):
+                result['raffles_exists'] = True
+                result['raffles_contents'] = os.listdir(raffles_path)[:10]  # Solo primeros 10
+            else:
+                result['raffles_exists'] = False
+                
+        except Exception as e:
+            result['list_error'] = str(e)
+    else:
+        result['media_root_contents'] = 'Directory does not exist'
+    
+    # Verificar permisos de escritura
+    try:
+        test_file = os.path.join(media_root, 'test_write.txt')
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+        result['write_permission'] = True
+    except Exception as e:
+        result['write_permission'] = False
+        result['write_error'] = str(e)
+    
+    return JsonResponse(result, status=200)
