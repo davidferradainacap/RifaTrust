@@ -174,7 +174,9 @@ class PasswordResetService:
                 domain = getattr(settings, 'SITE_DOMAIN', 'localhost:8000')
                 protocol = 'http' if settings.DEBUG else 'https'
 
-            reset_url = f"{protocol}://{domain}/reset-password/{token.token}/"
+            # URL correcta según urls.py: /reset-password/<token>/
+            token_str = token.token if hasattr(token, 'token') else str(token)
+            reset_url = f"{protocol}://{domain}/reset-password/{token_str}/"
 
             # Contexto para el template
             context = {
