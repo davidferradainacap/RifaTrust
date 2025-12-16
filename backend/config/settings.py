@@ -226,7 +226,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = PROJECT_ROOT / 'media'
+# En Azure App Service, usar /home/media para persistencia
+# La carpeta /home es persistente en Azure App Service
+if os.environ.get('WEBSITE_HOSTNAME'):
+    # Estamos en Azure
+    MEDIA_ROOT = '/home/media'
+else:
+    # Desarrollo local
+    MEDIA_ROOT = PROJECT_ROOT / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -12,6 +12,16 @@ sys.path.insert(0, backend_path)
 print(f"[STARTUP] Python path configured: {backend_path}", flush=True)
 print(f"[STARTUP] sys.path: {sys.path[:3]}", flush=True)
 
+# Create media directories in Azure's persistent storage
+if os.environ.get('WEBSITE_HOSTNAME'):
+    media_dirs = ['/home/media', '/home/media/avatars', '/home/media/raffles', '/home/media/prizes', '/home/media/documents']
+    for dir_path in media_dirs:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+            print(f"[STARTUP] Created media directory: {dir_path}", flush=True)
+        else:
+            print(f"[STARTUP] Media directory exists: {dir_path}", flush=True)
+
 # Configure PyMySQL before Django loads
 try:
     import pymysql
