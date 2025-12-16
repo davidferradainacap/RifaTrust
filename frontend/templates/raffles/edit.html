@@ -97,6 +97,31 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="{{ form.descripcion_premio.id_for_label }}" style="font-weight: 600; color: white;">Descripción del Premio</label>
+                    {{ form.descripcion_premio }}
+                    {% if form.descripcion_premio.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.descripcion_premio.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.imagen_premio.id_for_label }}" style="font-weight: 600; color: white;">Imagen del Premio</label>
+                    {% if raffle.imagen_premio %}
+                    <div style="margin-bottom: 1rem;">
+                        <img src="{{ raffle.imagen_premio.url }}" alt="Imagen actual del premio" style="max-width: 200px; border-radius: 8px;">
+                        <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.5rem;">Imagen actual del premio</p>
+                    </div>
+                    {% endif %}
+                    {{ form.imagen_premio }}
+                    <small style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.875rem;">
+                        {% if raffle.imagen_premio %}Subir una nueva imagen reemplazará la actual.{% else %}Sube una imagen del premio.{% endif %}
+                    </small>
+                    {% if form.imagen_premio.errors %}
+                        <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.imagen_premio.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
                     <label for="{{ form.valor_premio.id_for_label }}" style="font-weight: 600; color: white;">💰 Valor Estimado del Premio</label>
                     {{ form.valor_premio }}
                     <small style="display: block; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.875rem;">

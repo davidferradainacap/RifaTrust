@@ -12,15 +12,15 @@ class RaffleForm(forms.ModelForm):
         widgets = {
             'titulo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Título de la rifa'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe tu rifa...'}),
-            'imagen': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'precio_boleto': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
             'total_boletos': forms.NumberInput(attrs={'class': 'form-control', 'min': '100', 'placeholder': 'Mínimo 100 boletos'}),
             'fecha_sorteo': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'premio_principal': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: iPhone 15 Pro'}),
             'descripcion_premio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'imagen_premio': forms.FileInput(attrs={'class': 'form-control'}),
+            'imagen_premio': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'valor_premio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': 'Ej: 500000'}),
-            'documento_legal': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png'}),
+            'documento_legal': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png'}),
             'estado': forms.Select(attrs={'class': 'form-control'}),
             'permite_multiples_boletos': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'max_boletos_por_usuario': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
@@ -42,20 +42,29 @@ class RaffleForm(forms.ModelForm):
                 ('pendiente_aprobacion', 'Solicitar Aprobación'),
             ]
         
-        # Hacer todos los campos obligatorios
+        # Campos obligatorios para creación, opcionales para edición (si ya tienen imagen)
         self.fields['titulo'].required = True
         self.fields['descripcion'].required = True
-        self.fields['imagen'].required = True
         self.fields['precio_boleto'].required = True
         self.fields['total_boletos'].required = True
         self.fields['fecha_sorteo'].required = True
         self.fields['premio_principal'].required = True
         self.fields['descripcion_premio'].required = True
-        self.fields['imagen_premio'].required = True
         self.fields['valor_premio'].required = True
         self.fields['estado'].required = True
         self.fields['permite_multiples_boletos'].required = True
         self.fields['max_boletos_por_usuario'].required = True
+        
+        # Imágenes: obligatorias solo si es nueva rifa (no tiene pk)
+        if self.instance.pk:
+            # Es edición: imagen no es obligatoria si ya existe
+            self.fields['imagen'].required = False
+            self.fields['imagen_premio'].required = False
+            self.fields['documento_legal'].required = False
+        else:
+            # Es creación: imagen es obligatoria
+            self.fields['imagen'].required = True
+            self.fields['imagen_premio'].required = True
         
         # Si es una nueva rifa, establecer 'borrador' como valor por defecto
         if not self.instance.pk:
