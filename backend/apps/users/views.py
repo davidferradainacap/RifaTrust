@@ -388,10 +388,10 @@ def profile_view(request):
                 request.user.telefono = telefono
 
             # === GUARDAR AVATAR EN USER ===
-            # Avatar también se guarda en User model
-            avatar = form.cleaned_data.get('avatar')
-            if avatar:
-                request.user.avatar = avatar
+            # Avatar se guarda en User model, viene en request.FILES
+            if 'avatar' in request.FILES:
+                avatar_file = request.FILES['avatar']
+                request.user.avatar = avatar_file
 
             # Guardar cambios en User
             request.user.save()

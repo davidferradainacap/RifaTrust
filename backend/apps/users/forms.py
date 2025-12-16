@@ -190,7 +190,7 @@ class ProfileForm(forms.ModelForm):
     )
     avatar = forms.ImageField(
         required=False,
-        widget=forms.FileInput(attrs={
+        widget=forms.ClearableFileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*'
         })
@@ -198,7 +198,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['telefono', 'avatar', 'direccion', 'ciudad', 'estado', 'codigo_postal', 'pais']
+        fields = ['direccion', 'ciudad', 'estado', 'codigo_postal', 'pais']
         widgets = {
             'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'ciudad': forms.TextInput(attrs={'class': 'form-control'}),
