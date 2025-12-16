@@ -23,6 +23,9 @@
 {% endblock %}
 
 {% block content %}
+<!-- CSRF Token para AJAX -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
 <!-- Statistics Grid -->
 <div class="row g-3 mb-4">
     <div class="col-md-2">
@@ -454,6 +457,12 @@
 
 {% block extra_js %}
 <script>
+// CSRF Token helper
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
 // Bulk selection
 document.getElementById('selectAll')?.addEventListener('change', function() {
     document.querySelectorAll('.item-checkbox').forEach(checkbox => {
@@ -461,17 +470,163 @@ document.getElementById('selectAll')?.addEventListener('change', function() {
     });
 });
 
-// Edit user function
+// Edit user function - Abre modal de edición
 function editUser(userId) {
-    AdminPanel.showToast('Editar Usuario', 'Función en desarrollo', 'info');
+    // Abrir modal para editar usuario
+    document.getElementById('editUserId').value = userId;
+    
+    // Obtener datos actuales del usuario de la tabla
+    const row = document.querySelector(`button[onclick="editUser(${userId})"]`).closest('tr');
+    const rolBadge = row.querySelector('td:nth-child(3) .badge');
+    const rolText = rolBadge ? rolBadge.textContent.trim().toLowerCase() : 'participante';
+    
+    // Mapear texto a valor
+    let rolValue = 'participante';
+    if (rolText.includes('organizador')) rolValue = 'organizador';
+    else if (rolText.includes('sponsor')) rolValue = 'sponsor';
+    else if (rolText.includes('admin')) rolValue = 'admin';
+    
+    document.getElementById('editUserRole').value = rolValue;
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    modal.show();
+}
+
+// Guardar cambios del usuario
+function saveUserChanges() {
+    const userId = document.getElementById('editUserId').value;
+    const newRole = document.getElementById('editUserRole').value;
+    
+    fetch(`/admin-panel/users/${userId}/change-role/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: `role=${newRole}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cerrar modal y recargar
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            showToast('Éxito', data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error', 'Error de conexión', 'danger');
+    });
 }
 
 // Delete user function
 function deleteUser(userId, userName) {
-    if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${userName}"?\n\nEsta acción no se puede deshacer.`)) {
-        // TODO: Implement AJAX deletion
-        AdminPanel.showToast('Usuario Eliminado', `${userName} ha sido eliminado exitosamente`, 'success');
-    }
+    document.getElementById('deleteUserName').textContent = userName;
+    document.getElementById('deleteUserId').value = userId;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+    modal.show();
+}
+
+// Confirmar eliminación de usuario
+function confirmDeleteUser() {
+    const userId = document.getElementById('deleteUserId').value;
+    
+    fetch(`/admin-panel/users/${userId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteUserModal')).hide();
+            showToast('Éxito', data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error', 'Error de conexión', 'danger');
+    });
+}
+
+// Suspender usuario
+function suspendUser(userId) {
+    if (!confirm('¿Suspender este usuario?')) return;
+    
+    fetch(`/admin-panel/users/${userId}/suspend/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Éxito', data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.message, 'danger');
+        }
+    });
+}
+
+// Activar usuario
+function activateUser(userId) {
+    fetch(`/admin-panel/users/${userId}/activate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Éxito', data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.message, 'danger');
+        }
+    });
+}
+
+// Toast notification
+function showToast(title, message, type) {
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <strong>${title}:</strong> ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
 }
 
 // Auto-submit filters on change
@@ -481,6 +636,55 @@ document.querySelectorAll('#filtersForm select').forEach(select => {
     });
 });
 </script>
+
+<!-- Modal Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="mb-3">
+                    <label class="form-label">Rol del Usuario</label>
+                    <select id="editUserRole" class="form-select">
+                        <option value="participante">Participante</option>
+                        <option value="organizador">Organizador</option>
+                        <option value="sponsor">Sponsor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Usuario -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-danger">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteUserId">
+                <p>¿Estás seguro de que deseas eliminar al usuario <strong id="deleteUserName"></strong>?</p>
+                <p class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a este usuario.</p>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteUser()">Eliminar Usuario</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 /* Responsive Design */
