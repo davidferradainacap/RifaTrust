@@ -125,7 +125,7 @@ def serve_media(request, path):
     import mimetypes
     from django.http import FileResponse, Http404
     from django.conf import settings
-    
+
     # Determinar la ruta base de media
     if os.environ.get('WEBSITE_HOSTNAME'):
         # Azure - usar /home/media
@@ -133,27 +133,27 @@ def serve_media(request, path):
     else:
         # Desarrollo local
         media_root = settings.MEDIA_ROOT
-    
+
     # Construir ruta completa del archivo
     file_path = os.path.join(media_root, path)
-    
+
     # Verificar que el archivo existe
     if not os.path.exists(file_path):
         raise Http404(f"Media file not found: {path}")
-    
+
     # Verificar que es un archivo (no directorio)
     if not os.path.isfile(file_path):
         raise Http404(f"Not a file: {path}")
-    
+
     # Determinar el content type
     content_type, _ = mimetypes.guess_type(file_path)
     if content_type is None:
         content_type = 'application/octet-stream'
-    
+
     # Servir el archivo
     response = FileResponse(open(file_path, 'rb'), content_type=content_type)
     response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
-    
+
     return response
 
 
@@ -166,19 +166,19 @@ def debug_media(request):
     """
     import os
     from django.conf import settings
-    
+
     secret = request.GET.get('secret', '')
     if secret != 'rifatrust2025':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     # Determinar rutas
     is_azure = bool(os.environ.get('WEBSITE_HOSTNAME'))
-    
+
     if is_azure:
         media_root = '/home/media'
     else:
         media_root = str(settings.MEDIA_ROOT)
-    
+
     result = {
         'is_azure': is_azure,
         'media_root': media_root,
@@ -186,12 +186,12 @@ def debug_media(request):
         'media_root_exists': os.path.exists(media_root),
         'website_hostname': os.environ.get('WEBSITE_HOSTNAME', 'not set'),
     }
-    
+
     # Listar contenido de media_root
     if os.path.exists(media_root):
         try:
             result['media_root_contents'] = os.listdir(media_root)
-            
+
             # Listar avatars si existe
             avatars_path = os.path.join(media_root, 'avatars')
             if os.path.exists(avatars_path):
@@ -199,7 +199,7 @@ def debug_media(request):
                 result['avatars_contents'] = os.listdir(avatars_path)
             else:
                 result['avatars_exists'] = False
-                
+
             # Listar raffles si existe
             raffles_path = os.path.join(media_root, 'raffles')
             if os.path.exists(raffles_path):
@@ -207,12 +207,12 @@ def debug_media(request):
                 result['raffles_contents'] = os.listdir(raffles_path)[:10]  # Solo primeros 10
             else:
                 result['raffles_exists'] = False
-                
+
         except Exception as e:
             result['list_error'] = str(e)
     else:
         result['media_root_contents'] = 'Directory does not exist'
-    
+
     # Verificar permisos de escritura
     try:
         test_file = os.path.join(media_root, 'test_write.txt')
@@ -223,7 +223,7 @@ def debug_media(request):
     except Exception as e:
         result['write_permission'] = False
         result['write_error'] = str(e)
-    
+
     return JsonResponse(result, status=200)
 
 
@@ -235,18 +235,18 @@ def debug_user_avatar(request):
     """
     import os
     from django.conf import settings
-    
+
     secret = request.GET.get('secret', '')
     if secret != 'rifatrust2025':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     email = request.GET.get('email', '')
-    
+
     from apps.users.models import User
-    
+
     try:
         user = User.objects.get(email=email)
-        
+
         result = {
             'user_found': True,
             'email': user.email,
@@ -255,27 +255,27 @@ def debug_user_avatar(request):
             'avatar_name': user.avatar.name if user.avatar else None,
             'has_avatar': bool(user.avatar),
         }
-        
+
         if user.avatar:
             try:
                 result['avatar_url'] = user.avatar.url
             except Exception as e:
                 result['avatar_url_error'] = str(e)
-            
+
             # Verificar si el archivo existe físicamente
             is_azure = bool(os.environ.get('WEBSITE_HOSTNAME'))
             if is_azure:
                 media_root = '/home/media'
             else:
                 media_root = str(settings.MEDIA_ROOT)
-            
+
             file_path = os.path.join(media_root, user.avatar.name)
             result['file_path'] = file_path
             result['file_exists'] = os.path.exists(file_path)
-            
+
     except User.DoesNotExist:
         result = {'user_found': False, 'email': email}
     except Exception as e:
         result = {'error': str(e)}
-    
+
     return JsonResponse(result, status=200)

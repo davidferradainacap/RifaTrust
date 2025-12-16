@@ -379,7 +379,7 @@ def profile_view(request):
         # request.FILES: archivos subidos (avatar)
         # instance=profile: vincular formulario a perfil existente
         form = ProfileForm(request.POST, request.FILES, instance=profile)
-        
+
         # Debug: verificar si llega el archivo
         import logging
         logger = logging.getLogger(__name__)
@@ -418,7 +418,7 @@ def profile_view(request):
 
         # Pre-poblar campo teléfono desde User
         form.initial['telefono'] = request.user.telefono
-        
+
         # Pre-poblar avatar desde User (para mostrar en el formulario)
         if request.user.avatar:
             form.initial['avatar'] = request.user.avatar

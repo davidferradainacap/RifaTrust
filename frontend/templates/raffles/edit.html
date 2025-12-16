@@ -15,7 +15,7 @@
         <div class="card-body">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                
+
                 <!-- Errores generales del formulario -->
                 {% if form.non_field_errors %}
                 <div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 {% endif %}
-                
+
                 <div class="form-group">
                     <label for="{{ form.titulo.id_for_label }}" style="font-weight: 600; color: white;">Título de la Rifa</label>
                     {{ form.titulo }}
@@ -191,7 +191,7 @@
 
                 <div class="form-group">
                     <label for="{{ form.estado.id_for_label }}" style="font-weight: 600; color: white; font-size: 1.1rem; margin-bottom: 1rem; display: block;">Estado <span style="color: #ff6b6b;">*</span></label>
-                    
+
                     {% if raffle.estado == 'aprobada' %}
                     <!-- Mensaje de aprobación -->
                     <div style="background: rgba(34, 197, 94, 0.1); border: 2px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
@@ -200,7 +200,7 @@
                             <div>
                                 <div style="font-weight: 700; font-size: 1.2rem; color: #10b981; margin-bottom: 0.5rem;">¡Rifa Aprobada!</div>
                                 <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem;">
-                                    Tu rifa ha sido revisada y aprobada por el equipo administrativo. 
+                                    Tu rifa ha sido revisada y aprobada por el equipo administrativo.
                                     {% if raffle.comentarios_revision %}
                                     <br><strong>Comentarios:</strong> {{ raffle.comentarios_revision }}
                                     {% endif %}
@@ -208,7 +208,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                         <label style="cursor: pointer;">
                             <input type="radio" name="{{ form.estado.name }}" value="aprobada" {% if form.estado.value == 'aprobada' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
@@ -218,7 +218,7 @@
                                 <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Aún oculta al público</div>
                             </div>
                         </label>
-                        
+
                         <label style="cursor: pointer;">
                             <input type="radio" name="{{ form.estado.name }}" value="activa" {% if form.estado.value == 'activa' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
                             <div class="estado-option-edit" style="background: rgba(34, 197, 94, 0.15); border: 2px solid rgba(34, 197, 94, 0.5); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
@@ -238,7 +238,7 @@
                                 <div style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.4;">Oculta al público</div>
                             </div>
                         </label>
-                        
+
                         <label style="cursor: pointer;">
                             <input type="radio" name="{{ form.estado.name }}" value="pendiente_aprobacion" {% if form.estado.value == 'pendiente_aprobacion' %}checked{% endif %} style="display: none;" class="estado-radio-edit">
                             <div class="estado-option-edit" style="background: rgba(99, 102, 241, 0.1); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.25rem; text-align: center; transition: all 0.3s;">
@@ -249,12 +249,12 @@
                         </label>
                     </div>
                     {% endif %}
-                    
+
                     {% if form.estado.errors %}
                         <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.estado.errors }}</div>
                     {% endif %}
                 </div>
-                
+
                 <style>
                     .estado-radio-edit:checked + .estado-option-edit {
                         border-color: var(--primary) !important;
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalBoletosInput = document.querySelector('input[name="total_boletos"]');
     const calculadora = document.getElementById('calculadora-ingresos');
     const form = document.querySelector('form');
-    
+
     function formatearPesos(valor) {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -305,24 +305,24 @@ document.addEventListener('DOMContentLoaded', function() {
             minimumFractionDigits: 0
         }).format(valor);
     }
-    
+
     function actualizarCalculadora() {
         const valorPremio = parseFloat(valorPremioInput.value) || 0;
         const precioBoleto = parseFloat(precioBoletoInput.value) || 0;
         const totalBoletos = parseInt(totalBoletosInput.value) || 0;
-        
+
         if (valorPremio > 0 && precioBoleto > 0 && totalBoletos > 0) {
             calculadora.style.display = 'block';
-            
+
             const ingresoTotal = precioBoleto * totalBoletos;
             const minimoRequerido = valorPremio * 2;
-            
+
             document.getElementById('calc-valor-premio').textContent = formatearPesos(valorPremio);
             document.getElementById('calc-ingreso-total').textContent = formatearPesos(ingresoTotal);
             document.getElementById('calc-minimo-requerido').textContent = formatearPesos(minimoRequerido);
-            
+
             const mensaje = document.getElementById('calc-mensaje');
-            
+
             if (totalBoletos < 100) {
                 mensaje.style.background = 'rgba(239, 68, 68, 0.2)';
                 mensaje.style.color = '#f87171';
@@ -341,16 +341,16 @@ document.addEventListener('DOMContentLoaded', function() {
             calculadora.style.display = 'none';
         }
     }
-    
+
     if (valorPremioInput && precioBoletoInput && totalBoletosInput) {
         valorPremioInput.addEventListener('input', actualizarCalculadora);
         precioBoletoInput.addEventListener('input', actualizarCalculadora);
         totalBoletosInput.addEventListener('input', actualizarCalculadora);
-        
+
         // Ejecutar al cargar si hay valores
         actualizarCalculadora();
     }
-    
+
     // Detectar cuando se selecciona "activa" para rifas aprobadas
     const estadoRadios = document.querySelectorAll('input[name="estado"]');
     if (form) {

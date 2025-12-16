@@ -23,7 +23,7 @@ const LoadingManager = {
 
         // Interceptar clicks en botones de submit
         this.setupButtonInterceptors();
-        
+
         // Interceptar links con data-loading
         this.setupLinkInterceptors();
     },
@@ -88,7 +88,7 @@ const LoadingManager = {
         // ==========================================
         // AUTENTICACIÓN Y USUARIOS
         // ==========================================
-        
+
         // Formulario de login
         const loginForm = document.querySelector('form[action*="login"]');
         if (loginForm) {
@@ -133,11 +133,11 @@ const LoadingManager = {
                 this.addButtonLoading(profileForm.querySelector('button[type="submit"]'));
             });
         }
-        
+
         // ==========================================
         // RIFAS
         // ==========================================
-        
+
         // Crear rifa
         const createRaffleForm = document.querySelector('form[action*="raffles/create"], form[action*="/create/"]');
         if (createRaffleForm || window.location.pathname.includes('/create')) {
@@ -149,7 +149,7 @@ const LoadingManager = {
                 });
             }
         }
-        
+
         // Editar rifa
         if (window.location.pathname.includes('/edit/') || window.location.pathname.includes('/editar/')) {
             const editForm = document.querySelector('form[enctype="multipart/form-data"]');
@@ -160,7 +160,7 @@ const LoadingManager = {
                 });
             }
         }
-        
+
         // Comprar boleto
         if (window.location.pathname.includes('/buy/') || window.location.pathname.includes('/comprar/')) {
             const buyForm = document.querySelector('form[method="post"]');
@@ -171,11 +171,11 @@ const LoadingManager = {
                 });
             }
         }
-        
+
         // ==========================================
         // PAGOS
         // ==========================================
-        
+
         // Proceso de pago
         if (window.location.pathname.includes('/payments/') || window.location.pathname.includes('/pago/')) {
             const paymentForm = document.querySelector('form[method="post"]');
@@ -186,11 +186,11 @@ const LoadingManager = {
                 });
             }
         }
-        
+
         // ==========================================
         // ADMIN PANEL
         // ==========================================
-        
+
         // Formularios del panel admin
         if (window.location.pathname.includes('/admin-panel/')) {
             document.querySelectorAll('form[method="post"]').forEach(form => {
@@ -200,11 +200,11 @@ const LoadingManager = {
                 });
             });
         }
-        
+
         // ==========================================
         // FORMULARIOS GENÉRICOS (fallback)
         // ==========================================
-        
+
         // Cualquier formulario POST que no tenga interceptor específico
         document.querySelectorAll('form[method="post"]').forEach(form => {
             if (!form.hasAttribute('data-no-loading') && !form.dataset.loadingAttached) {
@@ -233,26 +233,26 @@ const LoadingManager = {
                 this.addButtonLoading(button);
             });
         });
-        
+
         // Botón de eliminar cuenta
         const deleteAccountBtn = document.querySelector('[onclick*="deleteAccount"], #deleteAccountBtn');
         if (deleteAccountBtn) {
             // Se maneja en el modal de confirmación
         }
-        
+
         // Botones de aprobar/rechazar en admin
         document.querySelectorAll('.btn-approve, [data-action="approve"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.show('Aprobando...', 'Activando la rifa');
             });
         });
-        
+
         document.querySelectorAll('.btn-reject, [data-action="reject"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.show('Rechazando...', 'Procesando rechazo');
             });
         });
-        
+
         // Botones de ejecutar sorteo
         document.querySelectorAll('[data-action="draw"], .btn-draw, [onclick*="sorteo"]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -260,7 +260,7 @@ const LoadingManager = {
             });
         });
     },
-    
+
     /**
      * Configura interceptores para links
      */
@@ -273,14 +273,14 @@ const LoadingManager = {
                 this.show(loadingText, loadingSubtext);
             });
         });
-        
+
         // Links a comprar boletos
         document.querySelectorAll('a[href*="/buy/"], a[href*="/comprar/"]').forEach(link => {
             link.addEventListener('click', () => {
                 this.show('Cargando...', 'Preparando la compra');
             });
         });
-        
+
         // Links a ver detalles de rifa
         document.querySelectorAll('a[href*="/raffles/"][href$="/"]').forEach(link => {
             if (!link.href.includes('/create') && !link.href.includes('/edit') && !link.href.includes('/buy')) {
@@ -289,14 +289,14 @@ const LoadingManager = {
                 });
             }
         });
-        
+
         // Links de logout
         document.querySelectorAll('a[href*="logout"]').forEach(link => {
             link.addEventListener('click', () => {
                 this.show('Cerrando sesión...', 'Hasta pronto');
             });
         });
-        
+
         // Links al dashboard
         document.querySelectorAll('a[href*="dashboard"]').forEach(link => {
             link.addEventListener('click', () => {
