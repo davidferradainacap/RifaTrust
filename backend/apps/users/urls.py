@@ -27,4 +27,7 @@ urlpatterns = [
     path('api/password-reset/request/', views.request_password_reset, name='api_password_reset_request'),
     path('api/password-reset/verify/<str:token>/', views.verify_reset_token, name='api_password_reset_verify'),
     path('api/password-reset/confirm/<str:token>/', views.confirm_password_reset, name='api_password_reset_confirm'),
+
+    # Account Management
+    path('delete-account/', views.delete_account_view, name='delete_account'),
 ]

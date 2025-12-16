@@ -1079,3 +1079,47 @@ def confirm_password_reset(request, token):
             {'error': 'Error al cambiar la contraseña'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+# ============================================================================
+# VISTA: delete_account_view
+# ============================================================================
+# Permite a usuarios eliminar su propia cuenta (excepto admins)
+#
+# URL: /delete-account/
+# Método: POST (eliminación)
+# Autenticación: Requerida
+#
+# Restricciones:
+# - Solo usuarios no-admin pueden eliminar su cuenta
+# - Requiere confirmación de contraseña
+# - Elimina usuario y todos sus datos asociados
+# ============================================================================
+@login_required
+def delete_account_view(request):
+    """Elimina la cuenta del usuario actual (excepto admins)"""
+
+    # Los administradores no pueden eliminar su cuenta desde aquí
+    if request.user.is_superuser or request.user.rol == 'admin':
+        messages.error(request, 'Los administradores no pueden eliminar su cuenta desde aquí.')
+        return redirect('profile')
+
+    if request.method == 'POST':
+        password = request.POST.get('password', '')
+
+        # Verificar contraseña
+        if not request.user.check_password(password):
+            messages.error(request, 'Contraseña incorrecta. No se eliminó la cuenta.')
+            return redirect('profile')
+
+        # Guardar email para mensaje
+        user_email = request.user.email
+
+        # Cerrar sesión y eliminar usuario
+        logout(request)
+        User.objects.filter(email=user_email).delete()
+
+        messages.success(request, 'Tu cuenta ha sido eliminada permanentemente.')
+        return redirect('home')
+
+    return redirect('profile')
