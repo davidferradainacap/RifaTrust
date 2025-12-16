@@ -169,8 +169,8 @@ class Profile(models.Model):
     estado = EncryptedCharField(max_length=255, blank=True, verbose_name='Estado')
     # Código postal encriptado - puede estar vacío
     codigo_postal = EncryptedCharField(max_length=255, blank=True, verbose_name='Código Postal')
-    # País sin encriptar - valor por defecto 'México'
-    pais = models.CharField(max_length=100, default='México', verbose_name='País')
+    # País - campo vacío por defecto para que el usuario lo ingrese
+    pais = models.CharField(max_length=100, default='', blank=True, verbose_name='País')
     # Fecha de nacimiento opcional - usado para validación de edad mínima
     fecha_nacimiento = models.DateField(null=True, blank=True, verbose_name='Fecha de Nacimiento')
 
