@@ -94,10 +94,10 @@
                 <h3 style="font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.25rem;">{{ user.nombre }}</h3>
                 <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 1.25rem;">{{ user.email }}</p>
 
-                <label for="{{ form.avatar.id_for_label }}" class="btn btn-secondary" style="cursor: pointer; font-size: 0.9rem; padding: 0.7rem 1.25rem; width: 100%;">
+                <label for="id_avatar" class="btn btn-secondary" style="cursor: pointer; font-size: 0.9rem; padding: 0.7rem 1.25rem; width: 100%;">
                     Cambiar Foto de Perfil
                 </label>
-                <input type="file" id="{{ form.avatar.id_for_label }}" name="avatar" accept="image/*" style="display: none;" form="profileForm" onchange="previewImage(event)">
+                <input type="file" id="id_avatar" name="avatar" accept="image/*" style="display: none;" form="profileForm" onchange="previewImage(event)">
                 {% if form.avatar.errors %}
                     <div style="color: rgb(239, 68, 68); font-size: 0.8rem; margin-top: 0.5rem;">{{ form.avatar.errors }}</div>
                 {% endif %}

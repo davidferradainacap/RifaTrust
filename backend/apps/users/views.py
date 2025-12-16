@@ -379,6 +379,12 @@ def profile_view(request):
         # request.FILES: archivos subidos (avatar)
         # instance=profile: vincular formulario a perfil existente
         form = ProfileForm(request.POST, request.FILES, instance=profile)
+        
+        # Debug: verificar si llega el archivo
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"POST recibido. FILES: {request.FILES}")
+        logger.info(f"Avatar en FILES: {'avatar' in request.FILES}")
 
         if form.is_valid():
             # === GUARDAR TELÉFONO EN USER ===
@@ -391,10 +397,12 @@ def profile_view(request):
             # Avatar se guarda en User model, viene en request.FILES
             if 'avatar' in request.FILES:
                 avatar_file = request.FILES['avatar']
+                logger.info(f"Guardando avatar: {avatar_file.name}")
                 request.user.avatar = avatar_file
 
             # Guardar cambios en User
             request.user.save()
+            logger.info(f"Usuario guardado. Avatar URL: {request.user.avatar.url if request.user.avatar else 'None'}")
 
             # === GUARDAR DATOS DE PROFILE ===
             # form.save() actualiza Profile con datos encriptados
@@ -410,6 +418,10 @@ def profile_view(request):
 
         # Pre-poblar campo teléfono desde User
         form.initial['telefono'] = request.user.telefono
+        
+        # Pre-poblar avatar desde User (para mostrar en el formulario)
+        if request.user.avatar:
+            form.initial['avatar'] = request.user.avatar
 
     return render(request, 'users/profile.html', {'form': form})
 
