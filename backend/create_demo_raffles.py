@@ -4,11 +4,19 @@ Las rifas finalizarán entre las 18:30 y 20:30 hora de Chile (hoy).
 """
 import os
 import sys
-import django
 import random
 import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+# Instalar PyMySQL como MySQLdb (antes de importar Django)
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass  # Si no está disponible, asumimos mysqlclient o sqlite
+
+import django
 
 # Configurar Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
