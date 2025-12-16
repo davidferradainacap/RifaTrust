@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from apps.raffles.views import home_view
-from apps.core.views import health_check, email_config_check
+from apps.core.views import health_check, email_config_check, test_send_email
 from django.shortcuts import redirect
 
 def redirect_to_admin(request):
@@ -17,6 +17,7 @@ urlpatterns = [
     # Health check para Azure
     path('health/', health_check, name='health_check'),
     path('email-check/', email_config_check, name='email_config_check'),
+    path('test-email/', test_send_email, name='test_send_email'),
 
     path('admin/', redirect_to_admin),
     path('django-admin/', admin.site.urls),  # Django admin original

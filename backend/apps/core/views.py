@@ -70,3 +70,47 @@ def email_config_check(request):
     }
     
     return JsonResponse(config, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def test_send_email(request):
+    """
+    Endpoint de prueba para enviar un email real.
+    Solo accesible con parámetro secreto.
+    """
+    from django.conf import settings
+    from django.core.mail import send_mail
+    import traceback
+    
+    # Verificar token secreto para seguridad
+    secret = request.GET.get('secret', '')
+    if secret != 'rifatrust2025':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    # Email destino (opcional, por defecto usa el from_email)
+    to_email = request.GET.get('to', 'daldeaferrada@gmail.com')
+    
+    try:
+        result = send_mail(
+            subject='[RifaTrust] Test de Email desde Azure',
+            message='Este es un email de prueba enviado desde la aplicación RifaTrust en Azure. Si lo recibes, la configuración SMTP está funcionando correctamente.',
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@rifatrust.com'),
+            recipient_list=[to_email],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Email enviado exitosamente a {to_email}',
+            'result': result,
+            'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
+        }, status=200)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'traceback': traceback.format_exc(),
+        }, status=500)
