@@ -41,3 +41,32 @@ def health_check(request):
         status_data['status'] = 'degraded'
     
     return JsonResponse(status_data, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def email_config_check(request):
+    """
+    Endpoint de diagnóstico para verificar configuración de email.
+    Solo accesible con parámetro secreto.
+    """
+    from django.conf import settings
+    
+    # Verificar token secreto para seguridad
+    secret = request.GET.get('secret', '')
+    if secret != 'rifatrust2025':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    config = {
+        'email_backend': settings.EMAIL_BACKEND,
+        'email_host': getattr(settings, 'EMAIL_HOST', 'not set'),
+        'email_port': getattr(settings, 'EMAIL_PORT', 'not set'),
+        'email_use_tls': getattr(settings, 'EMAIL_USE_TLS', 'not set'),
+        'email_host_user': getattr(settings, 'EMAIL_HOST_USER', 'not set'),
+        'email_host_password_set': bool(getattr(settings, 'EMAIL_HOST_PASSWORD', '')),
+        'email_host_password_length': len(getattr(settings, 'EMAIL_HOST_PASSWORD', '')),
+        'default_from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
+        'site_domain': getattr(settings, 'SITE_DOMAIN', 'not set'),
+    }
+    
+    return JsonResponse(config, status=200)
