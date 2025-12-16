@@ -279,3 +279,134 @@ def debug_user_avatar(request):
         result = {'error': str(e)}
 
     return JsonResponse(result, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def create_demo_raffles_view(request):
+    """
+    Endpoint para crear rifas de demostración.
+    Acceso protegido con parámetro secreto.
+    """
+    import random
+    import uuid
+    from datetime import datetime, timedelta
+    from decimal import Decimal
+    from django.utils import timezone
+    from apps.users.models import User
+    from apps.raffles.models import Raffle, Ticket
+    from apps.payments.models import Payment
+    import pytz
+    
+    # Verificar secreto
+    secret = request.GET.get('secret', '')
+    if secret != 'rifatrust2025':
+        return JsonResponse({'error': 'Acceso denegado'}, status=403)
+    
+    CHILE_TZ = pytz.timezone('America/Santiago')
+    now_chile = timezone.now().astimezone(CHILE_TZ)
+    hoy = now_chile.date()
+    
+    result = {
+        'fecha': str(hoy),
+        'hora_chile': now_chile.strftime('%H:%M:%S'),
+        'rifas_creadas': [],
+        'total_boletos': 0
+    }
+    
+    # Limpiar datos existentes
+    try:
+        Payment.objects.all().delete()
+        Ticket.objects.all().delete()
+        Raffle.objects.all().delete()
+        result['limpieza'] = 'OK'
+    except Exception as e:
+        result['limpieza_error'] = str(e)
+    
+    # Obtener organizador
+    organizador = User.objects.filter(rol='organizador', is_active=True).first()
+    if not organizador:
+        organizador = User.objects.filter(is_active=True).first()
+    
+    if not organizador:
+        return JsonResponse({'error': 'No hay usuarios'}, status=400)
+    
+    result['organizador'] = organizador.email
+    
+    # Obtener participantes
+    participantes = list(User.objects.filter(is_active=True))
+    
+    # Datos de rifas
+    rifas_data = [
+        {"titulo": "🎮 PlayStation 5 Digital Edition", "premio_principal": "PlayStation 5 Digital Edition", "valor_premio": Decimal("450000"), "precio_boleto": Decimal("2500"), "total_boletos": 200, "hora_sorteo": "18:30"},
+        {"titulo": "📱 iPhone 15 Pro Max 256GB", "premio_principal": "iPhone 15 Pro Max 256GB", "valor_premio": Decimal("1200000"), "precio_boleto": Decimal("5000"), "total_boletos": 300, "hora_sorteo": "18:45"},
+        {"titulo": "💻 MacBook Air M3 15 pulgadas", "premio_principal": "MacBook Air M3 15\"", "valor_premio": Decimal("1400000"), "precio_boleto": Decimal("7000"), "total_boletos": 250, "hora_sorteo": "19:00"},
+        {"titulo": "🎧 AirPods Pro 2da Generación", "premio_principal": "AirPods Pro 2da Gen", "valor_premio": Decimal("280000"), "precio_boleto": Decimal("1500"), "total_boletos": 200, "hora_sorteo": "19:15"},
+        {"titulo": "🖥️ Monitor Gaming Samsung 27\" 144Hz", "premio_principal": "Monitor Samsung Odyssey G5", "valor_premio": Decimal("350000"), "precio_boleto": Decimal("2000"), "total_boletos": 200, "hora_sorteo": "19:30"},
+        {"titulo": "⌚ Apple Watch Series 9 GPS", "premio_principal": "Apple Watch Series 9 45mm", "valor_premio": Decimal("500000"), "precio_boleto": Decimal("2500"), "total_boletos": 220, "hora_sorteo": "19:45"},
+        {"titulo": "🎮 Nintendo Switch OLED + Juegos", "premio_principal": "Nintendo Switch OLED Bundle", "valor_premio": Decimal("450000"), "precio_boleto": Decimal("2000"), "total_boletos": 250, "hora_sorteo": "20:00"},
+        {"titulo": "📷 GoPro Hero 12 Black", "premio_principal": "GoPro Hero 12 Black", "valor_premio": Decimal("380000"), "precio_boleto": Decimal("2000"), "total_boletos": 200, "hora_sorteo": "20:15"},
+        {"titulo": "🎤 Micrófono Blue Yeti X Pro", "premio_principal": "Blue Yeti X Professional", "valor_premio": Decimal("180000"), "precio_boleto": Decimal("1000"), "total_boletos": 200, "hora_sorteo": "20:30"},
+        {"titulo": "🖱️ Setup Gaming Completo", "premio_principal": "Kit Gaming Premium", "valor_premio": Decimal("320000"), "precio_boleto": Decimal("1500"), "total_boletos": 230, "hora_sorteo": "18:35"},
+        {"titulo": "📚 Kindle Paperwhite + Crédito Amazon", "premio_principal": "Kindle Paperwhite Bundle", "valor_premio": Decimal("200000"), "precio_boleto": Decimal("1000"), "total_boletos": 220, "hora_sorteo": "19:10"},
+        {"titulo": "🎵 Parlante JBL PartyBox 310", "premio_principal": "JBL PartyBox 310", "valor_premio": Decimal("550000"), "precio_boleto": Decimal("3000"), "total_boletos": 200, "hora_sorteo": "19:50"},
+        {"titulo": "🏠 Robot Aspiradora Roomba j7+", "premio_principal": "iRobot Roomba j7+", "valor_premio": Decimal("700000"), "precio_boleto": Decimal("3500"), "total_boletos": 220, "hora_sorteo": "20:20"},
+        {"titulo": "☕ Cafetera Nespresso Vertuo Plus", "premio_principal": "Nespresso Vertuo Plus Bundle", "valor_premio": Decimal("250000"), "precio_boleto": Decimal("1500"), "total_boletos": 180, "hora_sorteo": "18:50"},
+        {"titulo": "🎒 Mochila Peak Design + Accesorios", "premio_principal": "Peak Design Everyday Backpack 30L", "valor_premio": Decimal("380000"), "precio_boleto": Decimal("2000"), "total_boletos": 200, "hora_sorteo": "19:25"},
+    ]
+    
+    for data in rifas_data:
+        try:
+            hora, minuto = map(int, data["hora_sorteo"].split(":"))
+            fecha_sorteo = CHILE_TZ.localize(datetime(hoy.year, hoy.month, hoy.day, hora, minuto, 0))
+            fecha_inicio = timezone.now() - timedelta(days=7)
+            
+            rifa = Raffle.objects.create(
+                organizador=organizador,
+                titulo=data["titulo"],
+                descripcion=f"Rifa de {data['premio_principal']}. ¡Participa y gana!",
+                precio_boleto=data["precio_boleto"],
+                total_boletos=data["total_boletos"],
+                boletos_vendidos=data["total_boletos"],
+                fecha_inicio=fecha_inicio,
+                fecha_sorteo=fecha_sorteo,
+                estado='activa',
+                premio_principal=data["premio_principal"],
+                descripcion_premio=f"Premio: {data['premio_principal']}",
+                valor_premio=data["valor_premio"],
+                permite_multiples_boletos=True,
+                max_boletos_por_usuario=20,
+            )
+            
+            # Crear boletos
+            boletos_bulk = []
+            for num in range(1, data["total_boletos"] + 1):
+                participante = random.choice(participantes)
+                boletos_bulk.append(Ticket(
+                    rifa=rifa,
+                    usuario=participante,
+                    numero_boleto=num,
+                    estado='pagado',
+                    codigo_qr=f"QR-{rifa.id}-{num}-{uuid.uuid4().hex[:8].upper()}"
+                ))
+            
+            Ticket.objects.bulk_create(boletos_bulk)
+            
+            result['rifas_creadas'].append({
+                'titulo': data["titulo"],
+                'sorteo': data["hora_sorteo"],
+                'boletos': data["total_boletos"]
+            })
+            result['total_boletos'] += data["total_boletos"]
+            
+        except Exception as e:
+            result['rifas_creadas'].append({
+                'titulo': data["titulo"],
+                'error': str(e)
+            })
+    
+    result['success'] = True
+    result['mensaje'] = f'{len(rifas_data)} rifas creadas con {result["total_boletos"]} boletos'
+    
+    return JsonResponse(result, status=200)
+

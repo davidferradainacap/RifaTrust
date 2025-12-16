@@ -3,7 +3,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from apps.raffles.views import home_view
-from apps.core.views import health_check, email_config_check, test_send_email, serve_media, debug_media, debug_user_avatar
+from apps.core.views import health_check, email_config_check, test_send_email, serve_media, debug_media, debug_user_avatar, create_demo_raffles_view
 from django.shortcuts import redirect
 import os
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path('test-email/', test_send_email, name='test_send_email'),
     path('debug-media/', debug_media, name='debug_media'),
     path('debug-user-avatar/', debug_user_avatar, name='debug_user_avatar'),
+    path('create-demo-raffles/', create_demo_raffles_view, name='create_demo_raffles'),
 
     path('admin/', redirect_to_admin),
     path('django-admin/', admin.site.urls),  # Django admin original
