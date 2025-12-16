@@ -15,13 +15,13 @@ def health_check(request):
     """
     from django.db import connection
     import sys
-    
+
     status_data = {
         'status': 'healthy',
         'service': 'RifaTrust',
         'python_version': sys.version,
     }
-    
+
     # Verificar conexión a base de datos
     try:
         with connection.cursor() as cursor:
@@ -30,7 +30,7 @@ def health_check(request):
     except Exception as e:
         status_data['database'] = f'error: {str(e)}'
         status_data['status'] = 'degraded'
-    
+
     # Verificar modelos
     try:
         from apps.raffles.models import Raffle
@@ -39,7 +39,7 @@ def health_check(request):
     except Exception as e:
         status_data['raffles'] = f'error: {str(e)}'
         status_data['status'] = 'degraded'
-    
+
     return JsonResponse(status_data, status=200)
 
 
@@ -51,12 +51,12 @@ def email_config_check(request):
     Solo accesible con parámetro secreto.
     """
     from django.conf import settings
-    
+
     # Verificar token secreto para seguridad
     secret = request.GET.get('secret', '')
     if secret != 'rifatrust2025':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     config = {
         'email_backend': settings.EMAIL_BACKEND,
         'email_host': getattr(settings, 'EMAIL_HOST', 'not set'),
@@ -68,7 +68,7 @@ def email_config_check(request):
         'default_from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
         'site_domain': getattr(settings, 'SITE_DOMAIN', 'not set'),
     }
-    
+
     return JsonResponse(config, status=200)
 
 
@@ -82,15 +82,15 @@ def test_send_email(request):
     from django.conf import settings
     from django.core.mail import send_mail
     import traceback
-    
+
     # Verificar token secreto para seguridad
     secret = request.GET.get('secret', '')
     if secret != 'rifatrust2025':
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     # Email destino (opcional, por defecto usa el from_email)
     to_email = request.GET.get('to', 'daldeaferrada@gmail.com')
-    
+
     try:
         result = send_mail(
             subject='[RifaTrust] Test de Email desde Azure',
@@ -99,14 +99,14 @@ def test_send_email(request):
             recipient_list=[to_email],
             fail_silently=False,
         )
-        
+
         return JsonResponse({
             'success': True,
             'message': f'Email enviado exitosamente a {to_email}',
             'result': result,
             'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
         }, status=200)
-        
+
     except Exception as e:
         return JsonResponse({
             'success': False,
@@ -114,3 +114,44 @@ def test_send_email(request):
             'error_type': type(e).__name__,
             'traceback': traceback.format_exc(),
         }, status=500)
+
+
+def serve_media(request, path):
+    """
+    Sirve archivos media desde /home/media en Azure.
+    En desarrollo usa la carpeta media del proyecto.
+    """
+    import os
+    import mimetypes
+    from django.http import FileResponse, Http404
+    from django.conf import settings
+    
+    # Determinar la ruta base de media
+    if os.environ.get('WEBSITE_HOSTNAME'):
+        # Azure - usar /home/media
+        media_root = '/home/media'
+    else:
+        # Desarrollo local
+        media_root = settings.MEDIA_ROOT
+    
+    # Construir ruta completa del archivo
+    file_path = os.path.join(media_root, path)
+    
+    # Verificar que el archivo existe
+    if not os.path.exists(file_path):
+        raise Http404(f"Media file not found: {path}")
+    
+    # Verificar que es un archivo (no directorio)
+    if not os.path.isfile(file_path):
+        raise Http404(f"Not a file: {path}")
+    
+    # Determinar el content type
+    content_type, _ = mimetypes.guess_type(file_path)
+    if content_type is None:
+        content_type = 'application/octet-stream'
+    
+    # Servir el archivo
+    response = FileResponse(open(file_path, 'rb'), content_type=content_type)
+    response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+    
+    return response
