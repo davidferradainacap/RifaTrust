@@ -225,3 +225,57 @@ def debug_media(request):
         result['write_error'] = str(e)
     
     return JsonResponse(result, status=200)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def debug_user_avatar(request):
+    """
+    Endpoint para diagnosticar el avatar de un usuario específico.
+    """
+    import os
+    from django.conf import settings
+    
+    secret = request.GET.get('secret', '')
+    if secret != 'rifatrust2025':
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    email = request.GET.get('email', '')
+    
+    from apps.users.models import User
+    
+    try:
+        user = User.objects.get(email=email)
+        
+        result = {
+            'user_found': True,
+            'email': user.email,
+            'nombre': user.nombre,
+            'avatar_field': str(user.avatar) if user.avatar else None,
+            'avatar_name': user.avatar.name if user.avatar else None,
+            'has_avatar': bool(user.avatar),
+        }
+        
+        if user.avatar:
+            try:
+                result['avatar_url'] = user.avatar.url
+            except Exception as e:
+                result['avatar_url_error'] = str(e)
+            
+            # Verificar si el archivo existe físicamente
+            is_azure = bool(os.environ.get('WEBSITE_HOSTNAME'))
+            if is_azure:
+                media_root = '/home/media'
+            else:
+                media_root = str(settings.MEDIA_ROOT)
+            
+            file_path = os.path.join(media_root, user.avatar.name)
+            result['file_path'] = file_path
+            result['file_exists'] = os.path.exists(file_path)
+            
+    except User.DoesNotExist:
+        result = {'user_found': False, 'email': email}
+    except Exception as e:
+        result = {'error': str(e)}
+    
+    return JsonResponse(result, status=200)
